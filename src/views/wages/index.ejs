@@ -1,0 +1,456 @@
+<%
+/* The wages register. Audit item P7 — the largest gap that was left.
+
+   The muster proves a man was present. This proves he was paid for it, and
+   clause M5 is why it is per man and per date rather than a monthly total:
+   Rs 100 per staff per DAY of delay cannot be answered from a total.
+
+   Nothing here is computed into money. The screen says "eight days late, for
+   fourteen men" and hands that to the officer; the deficiency register is
+   where an accusation gets made, by a person. */
+const editable = can('wages.record') && !(wm && wm.verified_at);
+const verified = wm && wm.verified_at;
+const d = v => v ? String(v).slice(0, 10) : '';
+const rupee = v => v === null || v === undefined ? null
+  : Number(v).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const monthName = ym => new Date(Date.UTC(+ym.slice(0,4), +ym.slice(5,7) - 1, 1))
+  .toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+const M5 = {
+  ontime:      ['good', 'Paid within the due date'],
+  late:        ['crit', 'Paid late — clause M5'],
+  outstanding: ['crit', 'Not paid — clause M5 running'],
+  notyet:      ['neut', 'Not yet due'],
+};
+%>
+
+<form class="row" method="get" style="margin-bottom:14px;align-items:flex-end">
+  <div style="flex:0 0 250px"><label class="fl">Running room</label>
+    <select class="fi" name="rr" onchange="this.form.submit()">
+      <% rooms.forEach(function(r){ %>
+        <option value="<%= r.id %>" <%= r.id===rr.id?'selected':'' %>><%= r.name %> (<%= r.div_code %>)</option>
+      <% }); %>
+    </select></div>
+  <div style="flex:0 0 170px"><label class="fl">Wage month</label>
+    <input class="fi" type="month" name="month" value="<%= month %>" onchange="this.form.submit()"></div>
+  <noscript><button class="btn" type="submit">Go</button></noscript>
+</form>
+
+<% if (saved !== null) { %>
+  <div class="note" style="margin-bottom:14px">
+    <b>The wage sheet has been saved.</b>
+    <%= saved %> man<%= +saved === 1 ? '' : 'men' %> written down for <%= monthName(month) %>.
+    A man left entirely blank is <b>not</b> recorded as unpaid — he is simply not written down, and the
+    two are different things at a review.
+  </div>
+<% } %>
+<% if (note === 'verified') { %>
+  <div class="note ok" style="margin-bottom:14px"><b>The month has been verified.</b>
+    The figures are now closed to editing. If one has to be corrected, reopen the month first — the
+    confirmation was given to a particular payment sheet.</div>
+<% } else if (note === 'reopened') { %>
+  <div class="note" style="margin-bottom:14px"><b>The month has been reopened.</b>
+    The verification is withdrawn and the figures can be corrected. It will need verifying again.</div>
+<% } else if (note === 'm5') { %>
+  <div class="note err" style="margin-bottom:14px"><b>Clause M5 has been raised on the deficiency register.</b>
+    It is open against this running room and can be reviewed, corrected or withdrawn there like any other.
+    <a href="<%= url('/deficiencies?rr=' + rr.id + (raised ? '&highlight=' + raised.id : '')) %><%= raised ? '#d' + raised.id : '' %>">Open the deficiency register</a>.</div>
+<% } %>
+
+<div class="kpis" style="margin-bottom:14px">
+  <div class="kpi"><i class="strip" style="background:var(--s1)"></i>
+    <div class="lab">On the roll this month</div><div class="val"><%= rows.length %></div>
+    <div class="foot">including anyone who joined or left mid-month</div></div>
+  <div class="kpi"><i class="strip" style="background:var(--good)"></i>
+    <div class="lab">Written down as paid</div><div class="val"><%= written %></div>
+    <div class="foot"><%= stated %> with an amount stated</div></div>
+  <div class="kpi"><i class="strip" style="background:var(--warning)"></i>
+    <div class="lab">Not written down at all</div><div class="val"><%= rows.length - written %></div>
+    <div class="foot">silence, which is not the same as "unpaid"</div></div>
+  <div class="kpi"><i class="strip" style="background:var(--<%= m5.state==='ontime'?'good':(m5.state==='notyet'?'s1':'critical') %>)"></i>
+    <div class="lab">Clause M5</div>
+    <div class="val"><%= m5.state === 'ontime' ? '—' : (m5.days || '—') %></div>
+    <div class="foot"><% if (m5.state === 'ontime') { %>paid by the due date
+      <% } else if (m5.state === 'notyet') { %>due <%= m5.due %>
+      <% } else { %>day<%= m5.days === 1 ? '' : 's' %> past <%= m5.due %><% } %></div></div>
+</div>
+
+<div class="card" style="margin-bottom:14px">
+  <div class="card-h">
+    <h3>Clause M5 — wages by the 10th</h3>
+    <span class="sub">Rs 100 per staff per day of delay</span>
+    <span class="spacer"></span>
+    <span class="st <%= M5[m5.state][0] %>"><span class="dot"></span><%= M5[m5.state][1] %></span>
+  </div>
+  <div class="card-b">
+    <% if (m5.state === 'notyet') { %>
+      <div class="muted" style="font-size:12.5px">
+        Wages for <%= monthName(month) %> fall due on <b><%= m5.due %></b>. Nothing is outstanding yet, and a
+        month with nothing recorded before its due date is not a breach.
+      </div>
+    <% } else if (m5.state === 'ontime') { %>
+      <div class="note ok">Wages for <%= monthName(month) %> were paid on <b><%= d(wm.paid_on) %></b>,
+        on or before the due date of <%= m5.due %>. Nothing arises under clause M5.</div>
+    <% } else { %>
+      <div class="note err">
+        <% if (m5.state === 'late') { %>
+          Wages for <%= monthName(month) %> were paid on <b><%= d(wm.paid_on) %></b> —
+          <b><%= m5.days %> day<%= m5.days === 1 ? '' : 's' %></b> after the due date of <%= m5.due %>.
+        <% } else { %>
+          Wages for <%= monthName(month) %> are <b>not recorded as paid</b>. The due date of <%= m5.due %>
+          passed <b><%= m5.days %> day<%= m5.days === 1 ? '' : 's' %></b> ago.
+        <% } %>
+        <% if (m5.men) { %>
+          <%= m5.men %> staff are written down on the sheet, so the clause reads
+          <b><%= m5.men %> &times; <%= m5.days %> = <%= m5.quantity %></b> staff-days.
+          <b>No rupee figure is worked out here</b>, on this screen or anywhere else in this system.
+        <% } else { %>
+          No man has been written down on the payment sheet yet, so there is no head-count to put against
+          the clause. Enter the sheet below first — accusing a contractor over men nobody entered would be
+          this register inventing the case rather than recording it.
+        <% } %>
+      </div>
+      <% if (raised) { %>
+        <div class="muted" style="font-size:12.5px;margin-top:8px">
+          Already raised — deficiency <b>#<%= raised.id %></b>, <%= raised.quantity %> staff-days,
+          <%= raised.status %>.
+          <a href="<%= url('/deficiencies?rr=' + rr.id + '&highlight=' + raised.id) %>#d<%= raised.id %>">Open it on the register</a>. It will not be
+          offered again from here; correct or withdraw it on the deficiency register.
+        </div>
+      <% } else if (can('deficiency.record') && m5.men) { %>
+        <form method="post" action="<%= url('/wages/m5') %>" style="margin-top:10px">
+          <input type="hidden" name="rr" value="<%= rr.id %>">
+          <input type="hidden" name="month" value="<%= month %>">
+          <button class="btn" type="submit">Raise clause M5 — <%= m5.quantity %> staff-days</button>
+          <span class="muted" style="font-size:11.5px;margin-left:8px">
+            hands it to the deficiency register open, where it can be corrected or withdrawn
+          </span>
+        </form>
+      <% } %>
+    <% } %>
+  </div>
+</div>
+
+<form method="post" action="<%= url('/wages') %>" enctype="multipart/form-data">
+<input type="hidden" name="rr" value="<%= rr.id %>">
+<input type="hidden" name="month" value="<%= month %>">
+
+<div class="card" style="margin-bottom:14px">
+  <div class="card-h"><h3>The month</h3>
+    <span class="sub"><%= rr.name %> · <%= monthName(month) %></span>
+    <span class="spacer"></span>
+    <% if (verified) { %>
+      <span class="st good"><span class="dot"></span>Verified<% if (wm.verified_name) { %> by <%= wm.verified_name %><% } %></span>
+    <% } else if (wm) { %>
+      <span class="st warn"><span class="dot"></span>Not yet verified by the Railway</span>
+    <% } else { %>
+      <span class="st neut"><span class="dot"></span>Nothing recorded for this month</span>
+    <% } %>
+  </div>
+  <div class="card-b">
+    <div class="row" style="gap:10px;margin-bottom:8px">
+      <div style="flex:0 0 180px"><label class="fl">Wages paid on</label>
+        <% if (editable) { %>
+          <input class="fi" type="date" name="paid_on" max="<%= today() %>"
+                 value="<%= d(wm && wm.paid_on) %>">
+        <% } else { %><span class="tnum"><%= d(wm && wm.paid_on) || '—' %></span><% } %></div>
+      <div style="flex:0 0 160px"><label class="fl">Paid through</label>
+        <% if (editable) { %>
+          <select class="fi" name="payment_mode">
+            <option value="">— not stated —</option>
+            <% [['bank','Bank transfer'],['cash','Cash'],['mixed','Both']].forEach(function(o){ %>
+              <option value="<%= o[0] %>" <%= wm && wm.payment_mode === o[0] ? 'selected' : '' %>><%= o[1] %></option>
+            <% }); %>
+          </select>
+        <% } else { %><%= wm && wm.payment_mode || '—' %><% } %></div>
+      <div style="flex:1"><label class="fl">Remarks</label>
+        <% if (editable) { %>
+          <input class="fi" name="remarks" maxlength="500" value="<%= wm && wm.remarks ? wm.remarks : '' %>">
+        <% } else { %><span class="muted"><%= wm && wm.remarks || '—' %></span><% } %></div>
+    </div>
+    <div class="row" style="gap:10px">
+      <div style="flex:1">
+        <label class="fl">The jointly signed payment sheet — Labour compliance (2)</label>
+        <% if (editable) { %>
+          <input class="fi" type="file" name="sheet" accept="image/*,application/pdf">
+          <div class="muted" style="font-size:11px;margin-top:3px"><%= accepted %><%
+            if (wm && wm.sheet_file_id) { %> · one is already attached; choosing another replaces it<% } %></div>
+        <% } else if (wm && wm.sheet_file_id) { %>
+          <a href="<%= url('/wages/file/' + wm.sheet_file_id) %>">The payment sheet on record</a>
+        <% } else { %><span class="muted">none attached</span><% } %>
+      </div>
+    </div>
+    <div class="muted" style="font-size:11.5px;margin-top:10px">
+      <b>Wages paid on</b> is the date the money reached the men, not the date the sheet was written.
+      Clause M5 turns on it, so it is the one date on this screen worth being careful about. Left blank it
+      reads as <i>not yet paid</i> once the 10th has passed — silence, after a due date, is its own answer.
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom:14px">
+  <div class="card-h"><h3>The payment sheet</h3>
+    <span class="sub">one line per man — Payment Terms 5(2)</span>
+    <span class="spacer"></span>
+    <% if (unscreened) { %>
+      <span class="st warn"><span class="dot"></span><%= unscreened %> not screened</span>
+    <% } %>
+    <% if (!musterKept && rows.length) { %>
+      <span class="st warn"><span class="dot"></span>No muster marked for this month</span>
+    <% } %></div>
+  <% if (!musterKept && rows.length) { %>
+    <div class="card-b" style="padding-bottom:0">
+      <div class="note warn">
+        <b>The muster was not marked at this running room in <%= monthName(month) %>.</b>
+        So the <b>Present</b> column has nothing to draw on and shows a dash, not a nought — nobody was
+        recorded absent, nobody was recorded present, and the two are not the same thing.
+        Wages can still be entered here; the days are simply yours to state rather than the muster's to
+        suggest. <a href="<%= url('/records/muster?rr=' + rr.id) %>">The muster</a> is where that gap gets
+        closed, and clause A-series attendance findings are answered from it, not from here.
+      </div>
+    </div>
+  <% } %>
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr>
+      <th style="width:26%">Man</th>
+      <th style="width:78px" class="num">Present</th>
+      <th style="width:82px" class="num">Days paid</th>
+      <th style="width:120px" class="num">Amount (Rs)</th>
+      <th style="width:110px">Through</th>
+      <th>Bank / voucher reference</th>
+      <th style="width:130px">Paid on</th>
+    </tr></thead>
+    <tbody>
+    <% rows.forEach(function(row){ const m = row.m, p = row.p; %>
+      <tr>
+        <td>
+          <input type="hidden" name="staff" value="<%= m.id %>">
+          <b><%= m.full_name %></b>
+          <div class="muted" style="font-size:11px">
+            <%= m.staff_code %><% if (m.designation) { %> · <%= m.designation %><% } %>
+          </div>
+          <div style="font-size:10.5px;margin-top:2px">
+            <% if (!['approved','provisional'].includes(m.screening_status)) { %>
+              <span class="st warn" style="font-size:10.5px"><span class="dot"></span><%= m.screening_status %></span>
+            <% } %>
+            <% if (!m.date_of_joining) { %>
+              <span class="muted">· joining date not on record</span>
+            <% } %>
+            <% if (!m.bank_account_no) { %>
+              <span class="muted">· no bank account on record</span>
+            <% } %>
+          </div>
+        </td>
+        <td class="num tnum <%= m.days_marked ? 'muted' : '' %>">
+          <% if (m.days_marked) { %><%= m.days_present %>
+          <% } else { %><span class="muted" title="the muster was not marked for this man this month">—</span><% } %>
+        </td>
+        <td class="num">
+          <% if (editable) { %>
+            <input class="fi tnum" style="width:66px;text-align:right" name="d_<%= m.id %>"
+                   inputmode="numeric" maxlength="2"
+                   value="<%= p && p.days_paid !== null ? p.days_paid : '' %>"
+                   placeholder="<%= m.days_marked ? m.days_present : '' %>">
+          <% } else { %><span class="tnum"><%= p && p.days_paid !== null ? p.days_paid : '—' %></span><% } %>
+        </td>
+        <td class="num">
+          <% if (editable) { %>
+            <input class="fi tnum" style="width:104px;text-align:right" name="a_<%= m.id %>"
+                   inputmode="decimal" value="<%= p && p.amount_paid !== null ? p.amount_paid : '' %>">
+          <% } else { %><span class="tnum"><%= p && p.amount_paid !== null ? rupee(p.amount_paid) : '—' %></span><% } %>
+        </td>
+        <td>
+          <% if (editable) { %>
+            <select class="fi" style="width:100%" name="t_<%= m.id %>">
+              <option value="">—</option>
+              <option value="bank" <%= p && p.paid_through==='bank'?'selected':'' %>>Bank</option>
+              <option value="cash" <%= p && p.paid_through==='cash'?'selected':'' %>>Cash</option>
+            </select>
+          <% } else { %><%= p && p.paid_through || '—' %><% } %>
+        </td>
+        <td>
+          <% if (editable) { %>
+            <input class="fi" style="width:100%" name="r_<%= m.id %>" maxlength="60"
+                   value="<%= p && p.bank_ref ? p.bank_ref : '' %>" placeholder="UTR or voucher no">
+          <% } else { %><span class="tnum"><%= p && p.bank_ref || '—' %></span><% } %>
+        </td>
+        <td>
+          <% if (editable) { %>
+            <input class="fi" type="date" style="width:126px" name="p_<%= m.id %>"
+                   value="<%= d(p && p.paid_on) %>">
+          <% } else { %><span class="tnum"><%= d(p && p.paid_on) || '—' %></span><% } %>
+        </td>
+      </tr>
+    <% }); %>
+    <% if (!rows.length) { %>
+      <tr><td colspan="7" class="muted">Nobody was on the roll at this running room during
+        <%= monthName(month) %> — no active staff record covers the month. If men were working, they are
+        not on the <a href="<%= url('/staff?rr=' + rr.id) %>">staff register</a> yet.</td></tr>
+    <% } %>
+    </tbody>
+  </table></div>
+  <div class="tblfoot">
+    <b>Present</b> comes from the muster and is offered as a suggestion, not written in — wages may be paid
+    on a different basis, and a register that filled the figure in itself would be putting words in the
+    contractor's mouth. A <b>dash</b> there means the muster was never marked for that man; a <b>0</b> means
+    it was marked and he was present on no day. Reading the first as the second is how an unkept muster
+    turns into an accusation that nobody was paid.
+    <br><br>
+    <b>Everyone on the roll is listed</b>, whatever is missing from his record. A man whose screening is
+    unfinished, or whose joining date or bank account the Railway has never been given, is shown with that
+    said on his line — because a man paid while unscreened is something an officer needs to see, and a
+    register that quietly left him off the sheet would be hiding the finding rather than recording it. A man left entirely blank stays <b>unrecorded</b>; he is not written down as unpaid.
+    An amount of <b>0</b> says he was paid nothing, which is a finding — blank says nobody has told us yet.
+  </div>
+</div>
+
+<div class="card" style="margin-bottom:14px">
+  <div class="card-h"><h3>The statutory returns for the month</h3>
+    <span class="sub">Labour compliance (3) and Payment Terms 5(4), (5), (7) and (11)</span></div>
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr>
+      <th style="width:22%">Return</th><th style="width:140px">Paid / updated on</th>
+      <th style="width:190px">Reference</th><th style="width:140px" class="num">Amount (Rs)</th>
+      <th>Remarks</th><th style="width:180px">Proof</th>
+    </tr></thead>
+    <tbody>
+    <% returns.forEach(function(rt){ const code = rt[0], r = byType[code]; %>
+      <tr>
+        <td><b><%= rt[1] %></b>
+          <div class="muted" style="font-size:11px"><%= rt[2] %></div></td>
+        <td>
+          <% if (editable) { %>
+            <input class="fi" type="date" style="width:134px" name="rt_<%= code %>_on"
+                   max="<%= today() %>" value="<%= d(r && r.paid_on) %>">
+          <% } else { %><span class="tnum"><%= d(r && r.paid_on) || '—' %></span><% } %>
+        </td>
+        <td>
+          <% if (editable) { %>
+            <input class="fi" style="width:100%" name="rt_<%= code %>_ref" maxlength="80"
+                   value="<%= r && r.reference_no ? r.reference_no : '' %>"
+                   placeholder="<%= code === 'shramik_kalyan' ? 'portal acknowledgement' : 'challan number' %>">
+          <% } else { %><span class="tnum"><%= r && r.reference_no || '—' %></span><% } %>
+        </td>
+        <td class="num">
+          <% if (rt[3]) { %>
+            <% if (editable) { %>
+              <input class="fi tnum" style="width:124px;text-align:right" name="rt_<%= code %>_amt"
+                     inputmode="decimal" value="<%= r && r.amount !== null && r.amount !== undefined ? r.amount : '' %>">
+            <% } else { %><span class="tnum"><%= r && r.amount !== null && r.amount !== undefined ? rupee(r.amount) : '—' %></span><% } %>
+          <% } else { %><span class="muted">n/a</span><% } %>
+        </td>
+        <td>
+          <% if (editable) { %>
+            <input class="fi" style="width:100%" name="rt_<%= code %>_rem" maxlength="300"
+                   value="<%= r && r.remarks ? r.remarks : '' %>">
+          <% } else { %><span class="muted"><%= r && r.remarks || '—' %></span><% } %>
+        </td>
+        <td>
+          <% if (editable) { %>
+            <input class="fi" type="file" name="rt_<%= code %>_file" accept="image/*,application/pdf">
+          <% } else if (r && r.file_id) { %>
+            <a href="<%= url('/wages/file/' + r.file_id) %>">on record</a>
+          <% } else { %><span class="muted">none</span><% } %>
+          <% if (editable && r && r.file_id) { %>
+            <div class="muted" style="font-size:10.5px">one is attached; choosing another replaces it</div>
+          <% } %>
+        </td>
+      </tr>
+    <% }); %>
+    </tbody>
+  </table></div>
+  <div class="tblfoot">
+    The EPF and ESI <b>contributions</b> and the <b>challans</b> are two different pieces of paper and an
+    accounts office asks for both — the challan number goes in Reference, the receipt itself as Proof.
+    A blank row means the return has not been filed as far as this system knows, and that is what the bill
+    checklist will read at Payment Terms 5.
+  </div>
+</div>
+
+<% if (editable) { %>
+  <div style="margin-bottom:20px">
+    <button class="btn" type="submit">Save the month</button>
+    <span class="muted" style="font-size:11.5px;margin-left:10px">
+      saving again corrects the month; it does not create a second sheet
+    </span>
+  </div>
+<% } else if (verified) { %>
+  <div class="muted" style="font-size:12.5px;margin-bottom:20px">
+    This month has been verified and is closed to editing.
+    <% if (can('wages.verify')) { %>To correct a figure, <b>reopen the month</b> below.
+    <% } else { %>Ask the Railway to reopen it if a figure has to be corrected.<% } %>
+  </div>
+<% } else { %>
+  <div class="muted" style="font-size:12.5px;margin-bottom:20px">Your role has view access only.</div>
+<% } %>
+</form>
+
+<% if (can('wages.verify') && wm) { %>
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-h"><h3>The Railway's confirmation</h3>
+      <span class="sub">that the signed payment sheet was seen</span></div>
+    <div class="card-b">
+      <form method="post" action="<%= url('/wages/verify') %>">
+        <input type="hidden" name="rr" value="<%= rr.id %>">
+        <input type="hidden" name="month" value="<%= month %>">
+        <div class="row" style="gap:10px;align-items:flex-end">
+          <div style="flex:1"><label class="fl">What the Railway saw</label>
+            <input class="fi" name="verify_remarks" maxlength="400"
+                   value="<%= wm.verify_remarks ? wm.verify_remarks : '' %>"></div>
+          <button class="btn<%= verified ? ' ghost' : '' %>" type="submit">
+            <%= verified ? 'Verify again' : 'Verify this month' %></button>
+        </div>
+        <div class="muted" style="font-size:11.5px;margin-top:6px">
+          A payment register the contractor fills and nobody confirms is the contractor marking his own work.
+        </div>
+      </form>
+      <% if (verified) { %>
+        <form method="post" action="<%= url('/wages/verify') %>" style="margin-top:10px">
+          <input type="hidden" name="rr" value="<%= rr.id %>">
+          <input type="hidden" name="month" value="<%= month %>">
+          <input type="hidden" name="action" value="reopen">
+          <button class="btn ghost" type="submit">Reopen this month so a figure can be corrected</button>
+          <span class="muted" style="font-size:11.5px;margin-left:8px">
+            withdraws the confirmation; it is recorded in the audit trail
+          </span>
+        </form>
+      <% } %>
+    </div>
+  </div>
+<% } %>
+
+<div class="card">
+  <div class="card-h"><h3>The last twelve months</h3>
+    <span class="sub">when wages actually reached the men</span></div>
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr><th>Month</th><th>Due by</th><th>Paid on</th><th class="num">Men</th>
+      <th class="num">Returns</th><th>Position</th></tr></thead>
+    <tbody>
+    <% months.forEach(function(h){ %>
+      <tr <%= h.ym === month ? 'style="background:rgba(42,120,214,.05)"' : '' %>>
+        <td><a href="<%= url('/wages?rr=' + rr.id + '&month=' + h.ym) %>"><%= monthName(h.ym) %></a></td>
+        <td class="tnum muted"><%= h.m5.due %></td>
+        <td class="tnum"><%= h.paid_on || '—' %></td>
+        <td class="num tnum"><%= h.men || '—' %></td>
+        <td class="num tnum"><%= h.returns_filed %> of 4</td>
+        <td>
+          <% if (!h.recorded) { %>
+            <span class="st warn"><span class="dot"></span>nothing recorded</span>
+          <% } else { %>
+            <span class="st <%= M5[h.m5.state][0] %>"><span class="dot"></span>
+              <% if (h.m5.state === 'late') { %><%= h.m5.days %> day<%= h.m5.days===1?'':'s' %> late
+              <% } else if (h.m5.state === 'outstanding') { %>unpaid, <%= h.m5.days %> day<%= h.m5.days===1?'':'s' %> past due
+              <% } else if (h.m5.state === 'ontime') { %>paid in time
+              <% } else { %>not yet due<% } %></span>
+            <% if (h.verified) { %><span class="muted" style="font-size:11px"> · verified</span><% } %>
+          <% } %>
+        </td>
+      </tr>
+    <% }); %>
+    </tbody>
+  </table></div>
+  <div class="tblfoot">
+    A month with <b>nothing recorded</b> is not evidence that wages were unpaid, and is not counted as a
+    breach — but a year of them is its own answer at a review, and a contractor who paid on time every month
+    and never wrote it down cannot prove he did.
+  </div>
+</div>

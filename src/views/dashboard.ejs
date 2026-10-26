@@ -1,0 +1,239 @@
+<div class="kpis" style="margin-bottom:16px">
+  <div class="kpi"><i class="strip" style="background:var(--s1)"></i>
+    <div class="lab">Running rooms</div>
+    <div class="val"><%= totals.rr_count %></div>
+    <div class="foot"><%= fmtInt(totals.rooms) %> rooms · outsourced housekeeping</div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s1)"></i>
+    <div class="lab">Total beds</div>
+    <div class="val"><%= fmtInt(totals.beds) %></div>
+    <div class="foot">across <%= byDivision.length %> division<%= byDivision.length===1?'':'s' %></div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s3)"></i>
+    <div class="lab">Crews served per day</div>
+    <div class="val"><%= fmtInt(totals.crews_day) %></div>
+    <div class="foot">turnover <%= totals.beds ? (totals.crews_day/totals.beds).toFixed(2) : '—' %> crews per bed</div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s3)"></i>
+    <div class="lab">Peak concurrent occupancy</div>
+    <div class="val"><%= fmtInt(totals.peak) %> <small>/ <%= fmtInt(totals.beds) %></small></div>
+    <div class="foot"><span class="st <%= totals.peak/totals.beds > .95 ? 'warn':'good' %>"><span class="dot"></span><%= totals.beds ? Math.round(totals.peak/totals.beds*100) : 0 %>% of capacity at peak</span></div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s4)"></i>
+    <div class="lab">Meal-serving rooms</div>
+    <div class="val"><%= totals.meal_sites %> <small>/ <%= totals.rr_count %></small></div>
+    <div class="foot"><%= totals.rr_count - totals.meal_sites %> without subsidised meal facility</div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s5)"></i>
+    <div class="lab">Female accommodation</div>
+    <div class="val"><%= totals.female_sites %> <small>/ <%= totals.rr_count %></small></div>
+    <div class="foot"><%= totals.female_rooms %> rooms reserved · <span class="st <%= totals.rr_count-totals.female_sites ? 'warn':'good' %>"><span class="dot"></span><%= totals.rr_count - totals.female_sites %> without</span></div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s7)"></i>
+    <div class="lab">Active contractors</div>
+    <div class="val"><%= contractors %></div>
+    <div class="foot">holding a live agreement</div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s7)"></i>
+    <div class="lab">Contract staff on roll</div>
+    <div class="val"><%= fmtInt(staff.on_roll) %></div>
+    <div class="foot">sanctioned <%= fmtInt(sanctioned) %><%= staff.pending ? ' · ' + staff.pending + ' unscreened' : '' %></div></div>
+  <% grading.forEach(function(g){ %>
+  <div class="kpi"><i class="strip" style="background:var(--s4)"></i>
+    <div class="lab"><%= g.head.charAt(0).toUpperCase()+g.head.slice(1) %> grading</div>
+    <div class="val"><%= Number(g.avg_rating).toFixed(2) %> <small>/ 5</small></div>
+    <div class="foot"><span class="st <%= g.avg_rating > 4 ? 'good' : g.avg_rating > 3 ? 'warn' : 'crit' %>"><span class="dot"></span><%= g.avg_rating > 4 ? 'Above penalty threshold' : 'Below 4.01 — penalty band' %></span></div></div>
+  <% }); %>
+  <div class="kpi"><i class="strip" style="background:var(--s2)"></i>
+    <div class="lab">Feedback coverage</div>
+    <div class="val"><%= coverage.avg_pct === null || coverage.avg_pct === undefined ? '—' : coverage.avg_pct + '%' %></div>
+    <div class="foot"><span class="st <%= (coverage.meeting||0) === (coverage.periods||0) ? 'good':'warn' %>"><span class="dot"></span><%= coverage.meeting||0 %> of <%= coverage.periods||0 %> meet the 50% floor</span></div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s8)"></i>
+    <div class="lab">Deficiencies recorded</div>
+    <div class="val"><%= fmtInt(deficiencies.total||0) %></div>
+    <div class="foot"><%= deficiencies.open||0 %> open · <span class="muted">no amount computed</span></div></div>
+</div>
+
+<div class="note" style="margin-bottom:16px">
+  <b>The occupancy register and meal accounting are in RRMS</b> and are not duplicated here. The monthly occupant
+  count — the denominator for the tender's minimum-50%-of-occupants feedback floor — is entered on each running
+  room's page. <b>Penalty amounts are not computed</b> in this build; deficiencies are recorded against clause IDs
+  so the calculation can be switched on once the schedule under review is finalised.
+</div>
+
+<%
+  const trendPoints = ratingTrend.map(function(r){
+    return { x: r.month_label.replace(' 20', " '"), y: Number(r.avg_rating) }; });
+  const covRows = coverageByDivision.map(function(d){
+    return { label: d.name, value: Number(d.avg_pct),
+             tone: Number(d.avg_pct) >= 50 ? null : 'critical',
+             note: '· ' + d.meeting + '/' + d.sites + ' sites' }; });
+  // Short labels here: the card is a third of the width, and a long head name
+  // would leave the bars no room to be a chart.
+  const SHORT = { A: 'Housekeeping', B: 'Meals & kitchen', C: 'Linen', D: 'Consumables',
+                  M: 'Monthly', G: 'Grading' };
+  const headRows = defByHead.map(function(h){
+    return { label: SHORT[h.group_code] || h.group_name, value: +h.n,
+             note: h.open ? '· ' + h.open + ' open' : '' }; });
+%>
+
+<%
+/* The agreements, asked for by a divisional officer.
+
+   Two questions answered on one screen that could not be answered on any:
+   which agreement covers each of my running rooms, and when does it run out.
+   The LOA reference sits beside the agreement number because for the weeks
+   between acceptance and execution the LOA IS the authority the contractor
+   works under.
+
+   What is missing from a contract is printed as missing. Every one of those
+   gaps is data the Railway owes, and the officer reading his own dashboard is
+   the person who can chase it. */
+const dt = v => v ? String(v).slice(0, 10) : null;
+const expiring = agreements.filter(a => a.days_left !== null && a.days_left <= 90);
+const undated = agreements.filter(a => a.days_left === null);
+%>
+
+<div class="card" style="margin-bottom:16px">
+  <div class="card-h">
+    <h3>Agreements and Letters of Acceptance</h3>
+    <span class="sub"><%= agreements.length %> live agreement<%= agreements.length === 1 ? '' : 's' %> covering the running rooms you hold</span>
+    <span class="spacer"></span>
+    <% if (uncovered.length) { %>
+      <span class="st crit"><span class="dot"></span><%= uncovered.length %> room<%= uncovered.length === 1 ? '' : 's' %> with no agreement</span>
+    <% } else if (undated.length) { %>
+      <span class="st warn"><span class="dot"></span><%= undated.length %> with no period on record</span>
+    <% } else if (expiring.length) { %>
+      <span class="st warn"><span class="dot"></span><%= expiring.length %> running out within 90 days</span>
+    <% } else if (agreements.length) { %>
+      <span class="st good"><span class="dot"></span>all covered</span>
+    <% } %>
+  </div>
+
+  <% if (uncovered.length) { %>
+    <div class="card-b" style="padding-bottom:0">
+      <div class="note err">
+        <b><%= uncovered.length %> operational running room<%= uncovered.length === 1 ? ' has' : 's have' %> no live agreement on record</b>
+        — <%= uncovered.map(u => u.name + ' (' + u.div_code + ')').join(', ') %>.
+        Nothing in RR-CMS can say who is answerable for <%= uncovered.length === 1 ? 'that site' : 'those sites' %> today.
+      </div>
+    </div>
+  <% } %>
+
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr>
+      <th>LOA</th><th>Agreement</th><th>Contractor</th><th>Running rooms</th>
+      <th>Runs to</th><th>Position</th>
+    </tr></thead>
+    <tbody>
+    <% agreements.forEach(function(a){ %>
+      <tr>
+        <td>
+          <% if (a.loa_no) { %><b><%= a.loa_no %></b><% } else { %><span class="muted">not on record</span><% } %>
+          <div class="muted tnum" style="font-size:11px"><%= dt(a.loa_date) || 'no LOA date' %></div>
+        </td>
+        <td><% if (can('contract.view')) { %>
+            <a class="tnum" style="font-size:12px" href="<%= url('/contractors/contracts/' + a.id) %>"><%= a.agreement_no %></a>
+          <% } else { %><span class="tnum" style="font-size:12px"><%= a.agreement_no %></span><% } %>
+          <div class="muted tnum" style="font-size:11px">
+            <% if (a.start_date && a.end_date) { %>
+              <%= dt(a.start_date) %> to <%= dt(a.end_date) %><% if (a.extended_to) { %> · extended to <%= dt(a.extended_to) %><% } %>
+            <% } else { %>period not on record<% } %>
+          </div></td>
+        <td><%= a.contractor_name %>
+          <div class="muted" style="font-size:11px"><%= a.contractor_code %> · <%= a.div_code %></div></td>
+        <td><%= a.rooms %>
+          <div class="muted" style="font-size:11px"><%= a.room_names %></div></td>
+        <td class="tnum"><%= a.runs_to || '—' %>
+          <div class="muted" style="font-size:11px">
+            <% if (a.days_left === null) { %>not known
+            <% } else if (a.days_left < 0) { %>expired <%= Math.abs(a.days_left) %> days ago
+            <% } else { %><%= a.days_left %> days left<% } %>
+          </div></td>
+        <td>
+          <% if (a.days_left === null) { %>
+            <span class="st warn"><span class="dot"></span>No period on record</span>
+          <% } else if (a.days_left < 0) { %>
+            <span class="st crit"><span class="dot"></span>Expired</span>
+          <% } else if (a.days_left <= 90) { %>
+            <span class="st warn"><span class="dot"></span>Runs out in <%= a.days_left %> days</span>
+          <% } else { %>
+            <span class="st good"><span class="dot"></span><%= a.status === 'extended' ? 'Extended' : 'Live' %></span>
+          <% } %>
+          <% if (a.gaps.length) { %>
+            <div class="muted" style="font-size:11px;margin-top:3px">not on record: <%= a.gaps.join(', ') %>
+              <% if (can('contract.edit')) { %>
+                — <a href="<%= url('/contractors/contracts/' + a.id) %>">enter it</a>
+              <% } %></div>
+          <% } %>
+        </td>
+      </tr>
+    <% }); %>
+    <% if (!agreements.length) { %>
+      <tr><td colspan="6" class="muted">No agreement covers any running room you hold.</td></tr>
+    <% } %>
+    </tbody>
+  </table></div>
+  <div class="tblfoot">
+    The Letter of Acceptance and the agreement are two documents with two numbers. Between acceptance and
+    execution the LOA is the authority the contractor works under, which is the period an officer most needs
+    to see. <b>No amount here is computed</b> — the security deposit and performance guarantee are contract
+    facts, shown only as present or missing.
+  </div>
+</div>
+
+<div class="grid" style="grid-template-columns:1fr 1fr 1fr;margin-bottom:16px">
+  <div class="card">
+    <div class="card-h"><h3>Occupant rating</h3><span class="sub">six months, all heads</span></div>
+    <div class="chartbox">
+      <%- chart.line(trendPoints, { width: 400, height: 178, title: 'Average occupant rating by month',
+            clampMin: 1, clampMax: 5, valueFmt: function(v){ return Number(v).toFixed(2); },
+            reference: { value: 4.01, label: '4.01' } }) %>
+    </div>
+    <div class="tblfoot"><a href="<%= url('/reports/trends') %>">Full trend and the figures behind it →</a></div>
+  </div>
+  <div class="card">
+    <div class="card-h"><h3>Coverage by division</h3><span class="sub"><%= lastMonthLabel %></span></div>
+    <div class="chartbox">
+      <%- chart.hbar(covRows, { width: 400, max: 100, title: 'Feedback coverage by division',
+            valueFmt: function(v){ return Number(v).toFixed(1) + '%'; },
+            threshold: { value: 50, label: '50% floor' } }) %>
+    </div>
+    <div class="tblfoot">Below the floor the grading penalty is not leviable.</div>
+  </div>
+  <div class="card">
+    <div class="card-h"><h3>Deficiencies by head</h3><span class="sub">last six months</span></div>
+    <div class="chartbox">
+      <%- chart.hbar(headRows, { width: 400, title: 'Deficiencies by head of the schedule' }) %>
+    </div>
+    <div class="tblfoot"><a href="<%= url('/deficiencies') %>">Open the register →</a></div>
+  </div>
+</div>
+
+<div class="grid" style="grid-template-columns:1.4fr 1fr">
+  <div class="card">
+    <div class="card-h"><h3>Division-wise position</h3><span class="sub">running rooms within your access</span></div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>Division</th><th class="num">RRs</th><th class="num">Beds</th><th class="num">Crews/day</th><th class="num">Peak</th><th class="num">Peak load</th><th class="num">Female RRs</th></tr></thead>
+      <tbody>
+        <% byDivision.forEach(function(d){ %>
+        <tr>
+          <td><a href="<%= url('/running-rooms?division=' + d.code) %>"><%= d.name %></a> <span class="muted">(<%= d.code %>)</span></td>
+          <td class="num"><%= d.rr_count %></td>
+          <td class="num"><%= fmtInt(d.beds) %></td>
+          <td class="num"><%= fmtInt(d.crews_day) %></td>
+          <td class="num"><%= fmtInt(d.peak) %></td>
+          <td class="num"><%= d.beds ? Math.round(d.peak/d.beds*100) : 0 %>%</td>
+          <td class="num"><%= d.female_sites %>/<%= d.rr_count %></td>
+        </tr>
+        <% }); %>
+      </tbody>
+    </table></div>
+  </div>
+  <div class="card">
+    <div class="card-h"><h3>By category</h3><span class="sub">Schedule-A sizing follows bed count</span></div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>Category</th><th class="num">Running rooms</th><th class="num">Beds</th><th class="num">Avg beds</th></tr></thead>
+      <tbody>
+        <% byCategory.forEach(function(c){ %>
+        <tr><td><span class="pill <%= c.category==='A'?'b':c.category==='B'?'y':'' %>"><%= c.category %></span></td>
+          <td class="num"><%= c.n %></td><td class="num"><%= fmtInt(c.beds) %></td>
+          <td class="num"><%= Math.round(c.beds/c.n) %></td></tr>
+        <% }); %>
+      </tbody>
+    </table></div>
+  </div>
+</div>

@@ -1,0 +1,444 @@
+/* RR-CMS — Running Room Contract Management System */
+:root{
+  color-scheme: light;
+  --surface-1:#fcfcfb; --plane:#f4f5f2;
+  --sidebar:#12233d; --sidebar-2:#0c1a2e; --sidebar-ink:#c8d4e4; --brand-accent:#c8991a;
+  --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#898781;
+  --grid:#e1e0d9; --border:rgba(11,11,11,.10); --border-strong:rgba(11,11,11,.18);
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s7:#4a3aa7; --s8:#e34948;
+  --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#d03b3b;
+  --good-ink:#006300; --critical-ink:#a92c2c; --warning-ink:#8a6000;
+  --radius:10px; --shadow:0 1px 2px rgba(11,11,11,.05),0 1px 8px rgba(11,11,11,.04);
+  --font:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box} html,body{margin:0;padding:0}
+body{font-family:var(--font);background:var(--plane);color:var(--text-primary);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+a{color:var(--s1);text-decoration:none} a:hover{text-decoration:underline}
+.app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+.sidebar{background:linear-gradient(180deg,var(--sidebar),var(--sidebar-2));color:var(--sidebar-ink);position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+.brandbox{padding:16px;border-bottom:1px solid rgba(255,255,255,.09);display:flex;gap:11px;align-items:center}
+.brandmark{width:36px;height:36px;flex:0 0 36px;border-radius:50%;background:var(--brand-accent);display:grid;place-items:center}
+.brandtext .t1{color:#fff;font-weight:700;font-size:15px;line-height:1.15}
+.brandtext .t2{font-size:10.5px;letter-spacing:.7px;text-transform:uppercase;color:#8fa4c0;margin-top:2px}
+.navgroup{padding:14px 10px 4px}
+.navlabel{font-size:10px;letter-spacing:.9px;text-transform:uppercase;color:#6f86a6;padding:0 10px 6px;font-weight:600}
+.navitem{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border-radius:7px;border:0;background:transparent;color:var(--sidebar-ink);cursor:pointer;text-align:left;font-size:13.2px;margin-bottom:1px;text-decoration:none}
+.navitem:hover{background:rgba(255,255,255,.07);color:#fff;text-decoration:none}
+.navitem.active{background:rgba(255,255,255,.12);color:#fff;font-weight:600;box-shadow:inset 2px 0 0 var(--brand-accent)}
+.navitem svg{width:17px;height:17px;flex:0 0 17px;opacity:.9}
+.sidefoot{margin-top:auto;padding:12px 16px;border-top:1px solid rgba(255,255,255,.09);font-size:11px;color:#6f86a6}
+.main{display:flex;flex-direction:column;min-width:0}
+.topbar{background:var(--surface-1);border-bottom:1px solid var(--border);padding:10px 22px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:20}
+.crumb{font-size:12px;color:var(--text-muted)}
+.pagetitle{font-size:17px;font-weight:650;letter-spacing:-.2px;margin:0}
+.spacer{flex:1}
+.userchip{display:flex;align-items:center;gap:8px;padding-left:12px;border-left:1px solid var(--border)}
+.avatar{width:30px;height:30px;border-radius:50%;background:#1c5cab;color:#fff;display:grid;place-items:center;font-size:11.5px;font-weight:700}
+.uname{font-size:12.5px;font-weight:600;line-height:1.2}
+.urole{font-size:10.5px;color:var(--text-muted)}
+.content{padding:20px 22px 44px;max-width:1560px;width:100%}
+.card{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+.card-h{padding:13px 16px 11px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.card-h h3{margin:0;font-size:13.5px;font-weight:650}
+.card-h .sub{font-size:11.5px;color:var(--text-muted);font-weight:400}
+.card-b{padding:14px 16px}
+.grid{display:grid;gap:14px} .row{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+/* A GRID CHILD MUST BE ALLOWED TO SHRINK.
+   Grid and flex items default to min-width:auto, which means they refuse to go
+   narrower than their content's minimum — a wide table, or a form of
+   fixed-width boxes. The column then overflows its track, the whole page grows
+   wider than the window, and everything to the right of the fold becomes
+   unreachable without scrolling sideways.
+
+   That is what happened to the occupancy form on the running room page: at
+   1100px the page was 1443px wide and the "Occupants (from RRMS)" box sat at
+   x=1174, off the edge. It read as a missing box, and the officer reported it
+   as one. Once a page scrolls sideways the content also slides across the
+   sticky sidebar, which was the other half of what he saw.
+
+   `.main` has carried min-width:0 since the shell was built, for this reason.
+   The grids inside it never did. `.tblwrap{overflow-x:auto}` can only work if
+   its ancestors are allowed to be narrow. */
+.grid > *{min-width:0}
+.muted{color:var(--text-muted)} .tnum{font-variant-numeric:tabular-nums}
+.hr{height:1px;background:var(--border);margin:12px 0}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(186px,1fr));gap:12px}
+.kpi{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--radius);padding:12px 13px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.kpi .strip{position:absolute;left:0;top:0;bottom:0;width:3px}
+.kpi .lab{font-size:11.2px;color:var(--text-secondary);font-weight:500;min-height:30px}
+.kpi .val{font-size:25px;font-weight:680;letter-spacing:-.9px;margin-top:2px;line-height:1.1}
+.kpi .val small{font-size:13px;font-weight:500;color:var(--text-muted);letter-spacing:0}
+.kpi .foot{font-size:11px;color:var(--text-muted);margin-top:5px}
+.st{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.st .dot{width:8px;height:8px;border-radius:50%;flex:0 0 8px}
+.st.good{color:var(--good-ink)} .st.good .dot{background:var(--good)}
+.st.warn{color:var(--warning-ink)} .st.warn .dot{background:var(--warning)}
+.st.crit{color:var(--critical-ink)} .st.crit .dot{background:var(--critical)}
+.st.neut{color:var(--text-muted)} .st.neut .dot{background:#c3c2b7}
+.pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid var(--border-strong);color:var(--text-secondary)}
+.pill.b{background:rgba(42,120,214,.10);border-color:rgba(42,120,214,.3);color:#1c5cab}
+.pill.g{background:rgba(12,163,12,.10);border-color:rgba(12,163,12,.3);color:var(--good-ink)}
+.pill.r{background:rgba(208,59,59,.10);border-color:rgba(208,59,59,.3);color:var(--critical-ink)}
+.pill.y{background:rgba(250,178,25,.14);border-color:rgba(250,178,25,.4);color:var(--warning-ink)}
+.tblwrap{overflow-x:auto}
+table.tbl{width:100%;border-collapse:collapse;font-size:12.8px}
+table.tbl th{text-align:left;font-weight:600;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--text-muted);padding:8px 12px;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--surface-1)}
+table.tbl td{padding:9px 12px;border-bottom:1px solid var(--grid);vertical-align:middle}
+table.tbl tbody tr:hover{background:rgba(42,120,214,.045)}
+table.tbl tbody tr:last-child td{border-bottom:0}
+table.tbl td.num,table.tbl th.num{text-align:right;font-variant-numeric:tabular-nums}
+.minibar{height:6px;border-radius:3px;background:var(--grid);overflow:hidden;min-width:56px}
+.minibar>i{display:block;height:100%;border-radius:3px}
+label.fl{display:block;font-size:11.5px;font-weight:600;color:var(--text-secondary);margin-bottom:4px}
+input.fi,select.fi,textarea.fi{width:100%;padding:7px 10px;border:1px solid var(--border-strong);border-radius:7px;background:var(--surface-1);color:var(--text-primary);font-family:inherit;font-size:13px}
+input.fi:focus,select.fi:focus{outline:2px solid rgba(42,120,214,.35);border-color:var(--s1)}
+.btn{background:var(--s1);color:#fff;border:0;border-radius:7px;padding:8px 15px;font-weight:600;cursor:pointer;font-size:13px;text-decoration:none;display:inline-block}
+.btn:hover{filter:brightness(1.07);text-decoration:none;color:#fff}
+.btn.ghost{background:transparent;color:var(--s1);border:1px solid var(--s1)}
+.btn.small{padding:5px 11px;font-size:12px}
+.note{background:rgba(42,120,214,.06);border:1px solid rgba(42,120,214,.25);border-left:3px solid var(--s1);border-radius:7px;padding:10px 12px;font-size:12.3px;color:var(--text-secondary)}
+.note b{color:var(--text-primary)}
+.note.warn{background:rgba(250,178,25,.10);border-color:rgba(250,178,25,.4);border-left-color:var(--warning)}
+.note.err{background:rgba(208,59,59,.08);border-color:rgba(208,59,59,.35);border-left-color:var(--critical)}
+/* login */
+.loginwrap{min-height:100vh;display:grid;place-items:center;background:linear-gradient(160deg,#12233d,#0c1a2e)}
+.loginbox{background:var(--surface-1);border-radius:14px;padding:30px 32px;width:100%;max-width:390px;box-shadow:0 18px 60px rgba(0,0,0,.35)}
+.loginbox h1{font-size:20px;margin:0 0 3px;letter-spacing:-.3px}
+.loginbox .sub{font-size:12.5px;color:var(--text-muted);margin-bottom:20px}
+.loginbox .f{margin-bottom:14px}
+@media (max-width:1080px){.app{grid-template-columns:64px 1fr}.brandtext,.navlabel,.navitem span,.sidefoot{display:none}.navitem{justify-content:center}}
+
+/* section tabs (Daily Records) */
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.tabs .tab{padding:8px 14px;border:0;background:transparent;color:var(--text-secondary);cursor:pointer;
+  font-size:13px;border-bottom:2px solid transparent;margin-bottom:-1px;text-decoration:none;border-radius:6px 6px 0 0}
+.tabs .tab:hover{color:var(--text-primary);background:rgba(11,11,11,.03);text-decoration:none}
+.tabs .tab.active{color:var(--s1);border-bottom-color:var(--s1);font-weight:600;background:transparent}
+
+/* round tabs on a register that is filled more than once a day. The count under
+   each tab is what stops a round being forgotten when only one is on screen. */
+.tabs.rounds .tab{padding:7px 15px;line-height:1.25}
+.tabs .tab .cnt{display:block;font-size:10.5px;font-weight:500;color:var(--text-muted);letter-spacing:0;text-transform:none}
+.tabs .tab.active .cnt{color:var(--s1)}
+
+/* charts — server-rendered SVG, see src/lib/charts.js */
+.chart{display:block;width:100%;height:auto;overflow:visible}
+.chartbox{padding:12px 14px 6px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;padding:2px 14px 12px;font-size:11.5px;color:var(--text-secondary)}
+.legend .lg{display:inline-flex;align-items:center;gap:6px}
+.legend .lg i{width:10px;height:10px;border-radius:3px;flex:0 0 10px}
+.spark{vertical-align:middle}
+.meter{vertical-align:middle}
+.tblfoot{padding:9px 14px;font-size:11.3px;color:var(--text-muted);border-top:1px solid var(--grid)}
+details.tableview{border-top:1px solid var(--grid)}
+details.tableview>summary{padding:8px 14px;font-size:11.8px;color:var(--text-secondary);cursor:pointer;list-style:none}
+details.tableview>summary::-webkit-details-marker{display:none}
+details.tableview>summary::before{content:"▸ ";color:var(--text-muted)}
+details.tableview[open]>summary::before{content:"▾ "}
+details.tableview>summary:hover{color:var(--text-primary)}
+@media print{.sidebar,.topbar .btn,details.tableview>summary{display:none}
+  details.tableview{display:block}details.tableview>*{display:revert}
+  .app{grid-template-columns:1fr}.card{break-inside:avoid;box-shadow:none}}
+
+/* monthly certification pack — reads as a document, not a screen */
+.packsheet .card-b{padding:20px 22px}
+.packhead{display:flex;align-items:flex-start;gap:16px;border-bottom:2px solid var(--text-primary);padding-bottom:10px;margin-bottom:14px}
+.packtitle{font-size:19px;font-weight:700;letter-spacing:-.35px}
+.packsub{font-size:12.3px;color:var(--text-secondary);margin-top:2px}
+.packstamp{margin-left:auto}
+table.packmeta{width:100%;font-size:12.8px}
+table.packmeta th{width:118px;text-transform:none;letter-spacing:0;font-size:12.3px;color:var(--text-muted);background:transparent;padding:5px 10px 5px 0;border-bottom:1px solid var(--grid)}
+table.packmeta td{padding:5px 18px 5px 0;border-bottom:1px solid var(--grid)}
+.packh{font-size:13.5px;margin:22px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--border-strong);letter-spacing:-.1px}
+.packnote{font-size:11.8px;color:var(--text-secondary);margin-top:8px;line-height:1.5}
+.packtotal td{border-top:1px solid var(--border-strong);background:rgba(42,120,214,.04)}
+.packkpis{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
+.packkpis .kpi{box-shadow:none}
+.signrow{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:26px}
+.signbox{border-top:1px solid var(--text-primary);padding-top:7px;min-height:74px}
+.siglabel{font-size:10.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-muted);font-weight:600}
+.signame{font-size:12.8px;font-weight:600;margin-top:20px;min-height:18px}
+.sigdate{font-size:11px;color:var(--text-muted)}
+.sigrole{font-size:11px;color:var(--text-secondary);margin-top:2px}
+@media print{.packsheet{break-inside:auto}.packh{break-after:avoid}.signrow{break-inside:avoid}}
+/* the certificate has to fit A4 when printed */
+@media print{
+  .packsheet table.tbl{font-size:10.8px}
+  .packsheet table.tbl th,.packsheet table.tbl td{padding:5px 7px}
+  .packsheet .tblwrap{overflow:visible}
+  .packsheet .card-b{padding:0}
+}
+
+/* ---------------------------------------------------------------- muster
+   Marking attendance is thirty taps a day by someone who may not be at ease
+   with a computer, so the choices are buttons rather than a dropdown: always
+   visible, large enough for a thumb, and one tap each. The radio itself is
+   hidden but still there, so the form posts exactly as it always did and the
+   page works with JavaScript off. */
+.marks{display:flex;flex-wrap:wrap;gap:5px}
+.marks .mark{position:relative}
+.marks .mark input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer}
+.marks .mark span{display:block;padding:7px 12px;border:1px solid var(--border-strong);
+  border-radius:7px;font-size:12.5px;font-weight:600;color:var(--text-secondary);
+  background:var(--surface-1);user-select:none;line-height:1.15;white-space:nowrap}
+.marks .mark input:hover+span{border-color:var(--s1);color:var(--s1)}
+.marks .mark input:focus-visible+span{outline:2px solid rgba(42,120,214,.45);outline-offset:1px}
+/* A CHECKED MARK MUST BE VISIBLE, whatever its value.
+ *
+ * This line used to set white text and a transparent border and stop there,
+ * leaving the background to per-value rules below. Those rules covered the
+ * MUSTER's five values and nothing else — so on the cleaning register, the
+ * deficiency review and the staff grading, choosing an answer turned it white
+ * on white and it vanished. Found on 10.09.2026 while photographing a round
+ * marked Not done: the photo box opened, proving not_done was selected, and the
+ * words "Not done" could not be seen.
+ *
+ * The background is now set HERE, so a value nobody has styled is merely plain
+ * rather than invisible. Per-value colours below override it. The failure mode
+ * of forgetting one is now "it looks generic", not "the register's answer
+ * disappeared when it was given". */
+.marks .mark input:checked+span{color:#fff;border-color:transparent;background:var(--s1)}
+
+/* Cleaning register — the round happened, or it did not. */
+.marks .mark input[value=done]:checked+span{background:var(--good)}
+.marks .mark input[value=not_done]:checked+span{background:var(--critical)}
+
+/* Daily joint checklist review — the same two facts, the contract's words. */
+.marks .mark input[value=complied]:checked+span{background:var(--good)}
+.marks .mark input[value=not_complied]:checked+span{background:var(--critical)}
+.marks .mark input[value=na]:checked+span{background:var(--text-muted)}
+
+/* Staff grading. Watch is amber and takes dark ink, as the muster's Leave does:
+   amber under white text is the one combination in this palette that cannot be
+   read. */
+.marks .mark input[value=retain]:checked+span{background:var(--good)}
+.marks .mark input[value=monitor]:checked+span{background:var(--warning);color:#3a2c05}
+.marks .mark input[value=replace]:checked+span{background:var(--critical)}
+.marks .mark input[value=present]:checked+span,
+.marks .mark input[value=reliever]:checked+span{background:var(--good)}
+.marks .mark input[value=absent]:checked+span{background:var(--critical)}
+.marks .mark input[value=leave]:checked+span,
+.marks .mark input[value=weekly_off]:checked+span{background:var(--warning);color:#3a2c05}
+tr.unmarked{background:rgba(208,59,59,.05)}
+@media (max-width:900px){ .marks .mark span{padding:9px 11px;font-size:13px} }
+
+/* ----------------------------------------------------------------- linen
+   One colour per linen item, carried across all three tables on the daily
+   page: the register, what is out at the wash, and what is going to it. The
+   supervisor fills this every day and tracks one item down a page of numbers;
+   the colour is what lets him do it without reading each label.
+
+   The colours are the chart series (--s1 .. --s7), not new ones. A bedsheet is
+   therefore the same blue here as in any chart drawn about bedsheets, and the
+   palette stays one palette. The status colours -- good, warning, critical --
+   are never used for an item, so a colour on this page is either an item or a
+   state and never both.
+
+   Colour is never the only carrier. Every row keeps its written label, and
+   every state that matters keeps its words. A supervisor who cannot separate
+   the green from the orange loses the shortcut and nothing else. */
+tr.li{background:var(--li-tint)}
+table.tbl tbody tr.li:hover{background:var(--li-hover)}
+tr.li-bedsheet    {--li-tint:rgba( 42,120,214,.07);--li-hover:rgba( 42,120,214,.13)}
+tr.li-pillow_cover{--li-tint:rgba( 27,175,122,.07);--li-hover:rgba( 27,175,122,.13)}
+tr.li-mosquito_net{--li-tint:rgba( 74, 58,167,.07);--li-hover:rgba( 74, 58,167,.13)}
+tr.li-blanket     {--li-tint:rgba(235,104, 52,.07);--li-hover:rgba(235,104, 52,.13)}
+tr.li-curtain     {--li-tint:rgba(232,123,164,.07);--li-hover:rgba(232,123,164,.13)}
+/* The two the contract names and the register had never carried. Tints picked
+   to sit apart from the blanket's orange, since a blanket and its cover are the
+   two rows most easily read as one. */
+tr.li-mattress_cover {--li-tint:rgba(120, 92,168,.07);--li-hover:rgba(120, 92,168,.13)}
+tr.li-blanket_cover  {--li-tint:rgba(196,142, 38,.07);--li-hover:rgba(196,142, 38,.13)}
+tr.li-other       {--li-tint:rgba( 11, 11, 11,.035);--li-hover:rgba( 11, 11, 11,.06)}
+
+/* ------------------------------------------------------------- cleaning
+   The same device as the linen register: one colour per area group, carried
+   down the day's rounds, so the three kitchen rounds read as one block and the
+   two bed-room rounds as another. Same series colours, same reason -- a colour
+   on a register page is an item, never a state. */
+tr.cl{background:var(--cl-tint)}
+table.tbl tbody tr.cl:hover{background:var(--cl-hover)}
+tr.cl-rooms  {--cl-tint:rgba( 42,120,214,.06);--cl-hover:rgba( 42,120,214,.12)}
+tr.cl-kitchen{--cl-tint:rgba(235,104, 52,.06);--cl-hover:rgba(235,104, 52,.12)}
+tr.cl-furniture{--cl-tint:rgba( 27,175,122,.06);--cl-hover:rgba( 27,175,122,.12)}
+tr.cl-walls  {--cl-tint:rgba( 74, 58,167,.06);--cl-hover:rgba( 74, 58,167,.12)}
+tr.cl-garbage{--cl-tint:rgba( 11, 11, 11,.035);--cl-hover:rgba( 11, 11, 11,.06)}
+
+/* A column with nothing to type in it. The cell paints over the row tint --
+   grey wins wherever it appears -- so "this one is not yours" reads before the
+   item colour does. That is the right order: he needs to know which boxes are
+   his before he needs to know which row he is on. */
+table.tbl td.ro{background:#f1f1ec;color:#6f6e69}
+table.tbl th.ro{background:#ecece6;color:#8a8983}
+
+/* ------------------------------------------------------------ THE BUILDING BAR
+   A running room that stands in several buildings makes every register a
+   register OF A BUILDING, so the choice has to stay in reach. It was at the
+   top of the page and the officer had to scroll back up to it every time:
+   "can we make the section upto which building sticky, which will avoid
+   scrolling up and down every time."
+
+   It sticks under the topbar, which is itself sticky at 0 and 63px tall. The
+   offset is a variable rather than a number typed in eight places, so the two
+   cannot drift apart. z-index sits below the topbar's 20 and above the page,
+   so it slides under the topbar rather than over it. */
+:root{ --topbar-h:63px }
+.blockbar{position:sticky;top:var(--topbar-h);z-index:15;margin-bottom:12px}
+.blockbar .bb-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:9px 12px}
+.blockbar .bb-lab{font-size:11px;font-weight:650;letter-spacing:.04em;text-transform:uppercase;
+  color:var(--text-muted);flex:0 0 auto;margin-right:2px}
+/* The explanation is NOT inside the sticky element: a paragraph that follows
+   you down the page is in the way, and it only needs reading once. */
+.blocknote{font-size:11.5px;color:var(--text-muted);margin:-6px 0 14px;padding:0 2px}
+@media print{ .blockbar{position:static} }
+
+/* A NEGATIVE BOOK FIGURE. More linen issued than the shelf could have held --
+   which is a real fact about the register, not an error to be floored at zero.
+   It is printed, in red, because hiding a shortfall is the one direction this
+   register must never be wrong in. */
+.neg{color:var(--critical-ink)}
+
+/* THE PER-SCREEN HELP PANEL.
+   `.app` is a two-column grid; open, the panel becomes a third column, so the
+   page reflows rather than being covered. That is the whole point: half these
+   screens are wide tables that already scroll sideways, and a panel lying over
+   one hides the column a man is reading. It can therefore be left open all day,
+   which is what a supervisor's first fortnight actually wants.
+
+   Under 1100px there is no width to give it, so it overlays instead. */
+.helppanel{background:var(--surface-1);border-left:1px solid var(--border);
+  display:flex;flex-direction:column;min-width:0;position:sticky;top:0;
+  align-self:start;height:100vh;overflow-y:auto}
+/* HIDDEN MEANS HIDDEN, ON EVERY ELEMENT.
+   This is the general form of the fault described immediately below, which has
+   now happened twice: once to the help panel, and again on 10.09.2026 to the
+   camera buttons on the crew feedback form, which appeared on a Mac and did
+   nothing. Any class that sets `display` is an AUTHOR rule and silently beats
+   the browser's own `[hidden]{display:none}`, so an element the code believes
+   it has hidden is still on the screen. Settled here once, for everything. */
+[hidden]{display:none !important}
+
+/* AND IT MUST ACTUALLY HIDE WHEN IT IS HIDDEN.
+   `display:flex` above is an AUTHOR rule; the browser's own `[hidden]
+   {display:none}` is a USER-AGENT rule, and author beats user-agent. So the
+   `hidden` attribute the panel ships with did nothing at all: the panel was
+   always rendered, and since `.app` has only two columns until it is opened, a
+   third grid item flowed onto a NEW ROW — 900px of help panel sitting at the
+   bottom of every page that has one, below the sidebar.
+
+   Reported by the officer as "this is also there at bottom below left side
+   bar". Every screenshot taken while building it was of the top of the page,
+   which is why it went unseen: the fault was 3,500 pixels down. */
+.helppanel[hidden]{display:none}
+.helphead{display:flex;align-items:center;gap:10px;padding:10px 16px;
+  border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface-1);z-index:2}
+.helpbody{padding:14px 16px;font-size:12.6px}
+.helpbody ol{max-width:46ch}
+body.helpopen .app{grid-template-columns:236px 1fr 330px}
+@media (max-width:1080px){
+  body.helpopen .app{grid-template-columns:64px 1fr}
+  .helppanel{position:fixed;right:0;top:0;bottom:0;width:min(330px,86vw);z-index:40;
+    box-shadow:-12px 0 28px rgba(16,32,56,.16)}
+}
+@media print{.helppanel,#helptoggle{display:none}}
+
+/* THE CLAUSE DIALOG.
+   Sized to its content and capped, because a clause is five lines and a
+   full-height sheet for five lines reads as an error. `max-height` with a
+   scrolling body rather than a fixed height: clause (a) runs to two sentences
+   and clause (m) to one, and neither should leave a hole. */
+.clausedlg{border:1px solid var(--border);border-radius:var(--radius);padding:0;
+  background:var(--surface-1);color:var(--text);box-shadow:0 18px 50px rgba(0,0,0,.28);
+  width:min(520px,calc(100vw - 32px));max-height:min(70vh,560px)}
+.clausedlg::backdrop{background:rgba(15,18,22,.42)}
+.clausedlg .helphead{padding:12px 14px;border-bottom:1px solid var(--border);
+  display:flex;align-items:flex-start;gap:10px}
+.clausedlg .helpbody{padding:14px;overflow:auto;max-height:calc(min(70vh,560px) - 58px)}
+/* The clickable clause itself. It has to look pressable without turning a red
+   verdict chip into a blue link -- the chip's colour IS the verdict, so the
+   affordance is the underline and the cursor, not a change of colour. */
+[data-clause]{cursor:pointer;text-decoration:underline;text-decoration-style:dotted;
+  text-underline-offset:2px}
+[data-clause]:hover{text-decoration-style:solid}
+[data-clause]:focus-visible{outline:2px solid var(--accent,#6b7f9e);outline-offset:2px}
+
+/* The mark under a file box that says what was attached. Block, not inline:
+   the cell on the joint checklist is 117px and a name beside the button has
+   nowhere to go. The row grows only when something IS attached. */
+/* NOT word-break:break-all. The cell on the joint checklist is 117px and at
+   phone width narrower still, and breaking anywhere turned "evidence.png" into
+   "evid / ence.p / ng" stacked down the cell -- three lines that read worse
+   than the truncation being fixed. The name gets one line and an ellipsis, the
+   whole name is on the tooltip, and `remove` wraps under it only when there is
+   no room beside it. */
+.filemark{font-size:11px;line-height:1.5;margin-top:3px}
+.filemark.ok{color:var(--good-ink,#1c6b3f)}
+.filemark.bad{color:var(--critical-ink)}
+.filemark .fmname{font-weight:600;display:inline-block;max-width:100%;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
+.filemark .fmrm{border:0;background:none;padding:0 0 0 6px;font:inherit;
+  color:var(--text-muted);text-decoration:underline;cursor:pointer}
+.filemark .fmrm:hover{color:var(--critical-ink)}
+
+/* The two picker buttons, on a touch device only — see app.js. The native input
+   is hidden rather than removed: it is still the thing that holds the file and
+   still the thing that posts it. */
+.pickrow{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.pickrow .btn{padding:6px 10px;font-size:12px}
+input[type=file].picked-by-buttons{position:absolute;width:1px;height:1px;
+  opacity:0;pointer-events:none;overflow:hidden}
+
+/* ---------------------------------------------------------------- phones
+ *
+ * WHY EVERY PAGE WAS ZOOMED OUT ON A PHONE, and it was not the tables.
+ *
+ * Measured on a Pixel 7 (412px) on 10.09.2026, after the officer tested the
+ * photograph boxes on his own Android. Every screen reported a layout viewport
+ * of 514 to 561px instead of 412 — Chrome widens the viewport when content
+ * overflows and then shrinks the whole page to fit, which is why everything
+ * looked big and cramped at the same time.
+ *
+ * The tables were innocent: `.tblwrap` held them at 302px with 749px scrolling
+ * inside, exactly as intended, and `main.content` fitted its column to the
+ * pixel. The overflow was in `.topbar`, which needed 474px in 348px and had
+ * `flex-wrap: nowrap`. The user chip alone wanted 298 of those pixels — full
+ * name, role, Password and Sign out, none of it allowed to fold.
+ *
+ * So the bar is allowed to wrap, and the name and role step aside on a small
+ * screen. The avatar still carries the initials, so who is signed in is still
+ * on the screen, and both buttons stay reachable — a supervisor who cannot find
+ * Sign out on a shared phone is a worse problem than one who cannot read his own
+ * name in a header.
+ */
+@media (max-width:760px){
+  .topbar{flex-wrap:wrap;padding:9px 12px;gap:9px}
+  .userchip{padding-left:9px}
+  .userchip .uname,.userchip .urole{display:none}
+  .content{padding:14px 12px 36px}
+  /* A photograph button pair on a narrow cell needs the whole width or it
+     splits one button per line with the second half off the edge. */
+  .pickrow{width:100%}
+  .pickrow .btn{flex:1 1 auto;text-align:center}
+  /* A card heading is a title and a note beside it, and on a phone there is
+     room for one of them. Let the note fold under rather than push the page. */
+  .card-h{flex-wrap:wrap}
+  /* Status chips carry sentences — "after the window closed", "all back in
+     time". At this width they have to be allowed to break. */
+  .st{white-space:normal}
+  /* HEADERS MAY WRAP ON A PHONE, and this is what was widening the whole app.
+     `table.tbl th` is nowrap by design — a column heading broken over two lines
+     reads badly on a desktop. But Chrome sizes the mobile layout viewport from
+     the INTRINSIC width of the content, and with nowrap headers the cleaning
+     register's minimum was the sum of its eight headings: 829px. It widened the
+     viewport to 551 and shrank the page to fit, even though `.tblwrap` was
+     holding the table at 290px and scrolling it perfectly well. The table never
+     overflowed; its unbreakable headings did. */
+  table.tbl th{white-space:normal}
+  /* AND THE GENERAL FORM OF THE SAME FAULT. Letting headings wrap fixed nine
+     screens; three kept widening because something else inside a table could
+     not break. Rather than hunt each one, the scroll container is told that
+     what is inside it must not decide how wide it is — which is what a scroll
+     container was for. `contain: inline-size` makes its intrinsic width zero,
+     so the phone lays the page out at 412px and the table scrolls, as intended. */
+  .tblwrap{contain:inline-size}
+}

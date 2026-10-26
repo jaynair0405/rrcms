@@ -1,0 +1,47 @@
+<form class="row" method="get" style="margin-bottom:14px">
+  <input class="fi" name="q" value="<%= q %>" placeholder="Search running room…" style="max-width:280px">
+  <select class="fi" name="division" style="max-width:200px">
+    <option value="">All divisions</option>
+    <% divisions.forEach(function(d){ %>
+      <option value="<%= d.code %>" <%= div===d.code?'selected':'' %>><%= d.name %> (<%= d.code %>)</option>
+    <% }); %>
+  </select>
+  <select class="fi" name="category" style="max-width:150px">
+    <option value="">All categories</option>
+    <% ['A','B','C'].forEach(function(c){ %><option value="<%= c %>" <%= cat===c?'selected':'' %>>Category <%= c %></option><% }); %>
+  </select>
+  <button class="btn" type="submit">Filter</button>
+  <div class="spacer"></div>
+  <span class="muted" style="font-size:12px"><%= rows.length %> running rooms · <%= fmtInt(totals.beds) %> beds · <%= fmtInt(totals.crews) %> crews/day</span>
+</form>
+
+<div class="card"><div class="tblwrap"><table class="tbl">
+  <thead><tr>
+    <th>Running room</th><th>Div</th><th>Cat</th><th>Control</th>
+    <th class="num">Rooms</th><th class="num">Beds</th><th class="num">Crews/day</th><th class="num">Peak</th>
+    <th>Meals</th><th class="num">Female rooms</th><th>Contractor</th><th class="num">Staff</th><th>AC</th>
+  </tr></thead>
+  <tbody>
+  <% rows.forEach(function(r){ %>
+    <tr>
+      <td><a href="<%= url('/running-rooms/' + r.id) %>"><%= r.name %></a>
+          <div class="muted" style="font-size:10.5px"><%= r.code %></div></td>
+      <td><span class="pill"><%= r.div_code %></span></td>
+      <td><span class="pill <%= r.category==='A'?'b':r.category==='B'?'y':'' %>"><%= r.category %></span></td>
+      <td class="muted" style="font-size:11.5px"><%= r.control_dept %></td>
+      <td class="num"><%= r.physical_rooms %></td>
+      <td class="num"><%= r.total_beds %></td>
+      <td class="num"><%= fmtInt(r.ref_crews_per_day) %>
+        <div class="muted" style="font-size:10px"><%= r.total_beds ? (r.ref_crews_per_day/r.total_beds).toFixed(2) : '—' %>×</div></td>
+      <td class="num"><%= fmtInt(r.ref_peak_occupancy) %>
+        <div class="muted" style="font-size:10px"><%= r.total_beds ? Math.round(r.ref_peak_occupancy/r.total_beds*100) : 0 %>%</div></td>
+      <td><% if (r.has_meal_facility) { %><span class="st good"><span class="dot"></span>Subsidised</span><% } else { %><span class="st neut"><span class="dot"></span>None</span><% } %></td>
+      <td class="num"><% if (r.female_rooms) { %><%= r.female_rooms %><% } else { %><span class="st warn"><span class="dot"></span>0</span><% } %></td>
+      <td style="font-size:11.8px"><% if (r.contractor) { %><%= r.contractor %><% } else { %><span class="muted">—</span><% } %></td>
+      <td class="num"><%= r.on_roll %><span class="muted">/<%= r.sanctioned %></span></td>
+      <td><% if (r.ac_status === 'working') { %><span class="st good"><span class="dot"></span>Working</span><% } else { %><span class="st warn"><span class="dot"></span><%= r.ac_status.replace('_',' ') %></span><% } %></td>
+    </tr>
+  <% }); %>
+  <% if (!rows.length) { %><tr><td colspan="13" class="muted">No running rooms match.</td></tr><% } %>
+  </tbody>
+</table></div></div>

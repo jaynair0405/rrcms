@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><%= title %> · <%= cfg.appName %></title>
+<%# Stamped with each file's own modification time — see src/render.js. Without
+    it a corrected stylesheet sits on the server unread behind a seven-day
+    cache, and "I copied it up and nothing changed" is the only symptom. %>
+<link rel="stylesheet" href="<%= asset('/assets/app.css') %>">
+<script src="<%= asset('/assets/app.js') %>" defer></script>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brandbox">
+      <div class="brandmark">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#12233d" stroke-width="2.1" stroke-linecap="round">
+          <rect x="5" y="3" width="14" height="13" rx="3"/><path d="M5 10h14M9 20l-2 2M15 20l2 2M8 16v4h8v-4"/>
+          <circle cx="9" cy="13.2" r="1.1" fill="#12233d" stroke="none"/><circle cx="15" cy="13.2" r="1.1" fill="#12233d" stroke="none"/>
+        </svg>
+      </div>
+      <div class="brandtext">
+        <div class="t1"><%= cfg.appName %></div>
+        <div class="t2"><%= cfg.appSubtitle %></div>
+      </div>
+    </div>
+    <%
+      // Each item names the permission that opens it, so the sidebar never
+      // offers a page the signed-in role would be refused.
+      const NAV = [
+        ['Monitor', [
+          ['/',              'Dashboard',      'rr.view',       '<path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>'],
+          ['/running-rooms', 'Running Rooms',  'rr.view',       '<path d="M3 21V8l9-5 9 5v13h-6v-7H9v7H3z"/>'],
+          ['/reports',       'Reports',        'rr.view',       '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'],
+        ]],
+        ['Operations', [
+          ['/feedback',       'Crew Feedback', 'feedback.view', '<path d="M21 12a8 8 0 01-8 8H4l2-3a8 8 0 1115-5z"/>'],
+          ['/records/muster', 'Daily Records', 'rr.view',       '<path d="M4 4h16v16H4z"/><path d="M8 9l2 2 4-4M8 15l2 2 4-4"/>'],
+          ['/facility/laundry','Facility & Material','rr.view', '<path d="M4 3h16v18H4z"/><path d="M8 7h8M8 11h8M8 15h5"/>'],
+        ]],
+        ['Contract', [
+          ['/inspections',  'Inspections',    'rr.view',      '<path d="M9 3h6v4H9zM5 7h14v14H5z"/><path d="M9 13l2 2 4-4"/>'],
+          ['/deficiencies', 'Deficiencies',   'rr.view',      '<path d="M12 2l9 18H3L12 2zM12 9v5M12 17h.01"/>'],
+          ['/incidents',    'Incidents',      'rr.view',      '<path d="M12 3l1.8 5.6H19l-4.4 3.2 1.7 5.4L12 13.9 7.7 17.2l1.7-5.4L5 8.6h5.2z"/>'],
+          ['/compliance',   'Obligations',    'rr.view',      '<path d="M6 3h12v18H6z"/><path d="M9 8h6M9 12h6M9 16h3"/>'],
+          ['/staff',        'Contract Staff', 'staff.view',   '<circle cx="9" cy="8" r="3.2"/><path d="M2.5 20a6.5 6.5 0 0113 0"/><circle cx="17.5" cy="9" r="2.4"/><path d="M15 20a5 5 0 016.5-3.4"/>'],
+          ['/contractors',  'Contractors',    'contract.view','<path d="M6 2h9l5 5v15H6V2zm8 1v5h5M9 13h6M9 17h6"/>'],
+          ['/certificates', 'Monthly Pack',   'rr.view',      '<path d="M5 3h14v18l-7-4-7 4V3z"/><path d="M9 8h6M9 12h4"/>'],
+          ['/bills',        'Bills',          'bill.prepare', '<path d="M6 2h12v20l-3-2-3 2-3-2-3 2V2z"/><path d="M9 7h6M9 11h6M9 15h3"/>'],
+          ['/wages',        'Wages & Labour', 'wages.view',   '<path d="M3 6h18v12H3z"/><circle cx="12" cy="12" r="2.6"/><path d="M6 9v6M18 9v6"/>'],
+          ['/food-safety',  'Food Safety',    'fssai.view',   '<path d="M6 3v8a3 3 0 006 0V3M9 3v8M15 21V3c2.5 1 3.5 3.5 3.5 6.5S17 14 15 14"/><path d="M9 14v7"/>'],
+        ]],
+        ['Configuration', [
+          ['/masters', 'Master data', 'rr.view', '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/>'],
+          ['/account/users', 'Users', 'user.manage', '<circle cx="9" cy="8" r="3.2"/><path d="M2.5 20a6.5 6.5 0 0113 0"/><path d="M18 8v6M15 11h6"/>'],
+          // Open to everyone signed in. A man is always allowed to read what
+          // his own job is, and nothing on the page is a fact about a running
+          // room -- it is the order of his day and where each step is kept.
+          ['/help', 'How this works', null, '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.6 2.6 0 015 .9c0 1.8-2.5 2.2-2.5 3.9M12 17.4h.01"/>'],
+        ]],
+      ];
+      const active = p => p === '/' ? currentPath === '/' : currentPath.startsWith(p.split('/').slice(0,2).join('/'));
+    %>
+    <nav>
+      <% NAV.forEach(function(group){
+           // A null permission means the item is open to anybody signed in.
+           const items = group[1].filter(i => i[2] === null || can(i[2]));
+           if (!items.length) return; %>
+        <div class="navgroup">
+          <div class="navlabel"><%= group[0] %></div>
+          <% items.forEach(function(i){ %>
+            <a class="navitem <%= active(i[0]) ? 'active' : '' %>" href="<%= url(i[0]) %>" title="<%= i[1] %>">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                   stroke-linecap="round" stroke-linejoin="round"><%- i[3] %></svg><span><%= i[1] %></span></a>
+          <% }); %>
+        </div>
+      <% }); %>
+    </nav>
+    <div class="sidefoot">
+      Stage <%= cfg.stage %><br><%= cfg.env %> · auth: <%= cfg.authMode %>
+    </div>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <div>
+        <div class="crumb"><%= typeof crumb !== 'undefined' ? crumb : cfg.appSubtitle %></div>
+        <h1 class="pagetitle"><%= title %></h1>
+      </div>
+      <div class="spacer"></div>
+      <%# THE HELP FOR THIS SCREEN, one press away and no width until asked for.
+          It is drawn from the reader's own day (src/help/roles.js), so nothing
+          here is written per screen -- the steps already name the screen they
+          happen on. On a screen his day does not mention there is no button at
+          all, which is what keeps the button worth pressing. %>
+      <% if (typeof pageHelp !== 'undefined' && pageHelp) { %>
+        <button class="btn ghost small" type="button" id="helptoggle"
+                aria-controls="helppanel" aria-expanded="false"
+                title="What this screen is, in your day">? Help</button>
+      <% } %>
+      <% if (user) { %>
+      <div class="userchip">
+        <div class="avatar"><%= user.full_name.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase() %></div>
+        <div>
+          <div class="uname"><%= user.full_name %></div>
+          <div class="urole"><%= user.role_name %></div>
+        </div>
+        <a class="btn ghost small" href="<%= url('/account/password') %>" style="margin-left:10px">Password</a>
+        <form method="post" action="<%= url('/logout') %>" style="margin-left:6px">
+          <button class="btn ghost small" type="submit">Sign out</button>
+        </form>
+      </div>
+      <% } %>
+    </header>
+    <main class="content"><%- body %></main>
+  </div>
+
+  <% if (typeof pageHelp !== 'undefined' && pageHelp) { %>
+  <aside class="helppanel" id="helppanel" hidden>
+    <div class="helphead">
+      <div>
+        <div class="crumb">Your day here</div>
+        <b><%= pageHelp.roleTitle %></b>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn ghost small" type="button" id="helpclose" title="Close">Close</button>
+    </div>
+    <div class="helpbody">
+      <% if (pageHelp.about) { %>
+        <p style="margin:0 0 10px"><%= pageHelp.about %>.</p>
+        <div class="muted" style="font-size:11.5px">This screen is not a step in your day —
+          you come to it when you need it.</div>
+      <% } %>
+      <% pageHelp.groups.forEach(function(g){ %>
+        <div class="crumb" style="margin:2px 0 6px"><%= g.when %></div>
+        <ol style="margin:0 0 14px;padding-left:18px">
+          <% g.steps.forEach(function(st){ %>
+            <li style="margin-bottom:<%= st.note ? '10px' : '5px' %>">
+              <b><%= st.do %></b>
+              <% if (st.note) { %>
+                <div class="muted" style="font-size:11.5px;margin-top:3px"><%= st.note %></div>
+              <% } %>
+            </li>
+          <% }); %>
+        </ol>
+      <% }); %>
+      <% if (pageHelp.next) { %>
+        <div class="hr"></div>
+        <div class="crumb" style="margin-bottom:4px">Next in your day</div>
+        <a href="<%= url(pageHelp.next.at) %>"><%= pageHelp.next.do %></a>
+        <div class="muted" style="font-size:11px;margin-top:2px"><%= pageHelp.next.when %></div>
+      <% } %>
+      <div class="hr"></div>
+      <a href="<%= url('/help') %>">Your whole day, and where to find everything</a>
+    </div>
+  </aside>
+  <% } %>
+</div>
+
+<%# WHAT A CLAUSE SAYS, AT THIS RUNNING ROOM.
+    Asked for by the officer on 09.09.2026, looking at the live site: the
+    screens name clauses as verdicts against the contractor and gave him no way
+    to read one.
+
+    A DIALOG RATHER THAN A SECOND SIDE PANEL. The help panel reflows the page
+    and is meant to be left open all day. A clause is five lines you read and
+    dismiss, and two panels competing for the same edge would be worse than
+    either. A dialog also needs no positioning arithmetic, which is what makes
+    popovers break on the wide scrolling tables half these screens are.
+
+    It is rendered on every page whether or not the page names a clause -- an
+    empty dialog costs nothing and is never shown, whereas a page that names a
+    clause and forgot to include the dialog would fail silently. %>
+<dialog class="clausedlg" id="clausedlg">
+  <div class="helphead">
+    <div>
+      <div class="crumb" id="clausecrumb">Clause</div>
+      <b id="clausetitle">—</b>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn ghost small" type="button" id="clauseclose">Close</button>
+  </div>
+  <div class="helpbody" id="clausebody"></div>
+</dialog>
+
+<script>
+/* Clicking the word "clause" shows what the clause says HERE.
+   Only chips and feet that state a verdict are marked up -- see the note on
+   data-clause in the views. Prose mentions stay prose: a link inside an
+   explanatory sentence is noise, and the officer asked for this while reading
+   a red chip, not a paragraph. */
+(function () {
+  var dlg = document.getElementById('clausedlg');
+  if (!dlg || !dlg.showModal) return;          // very old browser: chips stay inert
+  var body  = document.getElementById('clausebody');
+  var title = document.getElementById('clausetitle');
+  var crumb = document.getElementById('clausecrumb');
+  var esc = function (t) {
+    return String(t == null ? '' : t).replace(/[&<>"]/g,
+      function (c) { return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]; });
+  };
+  document.getElementById('clauseclose').addEventListener('click', function () { dlg.close(); });
+
+  document.addEventListener('click', function (ev) {
+    var el = ev.target.closest ? ev.target.closest('[data-clause]') : null;
+    if (!el) return;
+    var code = el.getAttribute('data-clause');
+    var rr   = el.getAttribute('data-rr');
+    if (!code || !rr) return;
+    ev.preventDefault();
+
+    crumb.textContent = 'Clause ' + code;
+    title.textContent = 'Reading…';
+    body.innerHTML = '';
+    dlg.showModal();
+
+    fetch(<%- JSON.stringify(url('/clauses/')) %> + encodeURIComponent(code)
+          + '?rr=' + encodeURIComponent(rr), { headers: { 'Accept': 'application/json' } })
+      .then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.json(); })
+      .then(function (c) {
+        if (!c.found) {
+          title.textContent = 'Clause ' + c.asked;
+          body.innerHTML = '<p class="muted">' + esc(c.note) + '</p>';
+          return;
+        }
+        /* The heading is the code AS THIS CONTRACT HAS IT. A reader who clicked
+           "A6" and is shown IGP's clause (e) must be able to see that happened,
+           or the panel has quietly answered a different question. */
+        title.textContent = c.fromContract && c.code !== c.asked
+          ? c.code + '  (shown for ' + c.asked + ')' : c.code;
+        crumb.textContent = c.group || 'Clause';
+
+        var h = '<p style="margin:0 0 12px">' + esc(c.description) + '.</p>';
+        if (c.rate != null) {
+          h += '<div class="crumb" style="margin-bottom:4px">The rate</div>'
+             + '<p style="margin:0 0 12px"><b>Rs ' + esc(c.rate) + '</b> '
+             + esc(c.unit || '') + '</p>';
+        } else if (c.unit) {
+          h += '<div class="crumb" style="margin-bottom:4px">The rate</div>'
+             + '<p style="margin:0 0 12px">' + esc(c.unit) + '</p>';
+        }
+        if (c.note) h += '<p class="muted" style="font-size:11.5px;margin:0 0 12px">'
+                       + esc(c.note) + '</p>';
+        h += '<div class="hr"></div>';
+        if (c.silent) {
+          h += '<p class="muted" style="font-size:11.5px;margin:0"><b>'
+             + esc(c.silent) + '</b></p>';
+        } else {
+          h += '<div class="crumb" style="margin-bottom:4px">From</div>'
+             + '<p class="muted" style="font-size:11.5px;margin:0">'
+             + esc(c.source) + '</p>';
+        }
+        /* Money is never computed here. The clause states a rate; what is owed
+           is the officer's to apply, and no screen in RR-CMS multiplies one. */
+        h += '<p class="muted" style="font-size:11px;margin:10px 0 0">'
+           + 'The rate is what the schedule states. Nothing here works out an amount.</p>';
+        body.innerHTML = h;
+      })
+      .catch(function () {
+        title.textContent = 'Clause ' + code;
+        body.innerHTML = '<p class="muted">Could not read the clause just now. '
+                       + 'The whole schedule is under Master data.</p>';
+      });
+  });
+})();
+</script>
+
+<% if (typeof pageHelp !== 'undefined' && pageHelp) { %>
+<script>
+/* THE PANEL REFLOWS THE PAGE, IT DOES NOT COVER IT.
+   Half the screens in RR-CMS are wide tables that already scroll sideways, and
+   a panel lying on top of one would hide the column a man is reading. Open, it
+   takes its width from the content instead -- so it can be left open all day,
+   which is exactly what the first fortnight wants. Below 1100px there is no
+   width to give, so it overlays and is closed again by a press.
+
+   Whether it was left open is remembered, per browser, per person. Nothing
+   here needs the server: it is a preference about a panel, not a fact about a
+   running room. */
+(function () {
+  var KEY = 'rrcms.help.open';
+  var panel = document.getElementById('helppanel');
+  var btn   = document.getElementById('helptoggle');
+  var close = document.getElementById('helpclose');
+  if (!panel || !btn) return;
+  function set(open) {
+    panel.hidden = !open;
+    document.body.classList.toggle('helpopen', open);
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    try { localStorage.setItem(KEY, open ? '1' : '0'); } catch (e) {}
+  }
+  var remembered = '0';
+  try { remembered = localStorage.getItem(KEY) || '0'; } catch (e) {}
+  set(remembered === '1');
+  btn.addEventListener('click', function () { set(panel.hidden); });
+  close.addEventListener('click', function () { set(false); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && !panel.hidden) set(false);
+  });
+})();
+</script>
+<% } %>
+</body>
+</html>

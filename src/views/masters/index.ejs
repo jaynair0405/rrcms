@@ -1,0 +1,20 @@
+<div class="note" style="margin-bottom:16px">
+  Master data is held as rows, not code. When the tender is revised — a new manpower band, a changed penalty rate —
+  these tables change and nothing is redeployed.
+</div>
+<div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr))">
+  <% [
+    ['/masters/designations','Designations','Schedule-A roles, skill category, qualification requirement and the per-role floor used when scaling'],
+    ['/masters/manpower-norms','Manpower norms','The Schedule-A matrix: one staff table each for 50 / 100 / 150 / 200 / 250 beds'],
+    ['/masters/deficiency-clauses','Deficiency schedule','All 50 clauses from the tender annexure. Rates are stored but not applied in this build'],
+    ['/masters/vendors','Washing centres & operators','Approval, the periodic premises inspection and withdrawal — clause C1 turns on this being current'],
+    ['/masters/menu','Menu card & rate board','Schedule-B Table A and Table B. The tender fixes no rate for the optional items — clause B6 has nothing to test until the Railway does']
+  ].forEach(function(m){ %>
+  <a class="card" href="<%= url(m[0]) %>" style="text-decoration:none;color:inherit">
+    <div class="card-b">
+      <div style="font-size:14px;font-weight:650;margin-bottom:4px"><%= m[1] %></div>
+      <div class="muted" style="font-size:12px"><%= m[2] %></div>
+    </div>
+  </a>
+  <% }); %>
+</div>

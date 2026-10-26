@@ -1,0 +1,22 @@
+<% const hasMonth = typeof month !== 'undefined'; %>
+<form class="row" method="get" style="margin-bottom:14px;align-items:flex-end">
+  <% if (hasMonth) { %>
+    <div style="flex:0 0 190px"><label class="fl">Month</label>
+      <select class="fi" name="month" onchange="this.form.submit()">
+        <% months.forEach(function(m){ %>
+          <option value="<%= m.value %>" <%= m.value===month?'selected':'' %>><%= m.label %></option>
+        <% }); %>
+      </select></div>
+    <% if (typeof sort !== 'undefined') { %><input type="hidden" name="sort" value="<%= sort %>"><% } %>
+    <noscript><button class="btn" type="submit">Go</button></noscript>
+  <% } %>
+  <div class="spacer"></div>
+  <% if (can('report.export')) { %>
+    <a class="btn ghost small" style="margin-right:10px" href="<%= url('/reports/' + section + '.csv') %><%= hasMonth ? '?month=' + month : '' %>">Download CSV</a>
+  <% } %>
+  <div class="tabs" style="border:0;margin:0">
+    <% [['scorecard','Contractor scorecard','/reports'],['sites','Running rooms','/reports/sites'],['trends','Trends','/reports/trends']].forEach(function(t){ %>
+      <a class="tab <%= section===t[0]?'active':'' %>" style="text-decoration:none" href="<%= url(t[2]) %>"><%= t[1] %></a>
+    <% }); %>
+  </div>
+</form>

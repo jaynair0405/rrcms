@@ -1,0 +1,18 @@
+<form class="row" method="get" style="margin-bottom:14px;align-items:flex-end">
+  <div style="flex:0 0 250px"><label class="fl">Running room</label>
+    <select class="fi" name="rr" onchange="this.form.submit()">
+      <% rooms.forEach(function(r){ %>
+        <option value="<%= r.id %>" <%= r.id===rr.id?'selected':'' %>><%= r.name %> (<%= r.div_code %>) · <%= r.total_beds %> beds</option>
+      <% }); %>
+    </select></div>
+  <div style="flex:0 0 160px"><label class="fl">Date</label>
+    <input class="fi" type="date" name="date" value="<%= date %>" onchange="this.form.submit()"></div>
+  <noscript><button class="btn" type="submit">Go</button></noscript>
+  <div class="spacer"></div>
+  <div class="tabs" style="border:0;margin:0">
+    <% [['muster','Muster'],['call-book','Call book'],['meals','Meals'],['cleaning','Cleaning'],['linen','Linen'],['linen-stock','Linen stock'],['complaints','Complaints']].forEach(function(t){ %>
+      <a class="tab <%= section===t[0]?'active':'' %>" style="text-decoration:none"
+         href="<%= url('/records/' + t[0]) %>?rr=<%= rr.id %>&date=<%= date %>"><%= t[1] %></a>
+    <% }); %>
+  </div>
+</form>

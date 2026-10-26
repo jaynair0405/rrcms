@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><%= rr.name %> — monthly certificate — <%= monthLabel %></title>
+<link rel="stylesheet" href="<%= url('/assets/app.css') %>">
+<style>
+  /* A standalone sheet: no sidebar, no controls, A4 margins. */
+  body { background: #fff; }
+  .printwrap { max-width: 210mm; margin: 0 auto; padding: 14mm 12mm; }
+  .printbar { display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
+              font-size: 12px; color: var(--text-muted); }
+  .printbar .brand { font-weight: 700; color: var(--text-primary); font-size: 14px; letter-spacing: -.2px; }
+  .printwrap .card { box-shadow: none; border-color: var(--border-strong); }
+  @media print { .printbar a { display: none; } .printwrap { padding: 0; max-width: none; } }
+</style>
+</head>
+<body>
+<div class="printwrap">
+  <div class="printbar">
+    <span class="brand"><%= cfg.appName %></span>
+    <span><%= cfg.appSubtitle %></span>
+    <span style="flex:1"></span>
+    <a href="<%= url('/certificates/' + rr.id + '/' + month.slice(0,7)) %>">← back to the working copy</a>
+  </div>
+  <%- await include('_pack') %>
+</div>
+</body>
+</html>

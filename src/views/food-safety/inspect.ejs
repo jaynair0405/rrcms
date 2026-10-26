@@ -1,0 +1,90 @@
+<%
+  // Grouped by section so the officer walks the kitchen in one direction
+  // instead of jumping between the store and the notice board.
+  const groups = [];
+  items.forEach(function(it){
+    const g = groups.find(x => x.key === it.section);
+    if (g) g.items.push(it); else groups.push({ key: it.section, name: it.section_name, items: [it] });
+  });
+  const criticalCount = items.filter(i => i.is_critical).length;
+%>
+
+<div class="row" style="margin-bottom:14px">
+  <a class="btn small ghost" href="<%= url('/food-safety/' + rr.id) %>">← <%= rr.name %></a>
+</div>
+
+<% if (state.key === 'none') { %>
+  <div class="note err" style="margin-bottom:14px">
+    This kitchen has no FSSAI licence on record. The first item below will fail on its own; that is
+    the correct outcome and the inspection is still worth completing, because the rest of the
+    findings are what the contractor has to put right.
+  </div>
+<% } else if (state.tone !== 'ok') { %>
+  <div class="note warn" style="margin-bottom:14px">
+    Licence <b><%= current.licence_number %></b> — <b><%= state.label %></b>, valid to
+    <%= current.valid_upto %>. Take this into account against the licence items below.
+  </div>
+<% } %>
+
+<form method="post" action="<%= url('/food-safety/' + rr.id + '/inspect') %>">
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-b">
+      <div class="grid" style="grid-template-columns:1fr 1.2fr 1.2fr">
+        <div><label class="fl">Date of inspection</label>
+          <input class="fi" type="date" name="inspection_date" value="<%= today %>" required></div>
+        <div><label class="fl">Inspecting official</label>
+          <input class="fi" name="inspector_name" placeholder="your name and designation"></div>
+        <div><label class="fl">Contractor's representative present</label>
+          <input class="fi" name="contractor_rep_name"></div>
+      </div>
+      <div class="note" style="margin-top:12px">
+        Every item starts at <b>complied</b>. Change only what you actually found wanting — an
+        inspection that marks everything and observes nothing tells the next reader nothing.
+        <%= criticalCount %> of these <%= items.length %> items are marked critical; a single
+        critical failure makes the visit unsatisfactory whatever the rest score.
+      </div>
+    </div>
+  </div>
+
+  <% groups.forEach(function(g){ %>
+    <div class="card" style="margin-bottom:14px">
+      <div class="card-h"><h3><%= g.name %></h3><span class="sub"><%= g.items.length %> items</span></div>
+      <div class="tblwrap"><table class="tbl">
+        <thead><tr><th style="width:80px">Item</th><th>Requirement</th>
+          <th style="width:230px">Finding</th><th style="width:250px">Observation</th></tr></thead>
+        <tbody>
+        <% g.items.forEach(function(it){ %>
+          <tr>
+            <td class="tnum"><%= it.item_code %>
+                <% if (it.is_critical) { %><div><span class="pill r" style="margin-top:3px">critical</span></div><% } %></td>
+            <td><%= it.description %>
+                <% if (it.source_ref) { %><div class="muted" style="font-size:11px;margin-top:2px"><%= it.source_ref %></div><% } %></td>
+            <td>
+              <label style="margin-right:10px;font-size:12px">
+                <input type="radio" name="item_<%= it.id %>" value="complied" checked> complied</label>
+              <label style="margin-right:10px;font-size:12px">
+                <input type="radio" name="item_<%= it.id %>" value="not_complied"> not complied</label>
+              <label style="font-size:12px">
+                <input type="radio" name="item_<%= it.id %>" value="not_applicable"> N/A</label>
+            </td>
+            <td><input class="fi" name="obs_<%= it.id %>" placeholder="what was seen"></td>
+          </tr>
+        <% }); %>
+        </tbody>
+      </table></div>
+    </div>
+  <% }); %>
+
+  <div class="card">
+    <div class="card-b">
+      <label class="fl">General remarks</label>
+      <textarea class="fi" name="remarks" rows="3"
+        placeholder="anything the checklist does not cover, and what the contractor undertook to do"></textarea>
+      <div class="row" style="margin-top:14px">
+        <button class="btn" type="submit">Record the inspection</button>
+        <span class="muted" style="font-size:11.5px">
+          The result is worked out from the findings — it is not chosen.</span>
+      </div>
+    </div>
+  </div>
+</form>

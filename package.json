@@ -1,0 +1,34 @@
+{
+  "name": "rrcms",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Running Room Contract Management System - Central Railway",
+  "main": "src/server.js",
+  "scripts": {
+    "migrate": "node db/migrate.js up",
+    "migrate:status": "node db/migrate.js status",
+    "seed": "node db/migrate.js seed",
+    "seed:dummy": "node db/seed-dummy.js",
+    "user": "node db/create-user.js",
+    "test": "node test/lint-views.js && node test/seed-permissions.js && node test/audit-actions.js && node test/one-clock.js && node test/linen-book.js && node test/help-links.js && node test/scope-agrees.js && node test/contract-scoped.js && node test/annexure-a.js && node test/clause-codes.js && node test/file-access.js && node test/public-form.js && node test/smoke.js && node test/root-mount.js",
+    "db:reset": "node db/reset.js && npm run migrate && npm run seed && npm run seed:dummy",
+    "demo": "node demo/server.js",
+    "export": "node tools/export-csv.js",
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "crawl": "node tools/crawl.mjs",
+    "write-check": "node tools/write-check.mjs",
+    "seed:pilot": "node db/seed-pilot.js",
+    "demo:pilot": "DEMO_PILOT=1 node demo/server.js",
+    "demo:test": "DEMO_PILOT=1 DEMO_TEST_DATA=1 node demo/server.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "ejs": "^6.0.1",
+    "express": "^5.2.1",
+    "multer": "^2.2.0",
+    "mysql2": "^3.11.0",
+    "qrcode-svg": "^1.1.0",
+    "sharp": "^0.35.4"
+  }
+}

@@ -1,0 +1,350 @@
+<%
+/* One agreement, and the only place in RR-CMS where contract facts can be
+   written down.
+
+   Until this screen existed the contracts table could only be filled by the
+   pilot loader from the command line, which meant the officer's LOA panel on
+   the dashboard was a permanent list of things nobody could enter. The panel
+   was right; there was simply no way in.
+
+   Every field here is a fact copied off a document. Nothing on this page is
+   calculated, and blank means "not supplied yet" — never zero, never today. */
+const editable = can('contract.edit');
+const c = contract || {};
+const d = v => v ? String(v).slice(0, 10) : '';
+const rupees = v => v === null || v === undefined || v === ''
+  ? null : Number(v).toLocaleString('en-IN', { maximumFractionDigits: 2 });
+const gaps = [
+  !c.loa_no && 'LOA number', !c.loa_date && 'LOA date', !c.start_date && 'the period',
+  !c.security_deposit && 'security deposit', !c.performance_guarantee && 'performance guarantee',
+].filter(Boolean);
+const liveSet = new Set(liveIds);
+%>
+
+<div style="margin-bottom:14px">
+  <a href="<%= url('/contractors') %>">← Contractors</a>
+  <% if (contract) { %> · <a href="<%= url('/contractors/' + c.contractor_id) %>"><%= c.contractor_name %></a><% } %>
+</div>
+
+<% if (note) { %>
+  <div class="note <%= note === 'created' ? 'ok' : '' %>" style="margin-bottom:14px">
+    <b><%= note === 'created' ? 'The agreement has been recorded.' : 'The agreement has been updated.' %></b>
+    <% if (added) { %> <%= added %> running room<%= added === 1 ? '' : 's' %> attached.<% } %>
+    <% if (moved) { %> <b><%= moved %></b> of them <%= moved === 1 ? 'was' : 'were' %> held by another live
+      agreement and <%= moved === 1 ? 'has' : 'have' %> been handed over — the earlier link is stood down from
+      the same date, not deleted.<% } %>
+    <% if (stood) { %> <%= stood %> stood down.<% } %>
+  </div>
+<% } %>
+
+<% if (contract && gaps.length) { %>
+  <div class="note warn" style="margin-bottom:14px">
+    <b>Still not on record:</b> <%= gaps.join(', ') %>.
+    This is what the officer's dashboard is reporting against this agreement. Every one of them is paper the
+    Railway holds or is owed — filling it here clears it there.
+  </div>
+<% } %>
+
+<form method="post" action="<%= url(contract ? '/contractors/contracts/' + c.id : '/contractors/contracts/new') %>">
+<div class="grid" style="grid-template-columns:1.25fr 1fr">
+
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-h"><h3><%= contract ? 'The agreement' : 'Record an agreement' %></h3>
+      <span class="sub">as it stands on paper</span></div>
+    <div class="card-b">
+
+      <div class="row" style="gap:10px;margin-bottom:10px">
+        <div style="flex:1.4">
+          <label class="fl">Agreement number</label>
+          <% if (editable) { %>
+            <input class="fi" name="agreement_no" maxlength="80" required
+                   value="<%= c.agreement_no || '' %>" placeholder="AGREEMENT-AWAITED/IGP/PRE">
+          <% } else { %><div class="tnum"><%= c.agreement_no || '—' %></div><% } %>
+        </div>
+        <div style="flex:1">
+          <label class="fl">Status</label>
+          <% if (editable) { %>
+            <select class="fi" name="status" required>
+              <% statuses.forEach(function(s){ %>
+                <option value="<%= s[0] %>" <%= (c.status || 'draft') === s[0] ? 'selected' : '' %>><%= s[1] %></option>
+              <% }); %>
+            </select>
+          <% } else { %><span class="pill <%= c.status==='active'?'g':'' %>"><%= c.status %></span><% } %>
+        </div>
+      </div>
+
+      <div class="row" style="gap:10px;margin-bottom:10px">
+        <div style="flex:1.4">
+          <label class="fl">Contractor</label>
+          <% if (editable) { %>
+            <select class="fi" name="contractor_id" required>
+              <option value="">— choose —</option>
+              <% firms.forEach(function(f){ %>
+                <option value="<%= f.id %>" <%= c.contractor_id === f.id ? 'selected' : '' %>>
+                  <%= f.name %> (<%= f.code %>)<%= f.is_blacklisted ? ' — blacklisted' : '' %></option>
+              <% }); %>
+            </select>
+          <% } else { %><%= c.contractor_name %><% } %>
+        </div>
+        <div style="flex:1">
+          <label class="fl">Division</label>
+          <% if (editable) { %>
+            <select class="fi" name="division_id" required>
+              <% divisions.forEach(function(dv){ %>
+                <option value="<%= dv.id %>" <%= c.division_id === dv.id ? 'selected' : '' %>><%= dv.name %> (<%= dv.code %>)</option>
+              <% }); %>
+            </select>
+          <% } else { %><%= (divisions.find(x => x.id === c.division_id) || {}).name || '—' %><% } %>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px">Letter of Acceptance</div>
+      <div class="muted" style="font-size:11.5px;margin-bottom:8px">
+        Between acceptance and execution this is the only authority the contractor works under, and at all
+        four pilot sites it is the only paper anybody holds. It carries no period of its own — leave the
+        dates below blank until the agreement is executed.
+      </div>
+      <div class="row" style="gap:10px;margin-bottom:10px">
+        <div style="flex:1.4">
+          <label class="fl">LOA number</label>
+          <% if (editable) { %>
+            <input class="fi" name="loa_no" maxlength="80" value="<%= c.loa_no || '' %>">
+          <% } else { %><b class="tnum"><%= c.loa_no || '—' %></b><% } %>
+        </div>
+        <div style="flex:1">
+          <label class="fl">LOA date</label>
+          <% if (editable) { %>
+            <input class="fi" type="date" name="loa_date" max="<%= today %>" value="<%= d(c.loa_date) %>">
+          <% } else { %><span class="tnum"><%= d(c.loa_date) || '—' %></span><% } %>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px">Period</div>
+      <div class="row" style="gap:10px;margin-bottom:6px">
+        <div style="flex:1"><label class="fl">From</label>
+          <% if (editable) { %><input class="fi" type="date" name="start_date" value="<%= d(c.start_date) %>">
+          <% } else { %><span class="tnum"><%= d(c.start_date) || '—' %></span><% } %></div>
+        <div style="flex:1"><label class="fl">To</label>
+          <% if (editable) { %><input class="fi" type="date" name="end_date" value="<%= d(c.end_date) %>">
+          <% } else { %><span class="tnum"><%= d(c.end_date) || '—' %></span><% } %></div>
+        <div style="flex:1"><label class="fl">Extended to</label>
+          <% if (editable) { %><input class="fi" type="date" name="extended_to" value="<%= d(c.extended_to) %>">
+          <% } else { %><span class="tnum"><%= d(c.extended_to) || '—' %></span><% } %></div>
+      </div>
+      <div class="muted" style="font-size:11.5px;margin-bottom:10px">
+        A blank period is a real state and is shown as one. It is not read as an expired contract, and the
+        dashboard reports it as <i>period not on record</i> rather than counting days that nobody has given.
+      </div>
+
+      <div class="hr"></div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px">Amounts on the document</div>
+      <div class="row" style="gap:10px;margin-bottom:6px">
+        <div style="flex:1"><label class="fl">Security deposit (Rs)</label>
+          <% if (editable) { %><input class="fi tnum" name="security_deposit" inputmode="decimal"
+                 value="<%= c.security_deposit || '' %>">
+          <% } else { %><span class="tnum"><%= rupees(c.security_deposit) || '—' %></span><% } %></div>
+        <div style="flex:1"><label class="fl">Performance guarantee (Rs)</label>
+          <% if (editable) { %><input class="fi tnum" name="performance_guarantee" inputmode="decimal"
+                 value="<%= c.performance_guarantee || '' %>">
+          <% } else { %><span class="tnum"><%= rupees(c.performance_guarantee) || '—' %></span><% } %></div>
+        <div style="flex:1"><label class="fl">Contract value (Rs)</label>
+          <% if (editable) { %><input class="fi tnum" name="total_value" inputmode="decimal"
+                 value="<%= c.total_value || '' %>">
+          <% } else { %><span class="tnum"><%= rupees(c.total_value) || '—' %></span><% } %></div>
+      </div>
+      <div class="muted" style="font-size:11.5px;margin-bottom:10px">
+        Copied off the agreement, never worked out here. <b>Blank is not nought</b> — a deposit entered as 0
+        says the agreement demanded none, a blank says nobody has told us yet, and those are two different
+        findings at a review.
+      </div>
+
+      <div class="hr"></div>
+      <label class="fl">Remarks</label>
+      <% if (editable) { %>
+        <input class="fi" name="remarks" maxlength="500" value="<%= c.remarks || '' %>"
+               placeholder="Period assumed pending the executed agreement">
+      <% } else { %><div class="muted"><%= c.remarks || '—' %></div><% } %>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-h"><h3>Running rooms covered</h3>
+      <span class="sub"><%= liveIds.length %> live<%= past ? ' · ' + past + ' historic' : '' %></span></div>
+    <div class="card-b">
+      <% if (!contract) { %>
+        <div class="muted" style="font-size:11.5px;margin-bottom:10px">
+          Tick the sites this agreement covers. They can be changed afterwards.
+        </div>
+      <% } %>
+      <div class="tblwrap" style="max-height:420px;overflow-y:auto"><table class="tbl">
+        <thead><tr><th style="width:34px"></th><th>Running room</th><th>Held today by</th></tr></thead>
+        <tbody>
+        <% rooms.forEach(function(r){
+             const mine = liveSet.has(r.rr_id);
+             const elsewhere = r.held_contract_id && r.held_contract_id !== c.id; %>
+          <tr>
+            <td style="text-align:center">
+              <% if (editable) { %>
+                <input type="checkbox" name="rr" value="<%= r.rr_id %>" <%= mine ? 'checked' : '' %>
+                       style="width:17px;height:17px;cursor:pointer">
+              <% } else { %><%= mine ? '✓' : '' %><% } %>
+            </td>
+            <td><%= r.rr_name %>
+              <div class="muted" style="font-size:11px"><%= r.dv_code %><%
+                if (r.rr_status !== 'operational') { %> · <%= r.rr_status %><% } %></div></td>
+            <td>
+              <% if (mine) { %><span class="st good"><span class="dot"></span>this agreement</span>
+              <% } else if (elsewhere) { %>
+                <span class="muted" style="font-size:11.5px"><%= r.held_contractor %></span>
+                <div class="muted tnum" style="font-size:10.5px"><%= r.held_agreement %></div>
+              <% } else { %><span class="st crit"><span class="dot"></span>no live agreement</span><% } %>
+            </td>
+          </tr>
+        <% }); %>
+        <% if (!rooms.length) { %><tr><td colspan="3" class="muted">No running rooms within your access.</td></tr><% } %>
+        </tbody>
+      </table></div>
+      <div class="tblfoot">
+        Only <b>operational</b> running rooms are offered, plus any this agreement already holds. The forty
+        rooms marked <i>not in scope</i> — open and working, but not carried on this system yet — are not
+        listed, and neither are rooms outside your access; nothing here touches either.
+        Unticking a room <b>stands it down</b> from today; it is never deleted, because who was answerable for
+        a site last March is exactly what this table exists to answer. Ticking a room another live agreement
+        holds is a handover, and the earlier link is closed on the same date so no site is ever under two.
+      </div>
+    </div>
+  </div>
+</div>
+
+<% if (editable) { %>
+  <div style="margin-bottom:24px">
+    <button class="btn" type="submit"><%= contract ? 'Save the agreement' : 'Record the agreement' %></button>
+    <span class="muted" style="font-size:11.5px;margin-left:10px">
+      Every change here is written to the audit trail with what it was before.
+    </span>
+  </div>
+<% } else { %>
+  <div class="muted" style="font-size:12.5px;margin-bottom:24px">
+    Your role can read the agreement but not alter it. Contract facts are entered by the
+    Sr. DEE (TRO) / DME (O&amp;C) or the System Administrator.
+  </div>
+<% } %>
+</form>
+
+<%# ------------------------------------------------------------------------
+    WHAT THE CONTRACT BUYS.
+
+    Read-only, and outside the form above on purpose: these rows come off the
+    executed paper and are entered by a loader that quotes it, not typed into a
+    screen. A figure an officer can edit is a figure that can drift away from
+    the document it is supposed to represent.
+
+    NOTHING IS MULTIPLIED. Quantity and amount sit side by side and are never
+    multiplied together, exactly as the deficiency register shows a clause rate
+    beside a quantity and computes no penalty.
+------------------------------------------------------------------------ %>
+<% if (typeof lineItems !== 'undefined' && lineItems.length) { %>
+<div class="card" style="margin-bottom:14px">
+  <div class="card-h"><h3>What this agreement buys</h3>
+    <span class="sub"><%= lineItems.length %> priced lines, as the schedule prints them</span>
+    <span class="spacer"></span>
+    <% if (stated !== null && Math.abs(lineTotal - stated) < 0.005) { %>
+      <span class="st good"><span class="dot"></span>Adds up to the contract value</span>
+    <% } else if (stated !== null) { %>
+      <span class="st crit"><span class="dot"></span>Does not add up to the contract value</span>
+    <% } %>
+  </div>
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr>
+      <th>Item</th><th>Description</th>
+      <th class="num">Quantity<div class="muted" style="font-weight:400;font-size:10px">whole period</div></th>
+      <th class="num">Amount (Rs)</th><th>Per day</th>
+    </tr></thead>
+    <tbody>
+    <% let part = null; lineItems.forEach(function(l){
+         if (l.part_code !== part) { part = l.part_code; %>
+      <tr style="background:var(--plane)"><td colspan="5" style="font-size:11.5px">
+        <b>Part <%= l.part_code %></b> — <%= l.part_name %></td></tr>
+    <%   } %>
+      <tr>
+        <td class="tnum" style="white-space:nowrap"><%= l.item_code %></td>
+        <td style="font-size:11.8px"><%= l.description %>
+          <% if (l.remarks) { %><div class="muted" style="font-size:10.5px"><%= l.remarks %></div><% } %></td>
+        <td class="num tnum"><%= l.schedule_qty === null ? '—'
+              : Number(l.schedule_qty).toLocaleString('en-IN') %>
+          <% if (l.unit) { %><div class="muted" style="font-size:10px"><%= l.unit %></div><% } %></td>
+        <td class="num tnum"><%= l.amount === null ? '—'
+              : Number(l.amount).toLocaleString('en-IN', {minimumFractionDigits: 2}) %></td>
+        <td class="num"><% if (l.daily_strength) { %><b><%= l.daily_strength %></b>
+          <% if (l.designation_name) { %><div class="muted" style="font-size:10px"><%= l.designation_name %></div><% } %>
+          <% } else { %><span class="muted">—</span><% } %></td>
+      </tr>
+    <% }); %>
+      <tr style="background:var(--plane)">
+        <td colspan="3"><b>Total of the lines above</b></td>
+        <td class="num tnum"><b><%= lineTotal.toLocaleString('en-IN', {minimumFractionDigits: 2}) %></b></td>
+        <td></td>
+      </tr>
+      <% if (stated !== null) { %>
+      <tr>
+        <td colspan="3" class="muted">On the face of the contract</td>
+        <td class="num tnum muted"><%= stated.toLocaleString('en-IN', {minimumFractionDigits: 2}) %></td>
+        <td></td>
+      </tr>
+      <% } %>
+    </tbody>
+  </table></div>
+  <div class="tblfoot">
+    Quantities are for the <b>whole contract period</b>, not per month. Several lines carry
+    <b>Rs 0.01</b> because that is what the GeM price schedule prints against them — their value is
+    carried inside the manpower and meal lines. It is recorded as it stands; putting a plausible figure
+    there would be this system inventing a contractual amount.
+    <b>No amount on this page is computed.</b> Quantity and amount are printed side by side and never
+    multiplied, the same rule the deficiency register follows.
+  </div>
+</div>
+<% } %>
+
+<% if (typeof terms !== 'undefined' && terms &&
+       (terms.penalties || terms.cleaning || terms.consumables || terms.linen || terms.meals)) { %>
+<div class="card" style="margin-bottom:24px">
+  <div class="card-h"><h3>Terms this agreement sets for its running rooms</h3>
+    <span class="sub">these replace the general tender's tables at these sites</span></div>
+  <div class="card-b">
+    <div class="note">
+      <b>Where a contract has its own table, that table is the whole answer for its running rooms.</b>
+      RR-CMS was built from the general tender paper for Central Railway running rooms. An executed
+      contract for a particular site is a different document with different numbers — and where the two
+      differ, the contract is what the Railway is paying for. The general tables are still used at every
+      running room whose own contract has not been read in.
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px 18px;font-size:12.5px;margin-top:12px">
+      <% if (terms.penalties) { %><div><div class="muted" style="font-size:10.5px">PENALTY CLAUSES</div>
+        <b class="tnum"><%= terms.penalties %></b> <span class="muted">from this contract</span></div><% } %>
+      <% if (terms.cleaning) { %><div><div class="muted" style="font-size:10.5px">CLEANING ROUNDS</div>
+        <b class="tnum"><%= terms.cleaning %></b> <span class="muted">a day's rounds</span></div><% } %>
+      <% if (terms.linen) { %><div><div class="muted" style="font-size:10.5px">LINEN ITEMS</div>
+        <b class="tnum"><%= terms.linen %></b> <span class="muted">with delivery periods</span></div><% } %>
+      <% if (terms.consumables) { %><div><div class="muted" style="font-size:10.5px">NAMED PUBLICATIONS</div>
+        <b class="tnum"><%= terms.consumables %></b> <span class="muted">titles</span></div><% } %>
+    </div>
+    <% if (mealRates && mealRates.length) { %>
+      <div class="hr"></div>
+      <div style="font-size:12.5px"><b>Meal rates set by this contract</b></div>
+      <div class="tblwrap" style="margin-top:8px"><table class="tbl">
+        <thead><tr><th>Meal</th><th class="num">Railway's share (Rs)</th><th>What the contract says</th></tr></thead>
+        <tbody>
+        <% mealRates.forEach(function(m){ %>
+          <tr><td style="text-transform:capitalize"><%= m.meal_type %></td>
+            <td class="num tnum"><b><%= Number(m.subsidised_rate).toFixed(2) %></b>
+              <% if (m.is_ceiling) { %><div class="muted" style="font-size:10px">a ceiling, not a price</div><% } %></td>
+            <td class="muted" style="font-size:11.5px"><%= m.cap_note || '—' %></td></tr>
+        <% }); %>
+        </tbody>
+      </table></div>
+    <% } %>
+  </div>
+</div>
+<% } %>

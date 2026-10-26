@@ -1,0 +1,121 @@
+<%- await include('_tabs') %>
+
+<% const canEnter = can('occupancy.record'); %>
+
+<% if (typeof recomputed !== 'undefined' && recomputed) { %>
+  <div class="note ok" style="margin-bottom:14px">Coverage recomputed for <%= recomputed %> running rooms.</div>
+<% } %>
+<% if (typeof entered !== 'undefined' && entered) { %>
+  <div class="note ok" style="margin-bottom:14px">
+    <b>Occupant count entered for <%= entered %> running room<%= +entered === 1 ? '' : 's' %>.</b>
+    Coverage has been reworked for each of them in the same breath — the figure is the denominator, so it
+    could not be left to catch up later. A room left blank was <b>not</b> touched.
+  </div>
+<% } %>
+
+<div class="note" style="margin-bottom:14px">
+  <b>Two figures, and only one of them carries a penalty.</b> Everything received — QR included — is the
+  operational picture: are the crew being asked at all. The <b>signed</b> column counts entries keyed from the
+  physical register, which is what the tender's 50% floor actually names and what a grading deduction must
+  rest on.
+  <form method="post" action="<%= url('/feedback/coverage/recompute') %>" class="row" style="gap:8px;margin-top:8px">
+    <input type="hidden" name="month" value="<%= month.slice(0,7) %>">
+    <button class="btn ghost small" type="submit">Recompute this month</button>
+    <div class="muted" style="font-size:11px;align-self:center">
+      Coverage is kept up to date as feedback and occupancy are entered; this reworks it for every site at once.
+    </div>
+  </form>
+</div>
+
+<div class="note" style="margin-bottom:16px">
+  The tender requires grading to be taken from <b>at least 50% of the occupants</b>. Below that floor the
+  rating-linked penalty is <b>not leviable at all</b> — so weak collection quietly protects a poor contractor.
+  The occupant count comes from the RRMS portal or the running room's own register.
+  <% if (canEnter) { %>Type it into the <b>Occupants</b> column below and save — one month, as many rooms as
+  you have figures for.<% } else { %>It is entered by the Railway; your role can read it but not set it.<% } %>
+  <b>Without it, coverage cannot be worked out at all</b> — and a site with no figure is indistinguishable on
+  paper from a site that genuinely fell short, which is the more expensive of the two mistakes.
+</div>
+
+<div class="kpis" style="margin-bottom:16px">
+  <div class="kpi"><i class="strip" style="background:var(--s1)"></i>
+    <div class="lab">Running rooms</div><div class="val"><%= summary.sites %></div>
+    <div class="foot"><%= month.slice(0,7) %></div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s3)"></i>
+    <div class="lab">Meeting the 50% floor</div><div class="val"><%= summary.meeting %> <small>/ <%= summary.withFigure %></small></div>
+    <div class="foot">penalty leviable at these sites</div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s8)"></i>
+    <div class="lab">Below the floor</div><div class="val"><%= summary.withFigure - summary.meeting %></div>
+    <div class="foot"><span class="st warn"><span class="dot"></span>grading cannot be applied</span></div></div>
+  <div class="kpi"><i class="strip" style="background:var(--<%= summary.missing ? 'critical' : 's4' %>)"></i>
+    <div class="lab">Occupant count not entered</div><div class="val"><%= summary.missing %></div>
+    <div class="foot"><% if (summary.missing) { %><span class="st crit"><span class="dot"></span>grading not leviable there</span>
+      <% } else { %>every site has a denominator<% } %></div></div>
+</div>
+
+<form class="row" method="get" style="margin-bottom:14px">
+  <div style="flex:0 0 170px"><label class="fl">Month</label>
+    <input class="fi" type="month" name="month" value="<%= month.slice(0,7) %>" onchange="this.form.submit()"></div>
+</form>
+
+<form method="post" action="<%= url('/feedback/coverage/occupancy') %>">
+<input type="hidden" name="month" value="<%= month.slice(0,7) %>">
+<div class="card"><div class="tblwrap"><table class="tbl">
+  <thead><tr><th>Running room</th><th>Div</th><th class="num">Occupants (RRMS)</th><th class="num">Feedback received</th><th class="num">of which signed</th>
+    <th class="num">Coverage</th><th style="width:180px">Against the 50% floor</th><th>Source</th></tr></thead>
+  <tbody>
+  <% rows.forEach(function(r){ %>
+    <tr>
+      <td><a href="<%= url('/running-rooms/' + r.id) %>"><%= r.name %></a></td>
+      <td><span class="pill"><%= r.div_code %></span></td>
+      <td class="num">
+        <% if (canEnter) { %>
+          <input class="fi tnum" style="width:96px;text-align:right" name="occ_<%= r.id %>"
+                 inputmode="numeric" maxlength="5"
+                 value="<%= r.occupants_total || '' %>"
+                 placeholder="<%= r.ref_crews_per_day ? Math.round(r.ref_crews_per_day * 30) : '' %>">
+          <% if (!r.occupants_total) { %>
+            <div class="st warn" style="font-size:10.5px"><span class="dot"></span>not entered</div>
+          <% } %>
+        <% } else if (r.occupants_total) { %><%= fmtInt(r.occupants_total) %>
+        <% } else { %><span class="st warn"><span class="dot"></span>not entered</span><% } %>
+      </td>
+      <td class="num"><%= fmtInt(r.received) %></td>
+      <td class="num"><b><%= fmtInt(r.signed_received) %></b>
+        <div class="<%= r.meets_signed ? 'st good' : 'st warn' %>" style="font-size:10.5px">
+          <span class="dot"></span><%= r.signed_coverage === null ? 'no denominator' : r.signed_coverage + '%' %></div></td>
+      <td class="num"><%= r.coverage === null ? '—' : r.coverage + '%' %></td>
+      <td>
+        <% if (r.coverage === null) { %><span class="muted">cannot be computed</span>
+        <% } else { %>
+          <div class="minibar" style="width:120px;display:inline-block;vertical-align:middle">
+            <i style="width:<%= Math.min(100, r.coverage) %>%;background:<%= r.meets ? 'var(--good)' : 'var(--critical)' %>"></i>
+          </div>
+          <% if (r.meets) { %><span class="st good" style="margin-left:6px"><span class="dot"></span>Met</span>
+          <% } else { %><span class="st crit" style="margin-left:6px"><span class="dot"></span>Below</span><% } %>
+        <% } %>
+      </td>
+      <td class="muted" style="font-size:11.5px"><%= r.source ? r.source.replace('_',' ') : '—' %></td>
+    </tr>
+  <% }); %>
+  </tbody>
+</table></div>
+<% if (canEnter) { %>
+  <div class="card-b" style="border-top:1px solid var(--line)">
+    <div class="row" style="gap:10px;align-items:flex-end">
+      <div style="flex:1;max-width:420px">
+        <label class="fl">Where the figures were read from</label>
+        <input class="fi" name="source_reference" maxlength="120"
+               placeholder="RRMS occupancy register, printed 02.09.2026">
+      </div>
+      <button class="btn" type="submit">Save the occupant counts</button>
+    </div>
+    <div class="muted" style="font-size:11.5px;margin-top:8px">
+      A box left <b>blank</b> leaves that room untouched — it is not read as nought. A typed <b>0</b> is a
+      statement and is stored. The faint number in an empty box is this room's reference crews per day times
+      thirty: a sanity check on the order of magnitude, never a figure that gets saved.
+    </div>
+  </div>
+<% } %>
+</div>
+</form>

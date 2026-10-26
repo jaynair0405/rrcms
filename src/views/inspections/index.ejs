@@ -1,0 +1,62 @@
+<div class="kpis" style="margin-bottom:16px">
+  <div class="kpi"><i class="strip" style="background:var(--s1)"></i>
+    <div class="lab">Inspections filed</div><div class="val"><%= fmtInt(counts.total || 0) %></div>
+    <div class="foot">within your access</div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s3)"></i>
+    <div class="lab">Fully compliant</div><div class="val"><%= fmtInt(counts.compliant || 0) %></div>
+    <div class="foot">no deficiency recorded</div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s4)"></i>
+    <div class="lab">Minor deficiencies</div><div class="val"><%= fmtInt(counts.minor || 0) %></div>
+    <div class="foot">one or two items</div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s8)"></i>
+    <div class="lab">Major deficiencies</div><div class="val"><%= fmtInt(counts.major || 0) %></div>
+    <div class="foot">three or more items</div></div>
+</div>
+
+<form class="row" method="get" style="margin-bottom:14px">
+  <select class="fi" name="rr" style="max-width:220px"><option value="">All running rooms</option>
+    <% rooms.forEach(function(r){ %><option value="<%= r.id %>" <%= String(rr)===String(r.id)?'selected':'' %>><%= r.name %></option><% }); %>
+  </select>
+  <select class="fi" name="type" style="max-width:190px"><option value="">Any type</option>
+    <% [['daily_joint','Daily joint'],['scheduled','Scheduled'],['surprise','Surprise'],['higher_official','Higher official']]
+        .forEach(function(t){ %><option value="<%= t[0] %>" <%= type===t[0]?'selected':'' %>><%= t[1] %></option><% }); %>
+  </select>
+  <select class="fi" name="result" style="max-width:200px"><option value="">Any result</option>
+    <% [['compliant','Compliant'],['minor_deficiencies','Minor'],['major_deficiencies','Major']]
+        .forEach(function(t){ %><option value="<%= t[0] %>" <%= result===t[0]?'selected':'' %>><%= t[1] %></option><% }); %>
+  </select>
+  <button class="btn" type="submit">Filter</button>
+  <div class="spacer"></div>
+  <% if (can('inspection.create')) { %>
+    <a class="btn" href="<%= url('/inspections/new') %>">New joint checklist</a>
+  <% } %>
+</form>
+
+<div class="card"><div class="tblwrap"><table class="tbl">
+  <thead><tr><th>Date</th><th>Running room</th><th>Type</th><th>Inspected by</th><th>Contractor rep.</th>
+    <th class="num">Items</th><th class="num">Deficiencies</th><th>Result</th><th>Signed</th></tr></thead>
+  <tbody>
+  <% rows.forEach(function(i){ %>
+    <tr>
+      <td class="tnum"><a href="<%= url('/inspections/' + i.id) %>"><%= i.inspection_date %></a></td>
+      <td><%= i.rr_name %> <span class="muted" style="font-size:10.5px"><%= i.div_code %></span>
+        <% if (i.block_name) { %>
+          <div class="muted" style="font-size:10.5px"><%= i.block_name %><%
+            if (!i.block_live) { %> <span class="st warn" style="font-size:10px"><span class="dot"></span>off the register</span><% } %></div>
+        <% } %></td>
+      <td><span class="pill"><%= i.inspection_type.replace('_',' ') %></span></td>
+      <td style="font-size:11.8px"><%= i.inspector_name || '—' %></td>
+      <td style="font-size:11.8px"><% if (i.contractor_rep_name) { %><%= i.contractor_rep_name %>
+        <% } else { %><span class="muted">nobody present</span><% } %></td>
+      <td class="num"><%= i.items_checked %></td>
+      <td class="num"><%= i.deficiency_count %></td>
+      <td><% if (i.result === 'compliant') { %><span class="st good"><span class="dot"></span>Compliant</span>
+          <% } else if (i.result === 'minor_deficiencies') { %><span class="st warn"><span class="dot"></span>Minor</span>
+          <% } else { %><span class="st crit"><span class="dot"></span>Major</span><% } %></td>
+      <td><% if (i.railway_sign_file_id !== null) { %><span class="st good"><span class="dot"></span>Signed</span>
+          <% } else { %><span class="st warn"><span class="dot"></span>Awaiting</span><% } %></td>
+    </tr>
+  <% }); %>
+  <% if (!rows.length) { %><tr><td colspan="9" class="muted">No inspections filed.</td></tr><% } %>
+  </tbody>
+</table></div></div>

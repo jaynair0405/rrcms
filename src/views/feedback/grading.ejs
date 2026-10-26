@@ -1,0 +1,57 @@
+<%- await include('_tabs') %>
+
+<div class="note warn" style="margin-bottom:16px">
+  <b>No amount is computed here.</b> The tender bands the monthly average into an <b>R</b> value and applies
+  <b>(5 − R)/5 × 10% of the monthly bill</b> per head. R is calculated and stored below so the history is ready,
+  but the money stays switched off until the penalty schedule under review is finalised.
+  Bands: 4.01–5 → R 5 · 3.01–4 → R 4 · 2.01–3 → R 3 · 1.01–2 → R 2 · 0–1 → R 0.
+</div>
+
+<form class="row" method="get" style="margin-bottom:14px">
+  <div style="flex:0 0 170px"><label class="fl">Month</label>
+    <input class="fi" type="month" name="month" value="<%= month.slice(0,7) %>" onchange="this.form.submit()"></div>
+</form>
+
+<div class="card"><div class="tblwrap"><table class="tbl">
+  <thead><tr><th>Running room</th><th>Div</th><th class="num">Sample</th>
+    <th>Cleanliness</th><th>Food</th><th>Linen</th><th>Staff behaviour</th>
+    <th>50% floor</th><th>Position</th></tr></thead>
+  <tbody>
+  <% rows.forEach(function(r){
+       const cell = function(v){
+         if (v === null) return '<span class="muted">—</span>';
+         const n = Number(v), R = n > 4 ? 5 : n > 3 ? 4 : n > 2 ? 3 : n > 1 ? 2 : 0;
+         const cls = R === 5 ? 'good' : R === 4 ? 'warn' : 'crit';
+         return '<span class="st ' + cls + '"><span class="dot"></span>' + n.toFixed(2) + '</span>' +
+                '<div class="muted" style="font-size:10.5px">R = ' + R + '</div>';
+       };
+       const below = r.heads.filter(h => h.r < 5).length; %>
+    <tr>
+      <td><a href="<%= url('/running-rooms/' + r.id) %>"><%= r.name %></a></td>
+      <td><span class="pill"><%= r.div_code %></span></td>
+      <td class="num"><b><%= r.signed_sample || 0 %></b>
+        <div class="muted" style="font-size:10.5px">signed<%= r.sample ? ' of ' + r.sample + ' received' : '' %></div></td>
+      <td><%- cell(r.cleanliness) %></td>
+      <td><% if (r.has_meal_facility) { %><%- cell(r.food) %><% } else { %><span class="muted" style="font-size:11.5px">no meals</span><% } %></td>
+      <td><%- cell(r.linen) %></td>
+      <td><%- cell(r.behaviour) %></td>
+      <td><% if (r.meets === null) { %><span class="muted">—</span>
+          <% } else if (r.meets) { %><span class="st good"><span class="dot"></span>Met</span>
+          <% } else { %><span class="st crit"><span class="dot"></span>Below</span><% } %></td>
+      <td><% if (!r.heads.length) { %><span class="muted">no signed feedback</span>
+            <% if (r.allHeads && r.allHeads.length) { %>
+              <div class="muted" style="font-size:10.5px">unsigned QR average
+                <%= r.allHeads.map(h => h.head + ' ' + h.avg).join(', ') %> — not leviable</div>
+            <% } %>
+          <% } else if (!below) { %><span class="st good"><span class="dot"></span>All heads clear</span>
+          <% } else if (r.meets === false) { %><span class="st warn"><span class="dot"></span><%= below %> head<%= below>1?'s':'' %> below — not leviable</span>
+          <% } else { %><span class="st warn"><span class="dot"></span><%= below %> head<%= below>1?'s':'' %> in the penalty band</span><% } %></td>
+    </tr>
+  <% }); %>
+  </tbody>
+</table></div></div>
+
+<div class="muted" style="font-size:11.5px;margin-top:10px">
+  "Staff behaviour" is collected and reported but is not one of the three penalty heads in the tender —
+  those are cleanliness, food quality and linen washing.
+</div>

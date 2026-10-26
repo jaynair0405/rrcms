@@ -1,0 +1,76 @@
+<%- await include('_nav') %>
+
+<%
+  const SORTS = [['rating','Lowest rating first'],['coverage','Lowest coverage first'],
+                 ['open','Most open deficiencies'],['beds','Largest first'],['name','By name']];
+  const rated = rows.filter(function(r){ return r.rating !== null; });
+  const belowFloor = rows.filter(function(r){ return r.coverage_pct !== null && r.coverage_pct < 50; });
+  const short = rows.filter(function(r){ return (r.sanctioned||0) - (r.on_roll||0) > 0; });
+  const watch = rows.filter(function(r){ return r.rating !== null && r.rating <= 4.01; });
+%>
+
+<div class="kpis" style="margin-bottom:14px">
+  <div class="kpi"><i class="strip" style="background:var(--s1)"></i>
+    <div class="lab">Running rooms</div><div class="val"><%= rows.length %></div>
+    <div class="foot"><%= rated.length %> rated in <%= monthLabel %></div></div>
+  <div class="kpi"><i class="strip" style="background:var(--critical)"></i>
+    <div class="lab">Rated in the penalty band</div><div class="val"><%= watch.length %></div>
+    <div class="foot">4.01 or below</div></div>
+  <div class="kpi"><i class="strip" style="background:var(--warning)"></i>
+    <div class="lab">Below the 50% floor</div><div class="val"><%= belowFloor.length %></div>
+    <div class="foot">grading penalty not leviable there</div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s2)"></i>
+    <div class="lab">Short of sanctioned strength</div><div class="val"><%= short.length %></div>
+    <div class="foot">sites with fewer staff on roll than sanctioned</div></div>
+</div>
+
+<form class="row" method="get" style="margin-bottom:12px;align-items:flex-end">
+  <input type="hidden" name="month" value="<%= month %>">
+  <div style="flex:0 0 230px"><label class="fl">Order</label>
+    <select class="fi" name="sort" onchange="this.form.submit()">
+      <% SORTS.forEach(function(s){ %>
+        <option value="<%= s[0] %>" <%= sort===s[0]?'selected':'' %>><%= s[1] %></option>
+      <% }); %>
+    </select></div>
+  <noscript><button class="btn" type="submit">Go</button></noscript>
+</form>
+
+<div class="card">
+  <div class="card-h"><h3>Running rooms</h3><span class="sub"><%= monthLabel %> · worst first, so the list starts where the attention is needed</span></div>
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr>
+      <th>Running room</th><th>Division</th><th>Contractor</th><th class="num">Beds</th>
+      <th class="num">Rating</th><th>Coverage</th><th class="num">Open def.</th>
+      <th class="num">Def. 6 mo</th><th class="num">Inspections</th><th class="num">On roll</th><th>Strength</th>
+    </tr></thead>
+    <tbody>
+    <% rows.forEach(function(r){ const gap = (r.sanctioned||0) - (r.on_roll||0); %>
+      <tr>
+        <td><a href="<%= url('/running-rooms/' + r.id) %>"><%= r.name %></a>
+            <span class="muted"><%= r.code %></span>
+            <% if (!r.has_meal_facility) { %><span class="pill" style="margin-left:4px">no meals</span><% } %></td>
+        <td class="muted"><%= r.div_code %></td>
+        <td><% if (r.contractor) { %><%= r.contractor %><% } else { %><span class="muted">—</span><% } %></td>
+        <td class="num"><%= fmtInt(r.total_beds) %></td>
+        <td class="num"><% if (r.rating === null) { %><span class="muted">—</span>
+            <% } else if (Number(r.rating) > 4.01) { %><span class="st good"><span class="dot"></span><%= Number(r.rating).toFixed(2) %></span>
+            <% } else { %><span class="st crit"><span class="dot"></span><%= Number(r.rating).toFixed(2) %></span><% } %></td>
+        <td><% if (r.coverage_pct === null) { %><span class="muted">not computed</span>
+            <% } else { %><%- chart.meter(Number(r.coverage_pct), { floor: 50, label: r.coverage_pct + '% coverage' }) %>
+              <span class="muted" style="margin-left:6px"><%= Number(r.coverage_pct).toFixed(1) %>%</span><% } %></td>
+        <td class="num"><% if (r.def_open) { %><span class="st warn"><span class="dot"></span><%= r.def_open %></span>
+            <% } else { %>0<% } %></td>
+        <td class="num"><%= r.def_total %></td>
+        <td class="num"><%= r.insp_total %></td>
+        <td class="num"><%= r.on_roll %> <span class="muted">/ <%= r.sanctioned %></span></td>
+        <td><% if (gap > 0) { %><span class="st crit"><span class="dot"></span><%= gap %> short</span>
+            <% } else if (gap < 0) { %><span class="st neut"><span class="dot"></span><%= -gap %> over</span>
+            <% } else { %><span class="st good"><span class="dot"></span>Full</span><% } %></td>
+      </tr>
+    <% }); %>
+    <% if (!rows.length) { %><tr><td colspan="11" class="muted">No running room within your access.</td></tr><% } %>
+    </tbody>
+  </table></div>
+  <div class="tblfoot">Rating and coverage are for <%= monthLabel %>; deficiencies and inspections
+    cover six months. Open deficiencies include items raised before this month and not yet closed.</div>
+</div>

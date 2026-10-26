@@ -1,0 +1,222 @@
+<%
+  const f = cert || {};
+  const pct = (a, b) => b ? Math.round((a / b) * 100) : 0;
+  const num = v => (v === null || v === undefined) ? '—' : fmtInt(v);
+  const rate = v => (v === null || v === undefined) ? '—' : Number(v).toFixed(2);
+  const manShort = Math.max(0, (+f.man_days_due || 0) - (+f.man_days_present || 0));
+%>
+
+<div class="card packsheet">
+  <div class="card-b">
+    <div class="packhead">
+      <div>
+        <div class="packtitle">Monthly certificate of service</div>
+        <div class="packsub">Running room contract — housekeeping, linen and catering services</div>
+      </div>
+      <div class="packstamp">
+        <% if (!cert) { %><span class="pill">Not generated</span>
+        <% } else if (f.status === 'countersigned') { %><span class="pill g">Counter-signed</span>
+        <% } else if (f.status === 'certified') { %><span class="pill b">Certified</span>
+        <% } else if (f.status === 'returned') { %><span class="pill r">Returned</span>
+        <% } else { %><span class="pill y">Draft</span><% } %>
+      </div>
+    </div>
+
+    <table class="tbl packmeta">
+      <tbody>
+        <tr><th>Running room</th><td><%= rr.name %> <span class="muted">(<%= rr.code %>)</span></td>
+            <th>Month</th><td><%= monthLabel %></td></tr>
+        <tr><th>Division</th><td><%= rr.div_name %> (<%= rr.div_code %>)</td>
+            <th>Beds</th><td><%= fmtInt(rr.total_beds) %> in <%= fmtInt(rr.physical_rooms) %> rooms</td></tr>
+        <tr><th>Contractor</th><td><%= contract ? contract.contractor : '—' %></td>
+            <th>Agreement</th><td><%= contract ? contract.agreement_no : '—' %></td></tr>
+        <tr><th>Meal facility</th><td><%= rr.has_meal_facility ? 'Provided' : 'Not provided' %></td>
+            <th>Days in month</th><td><%= cert ? f.days_in_month : '—' %></td></tr>
+      </tbody>
+    </table>
+
+    <% if (!cert) { %>
+      <div class="note warn" style="margin-top:14px">
+        No certificate has been generated for this month yet. Generating freezes the month's figures
+        into the document so that later corrections cannot change a signed sheet.
+      </div>
+    <% } else { %>
+
+    <h4 class="packh">1 · Manpower and attendance</h4>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>Designation</th><th class="num">Sanctioned</th><th class="num">On roll</th>
+        <th class="num">Man-days due</th><th class="num">Present</th><th class="num">Short</th></tr></thead>
+      <tbody>
+      <% manpower.forEach(function(m){
+           const due = (+m.sanctioned_count || 0) * (+f.days_in_month || 0);
+           const got = +m.man_days_present || 0;
+           const short = Math.max(0, due - got); %>
+        <tr>
+          <td><%= m.name %></td>
+          <td class="num"><%= m.sanctioned_count %></td>
+          <td class="num"><%= m.on_roll %></td>
+          <td class="num"><%= fmtInt(due) %></td>
+          <td class="num"><%= fmtInt(got) %></td>
+          <td class="num"><% if (!due) { %><span class="muted">—</span>
+              <% } else if (short === 0) { %><span class="st good"><span class="dot"></span>nil</span>
+              <% } else { %><span class="st warn"><span class="dot"></span><%= fmtInt(short) %></span><% } %></td>
+        </tr>
+      <% }); %>
+      <tr class="packtotal">
+        <td><b>Total</b></td>
+        <td class="num"><b><%= num(f.sanctioned_strength) %></b></td>
+        <td class="num"><b><%= num(f.on_roll_strength) %></b></td>
+        <td class="num"><b><%= num(f.man_days_due) %></b></td>
+        <td class="num"><b><%= num(f.man_days_present) %></b></td>
+        <td class="num"><% if (manShort === 0) { %><span class="st good"><span class="dot"></span>nil</span>
+            <% } else { %><span class="st crit"><span class="dot"></span><b><%= fmtInt(manShort) %></b></span><% } %></td>
+      </tr>
+      </tbody>
+    </table></div>
+    <div class="packnote">
+      Short is man-days due less man-days present. Muster marked on <b><%= f.days_marked %></b> of
+      <%= f.days_in_month %> days, counter-signed on <b><%= f.days_countersigned %></b>.
+      <% if (f.unscreened_count) { %>
+        <b><%= f.unscreened_count %></b> staff on roll are not yet screened and cannot be marked present.
+      <% } else { %>All staff on roll are screened.<% } %>
+      Man-days are stated as a count. They are not converted to an amount here.
+    </div>
+
+    <h4 class="packh">2 · Service quality as rated by occupants</h4>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>Head</th><th class="num">Average rating</th><th class="num">R value</th><th>Position</th></tr></thead>
+      <tbody>
+        <tr><td>Cleanliness</td><td class="num"><%= rate(f.rating_cleanliness) %></td>
+            <td class="num" rowspan="3"><%= f.r_min === null || f.r_min === undefined ? '—' : f.r_min %></td>
+            <td rowspan="3">
+              <% if (f.r_min === null || f.r_min === undefined) { %><span class="muted">Not computed</span>
+              <% } else if (f.r_min === 5) { %><span class="st good"><span class="dot"></span>Above the penalty band</span>
+              <% } else { %><span class="st crit"><span class="dot"></span>Within the penalty band</span><% } %>
+            </td></tr>
+        <tr><td>Food<% if (!rr.has_meal_facility) { %> <span class="muted">(no meal facility)</span><% } %></td>
+            <td class="num"><%= rate(f.rating_food) %></td></tr>
+        <tr><td>Linen and bed attending</td><td class="num"><%= rate(f.rating_linen) %></td></tr>
+      </tbody>
+    </table></div>
+    <div class="packnote">
+      Feedback received from <b><%= num(f.feedback_received) %></b> of <b><%= num(f.occupants_total) %></b>
+      occupants — <b><%= Number(f.coverage_pct).toFixed(1) %>%</b>.
+      <% if (f.meets_floor) { %>
+        The minimum-50%-of-occupants floor is met, so the grading is valid for the month.
+      <% } else { %>
+        <b>Below the 50% floor</b>, so the grading penalty is not leviable for this month.
+      <% } %>
+      The R value is the lowest across the heads rated. The tender's formula
+      (5&nbsp;−&nbsp;R)/5 × 10% of the monthly bill is <b>not applied here</b> — the amount is worked out
+      when the bill is passed, against the schedule then in force.
+    </div>
+
+    <h4 class="packh">3 · Inspections and deficiencies</h4>
+    <div class="kpis packkpis">
+      <div class="kpi"><div class="lab">Inspections held</div><div class="val"><%= num(f.inspections_done) %></div>
+        <div class="foot"><%= num(f.inspections_compliant) %> fully compliant</div></div>
+      <div class="kpi"><div class="lab">Deficiencies raised</div><div class="val"><%= num(f.deficiencies_raised) %></div>
+        <div class="foot"><%= num(f.deficiencies_open) %> still open at signing</div></div>
+      <div class="kpi"><div class="lab">Compliant inspections</div>
+        <div class="val"><%= f.inspections_done ? pct(f.inspections_compliant, f.inspections_done) + '%' : '—' %></div>
+        <div class="foot">of those held this month</div></div>
+    </div>
+
+    <div class="tblwrap" style="margin-top:10px"><table class="tbl">
+      <thead><tr><th>Date</th><th>Clause</th><th>Head</th><th>Observed</th>
+        <th class="num">Qty</th><th>At signing</th></tr></thead>
+      <tbody>
+      <% deficiencies.forEach(function(d){ %>
+        <tr>
+          <td class="tnum"><%= String(d.occurred_on).slice(0,10) %></td>
+          <td><b><%= d.clause_code %></b></td>
+          <td class="muted"><%= d.group_name %></td>
+          <td><%= d.description %></td>
+          <td class="num"><%= d.quantity %>
+              <% if (d.unit) { %><div class="muted" style="font-size:10.5px"><%= d.unit %></div><% } %></td>
+          <td><% if (d.status_at_signing === 'open') { %><span class="st crit"><span class="dot"></span>Open</span>
+              <% } else { %><span class="st good"><span class="dot"></span><%= d.status_at_signing %></span><% } %></td>
+        </tr>
+      <% }); %>
+      <% if (!deficiencies.length) { %>
+        <tr><td colspan="6" class="muted">No deficiency was raised during the month.</td></tr>
+      <% } %>
+      </tbody>
+    </table></div>
+    <div class="packnote">
+      This list is frozen as at the date the certificate was generated. Rates against each clause are held
+      in master data and are <b>not applied</b> to any quantity above.
+    </div>
+
+    <h4 class="packh">4 · Facility and material obligations</h4>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>Obligation</th><th class="num">Exceptions in the month</th><th>Position</th></tr></thead>
+      <tbody>
+      <%
+        const OBLIG = [
+          ['Laundry dispatches without an invoice from the approved washing centre', f.laundry_no_invoice],
+          ['Consumables supplied short of the due quantity', f.consumable_short],
+          ['Asset defects not rectified within 24 hours', f.asset_faults_overdue],
+          ['Kitchen obligations found short', f.kitchen_shortfalls],
+          ['Pest control not carried out on schedule', f.pest_overdue],
+        ];
+      %>
+      <% OBLIG.forEach(function(o){
+           const skip = !rr.has_meal_facility && o[0].indexOf('Kitchen') === 0; %>
+        <tr>
+          <td><%= o[0] %></td>
+          <td class="num"><%= skip ? '—' : num(o[1]) %></td>
+          <td><% if (skip) { %><span class="st neut"><span class="dot"></span>Not applicable</span>
+              <% } else if (!o[1]) { %><span class="st good"><span class="dot"></span>Nil</span>
+              <% } else { %><span class="st warn"><span class="dot"></span>To be regularised</span><% } %></td>
+        </tr>
+      <% }); %>
+      </tbody>
+    </table></div>
+
+    <h4 class="packh">5 · Certification</h4>
+    <div class="note" style="margin-bottom:12px">
+      Certified that the services described above were rendered at this running room during
+      <b><%= monthLabel %></b>, and that the figures stated are as recorded in RR-CMS on the date of
+      generation. <b>This certificate states no amount.</b> The contract rates, the Schedule-B meal
+      quantity (maintained on RRMS) and any penalty deduction are dealt with separately when the bill
+      is passed.
+    </div>
+
+    <% if (f.remarks) { %>
+      <div style="margin-bottom:12px"><b>Remarks:</b> <%= f.remarks %></div>
+    <% } %>
+    <% if (f.status === 'returned' && f.returned_reason) { %>
+      <div class="note err" style="margin-bottom:12px"><b>Returned:</b> <%= f.returned_reason %></div>
+    <% } %>
+
+    <div class="signrow">
+      <div class="signbox">
+        <div class="siglabel">Prepared by</div>
+        <div class="signame"><%= f.generated_name || '—' %></div>
+        <div class="sigdate"><%= f.generated_at ? String(f.generated_at).slice(0,16).replace('T',' ') : '' %></div>
+        <div class="sigrole">RR-CMS</div>
+      </div>
+      <div class="signbox">
+        <div class="siglabel">Certified by</div>
+        <div class="signame"><%= f.certified_name || '' %></div>
+        <div class="sigdate"><%= f.certified_at ? String(f.certified_at).slice(0,16).replace('T',' ') : '' %></div>
+        <div class="sigrole">RR In-charge / CLI</div>
+      </div>
+      <div class="signbox">
+        <div class="siglabel">Counter-signed by</div>
+        <div class="signame"><%= f.countersigned_name || '' %></div>
+        <div class="sigdate"><%= f.countersigned_at ? String(f.countersigned_at).slice(0,16).replace('T',' ') : '' %></div>
+        <div class="sigrole">Sr. DEE (TRO) / DME (O&amp;C)</div>
+      </div>
+      <div class="signbox">
+        <div class="siglabel">Received by</div>
+        <div class="signame"></div>
+        <div class="sigdate"></div>
+        <div class="sigrole">Contractor's representative</div>
+      </div>
+    </div>
+
+    <% } %>
+  </div>
+</div>

@@ -1,0 +1,130 @@
+<%- await include('_tabs') %>
+
+<form class="row" method="get" style="margin-bottom:14px;align-items:flex-end;gap:10px">
+  <div style="flex:0 0 250px"><label class="fl">Running room</label>
+    <select class="fi" name="rr" onchange="this.form.submit()">
+      <% rooms.forEach(function(r){ %>
+        <option value="<%= r.id %>" <%= r.id===rr.id?'selected':'' %>><%= r.name %> (<%= r.div_code %>)</option>
+      <% }); %>
+    </select></div>
+  <div style="flex:0 0 170px"><label class="fl">Month</label>
+    <input class="fi" type="month" name="month" value="<%= month.slice(0,7) %>" onchange="this.form.submit()"></div>
+  <noscript><button class="btn" type="submit">Go</button></noscript>
+</form>
+
+<% if (saved) { %>
+  <div class="note ok" style="margin-bottom:14px"><b><%= saved %></b> signed entries recorded.</div>
+<% } %>
+
+<div class="kpis" style="margin-bottom:16px">
+  <div class="kpi"><i class="strip" style="background:var(--s1)"></i>
+    <div class="lab">Signed entries this month</div><div class="val"><%= fmtInt(entries.length) %></div>
+    <div class="foot"><%= rr.name %> · <%= month.slice(0,7) %></div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s3)"></i>
+    <div class="lab">Occupants</div>
+    <div class="val"><%= occupants ? fmtInt(occupants) : '—' %></div>
+    <div class="foot"><%= occupants ? 'from the occupancy figure' : 'occupancy not entered yet' %></div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s8)"></i>
+    <div class="lab">Against the 50% floor</div>
+    <div class="val"><%= signedPct === null ? '—' : signedPct + '%' %></div>
+    <div class="foot"><% if (signedPct === null) { %><span class="muted">no denominator</span>
+      <% } else { %><span class="st <%= signedPct >= 50 ? 'good' : 'warn' %>"><span class="dot"></span>
+        <%= signedPct >= 50 ? 'the grading penalty may be applied' : 'below the floor — no grading penalty' %></span><% } %></div></div>
+</div>
+
+<div class="note" style="margin-bottom:16px">
+  The tender asks for grading feedback on <b>cleanliness, food quality and linen washing</b> to be taken from
+  each occupant every month <b>on a physical register, signed by the occupant</b>, and puts the grading
+  penalty on the average from a minimum of 50% of occupants. This screen is where that register is keyed in,
+  with the signed page attached. QR feedback is welcome and useful — but it is unsigned, and a deduction
+  resting on it is a deduction the contractor can argue with.
+</div>
+
+<% if (can('feedback.enter')) { %>
+<div class="card" style="margin-bottom:16px">
+  <div class="card-h"><h3>Key in a page of the register</h3>
+    <span class="sub">one scan, many occupants — which is what a page is</span></div>
+  <form method="post" action="<%= url('/feedback/register') %>" enctype="multipart/form-data" id="regform">
+    <input type="hidden" name="rr" value="<%= rr.id %>">
+    <input type="hidden" name="month" value="<%= month.slice(0,7) %>">
+    <div class="card-b" style="border-bottom:1px solid var(--border);padding-bottom:12px">
+      <div class="row" style="gap:10px;align-items:flex-end;flex-wrap:wrap">
+        <div style="flex:0 0 150px"><label class="fl">Page number</label>
+          <input class="fi" name="register_page_no" placeholder="e.g. 47" maxlength="20"></div>
+        <div style="flex:1;min-width:240px"><label class="fl">Scan or photograph of the signed page</label>
+          <input class="fi" type="file" name="page_scan" accept="image/*,application/pdf"
+                 data-camera="document" data-camera-label="Photograph the page"></div>
+        <div class="spacer"></div>
+        <div id="regcount" class="muted" style="font-size:12.5px"></div>
+      </div>
+    </div>
+    <div class="tblwrap"><table class="tbl" id="regtable">
+      <thead><tr><th style="width:34px"></th><th>Occupant</th><th style="width:110px">CMS no.</th>
+        <th style="width:140px">Stay date</th>
+        <% heads.forEach(function(h){ if (h[0] === 'food' && !rr.has_meal_facility) return; %>
+          <th class="num" style="width:92px"><%= h[1] %></th>
+        <% }); %>
+        <th>Remarks</th></tr></thead>
+      <tbody>
+      <% for (let i = 0; i < rowsPerPage; i++) { %>
+        <tr>
+          <td class="muted" style="font-size:11px"><%= i + 1 %></td>
+          <td><input class="fi" name="n_<%= i %>" style="padding:4px 7px;font-size:12px" maxlength="150"></td>
+          <td><input class="fi" name="c_<%= i %>" style="padding:4px 7px;font-size:12px" maxlength="20"></td>
+          <td><input class="fi" type="date" name="d_<%= i %>" style="padding:4px 6px;font-size:12px"></td>
+          <% heads.forEach(function(h){ if (h[0] === 'food' && !rr.has_meal_facility) return; %>
+            <td class="num"><input class="fi" type="number" min="0" max="5" step="0.5"
+                  name="<%= h[0] %>_<%= i %>" data-rating="<%= i %>"
+                  style="width:74px;padding:4px 6px"></td>
+          <% }); %>
+          <td><input class="fi" name="r_<%= i %>" style="padding:4px 7px;font-size:12px" maxlength="1000"></td>
+        </tr>
+      <% } %>
+      </tbody>
+    </table></div>
+    <div class="card-b" style="border-top:1px solid var(--border)">
+      <button class="btn" type="submit">Save the page</button>
+      <div class="muted" style="font-size:11.5px;margin-top:8px">
+        Empty lines are ignored — a blank row is an unused line on the form, not an occupant who said nothing,
+        and it is not saved as zeroes. The overall rating is the average of what was given, unless the register
+        carries its own.
+        <% if (!rr.has_meal_facility) { %>
+          <br><%= rr.name %> has no meal facility, so food quality is not asked for and none is invented.
+        <% } %>
+      </div>
+    </div>
+  </form>
+</div>
+<% } %>
+
+<div class="card">
+  <div class="card-h"><h3>What has been keyed for <%= month.slice(0,7) %></h3></div>
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr><th>Page</th><th>Occupant</th><th>Stay</th>
+      <% heads.forEach(function(h){ %><th class="num"><%= h[1] %></th><% }); %>
+      <th class="num">Overall</th><th>Signed page</th><th>Keyed by</th></tr></thead>
+    <tbody>
+    <% entries.forEach(function(e){ %>
+      <tr>
+        <td class="tnum"><%= e.register_page_no || '—' %></td>
+        <td><%= e.crew_name || '—' %>
+          <% if (e.crew_id_entered) { %><div class="muted" style="font-size:10.5px"><%= e.crew_id_entered %></div><% } %>
+          <% if (e.comments) { %><div class="muted" style="font-size:10.5px"><%= e.comments %></div><% } %></td>
+        <td class="tnum"><%= e.stay_date ? String(e.stay_date).slice(0,10) : '—' %></td>
+        <% heads.forEach(function(h){ const v = e['rating_' + h[0]]; %>
+          <td class="num"><%= v === null || v === undefined ? '—' : v %></td>
+        <% }); %>
+        <td class="num"><b><%= e.rating_overall === null ? '—' : e.rating_overall %></b></td>
+        <td><% if (e.signature_file_id) { %><span class="st good"><span class="dot"></span>attached</span>
+            <% } else { %><span class="st warn"><span class="dot"></span>no scan</span><% } %></td>
+        <td style="font-size:12px"><%= e.entered_by_name || '—' %></td>
+      </tr>
+    <% }); %>
+    <% if (!entries.length) { %>
+      <tr><td colspan="<%= 6 + heads.length %>" class="muted">
+        No signed register entry has been keyed for this month. Until one is, any grading figure for this room
+        rests on unsigned QR feedback alone.</td></tr>
+    <% } %>
+    </tbody>
+  </table></div>
+</div>

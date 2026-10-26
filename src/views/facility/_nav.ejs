@@ -1,0 +1,16 @@
+<form class="row" method="get" style="margin-bottom:14px;align-items:flex-end">
+  <div style="flex:0 0 270px"><label class="fl">Running room</label>
+    <select class="fi" name="rr" onchange="this.form.submit()">
+      <% rooms.forEach(function(r){ %>
+        <option value="<%= r.id %>" <%= r.id===rr.id?'selected':'' %>><%= r.name %> (<%= r.div_code %>) · <%= r.total_beds %> beds<%= r.has_meal_facility ? '' : ' · no meals' %></option>
+      <% }); %>
+    </select></div>
+  <noscript><button class="btn" type="submit">Go</button></noscript>
+  <div class="spacer"></div>
+  <div class="tabs" style="border:0;margin:0">
+    <% [['laundry','Linen & laundry'],['consumables','Consumables'],['assets','Assets'],['kitchen','Kitchen'],['foodstuff','Raw foodstuff'],['menu','Weekly menu'],['pest','Pest & garden'],['cctv','CCTV']].forEach(function(t){ %>
+      <a class="tab <%= section===t[0]?'active':'' %>" style="text-decoration:none"
+         href="<%= url('/facility/' + t[0]) %>?rr=<%= rr.id %>"><%= t[1] %></a>
+    <% }); %>
+  </div>
+</form>

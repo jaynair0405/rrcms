@@ -1,0 +1,683 @@
+<%- await include('_nav') %>
+
+<%# WHICH BUILDING'S LINEN.
+    Each of Igatpuri's four buildings keeps its own store, so the shelf, the
+    day's issues, the wash and the write-offs are all facts about a building.
+    Forty-three of the forty-five running rooms are one building; for those
+    `blocks` is empty and none of this appears. %>
+<% if (blocks && blocks.length) { %>
+  <div class="card blockbar">
+    <div class="bb-row">
+      <span class="bb-lab">Building</span>
+        <% blocks.forEach(function(b){ %>
+          <a class="btn <%= blockId === b.id ? '' : 'ghost' %> small"
+             href="<%= url('/records/linen') %>?rr=<%= rr.id %>&block=<%= b.id %>&date=<%= date %>"><%= b.name %>
+             <span class="muted" style="font-weight:400">· <%= b.total_beds %> beds</span></a>
+        <% }); %>
+      <% if (orphans) { %>
+        <a class="btn <%= viewNone ? '' : 'ghost' %> small"
+           href="<%= url('/records/linen') %>?rr=<%= rr.id %>&date=<%= date %>&block=none">No building
+           <span class="pill" style="margin-left:5px"><%= orphans %></span></a>
+      <% } %>
+    </div>
+  </div>
+<% } %>
+<% if (viewNone && orphans) { %>
+  <div class="note warn" style="margin-bottom:14px">
+    <b>Records made before <%= rr.name %> had buildings.</b>
+    These <%= orphans %> row<%= orphans === 1 ? '' : 's' %> belong to no building, because none
+    existed when they were written. They are shown here so they are not lost — nothing new can be
+    recorded against "no building", because a round is done in one building and linen sits on one
+    shelf. Read them, close out anything still open, and the list will empty itself.
+  </div>
+<% } else if (viewNone) { %>
+  <%# The button that leads here only appears when there is something to see,
+      so arriving with nothing means the list has been worked through — or the
+      address was typed. Either way, saying "0 rows belong to no building" as
+      though it were a finding would be the screen inventing a problem. %>
+  <div class="note" style="margin-bottom:14px">
+    Nothing at <%= rr.name %> is on record without a building.
+  </div>
+<% } %>
+
+<% if (needBlock) { %>
+  <%# NOT AN ERROR — A QUESTION THE REGISTER CANNOT ANSWER FOR HIM.
+      Defaulting to the first building would work out one building's ledger
+      from another's opening figure, and the arithmetic would look perfectly
+      sound while being about the wrong shelf. %>
+  <div class="note warn">
+    <b>Choose the building above.</b>
+    <%= rr.name %> stands in <%= blocks.length %> buildings and each keeps its own linen —
+    nothing is defaulted, because a ledger opened from the wrong shelf is wrong in a way
+    that looks right.
+  </div>
+<% } else { %>
+
+<%
+/* The supervisor's daily linen page.
+
+   Three facts about linen, kept apart because they are established by three
+   different people at three different moments:
+
+     issued / in hand   he counted it himself, this morning, on this shelf
+     sent / back        the laundry man came, with a challan
+     the room's holding a periodic count, on the linen stock page
+
+   He does all of it here. Only the first is written here; the wash cycle saves
+   to the laundry record, which has carried it per item and per vendor since
+   stage 11 and holds the invoice that clause C1 turns on. See migration 032. */
+const editable = can('stay.manage') && !viewNone;
+const dt = v => v ? String(v).slice(0, 10) : '';
+%>
+
+<% if (sent !== null) { %>
+  <div class="note" style="margin-bottom:14px">
+    <b>Sent to the wash.</b>
+    <%= sent %> item<%= sent === 1 ? '' : 's' %> recorded on one challan, dated <%= date %>.
+    Each is now out at the wash below, and stays there until it is counted back.
+  </div>
+<% } %>
+
+<% if (saved !== null && saved > 0) { %>
+  <div class="note" style="margin-bottom:14px">
+    <b>The linen register has been saved.</b>
+    <%= saved %> item<%= saved === 1 ? '' : 's' %> recorded for <%= date %>.
+    Saving again simply corrects the day; it does not add a second entry.
+  </div>
+<% } else if (saved === 0) { %>
+  <%# "Saved. 0 items recorded." IS A SUCCESS MESSAGE FOR HAVING DONE NOTHING.
+      Every box empty is silence, and the register is right to write nothing --
+      but it must not then report a saved day. A supervisor who mistyped and
+      pressed save would be told his count was recorded. %>
+  <div class="note warn" style="margin-bottom:14px">
+    <b>No issue figures were entered, so none were recorded for <%= date %>.</b>
+    Any remarks and the used-linen figure were saved. An empty box is silence,
+    not a zero, so nothing already on the register has been altered — if nothing
+    was issued today, write <b>0</b> in the box and save again.
+  </div>
+<% } %>
+
+<%# A DAY THAT HAS NOT HAPPENED YET. The picker will not offer one, but a
+    date can be typed, and typing one used to end in a 400 error screen the
+    moment he pressed Save. The register was right to refuse; the screen was
+    wrong to let him get that far and then shout. %>
+<% if (future) { %>
+  <div class="note warn" style="margin-bottom:14px">
+    <b><%= future %> has not happened yet.</b>
+    Nothing can be recorded against a day that has not finished, so this is
+    <b><%= date %></b> — today. Use the day box above to go back to
+    <a href="<%= url('/records/linen?rr=' + rr.id + '&date=' + yesterday
+       + (blockId ? '&block=' + blockId : '')) %>"><%= yesterday %></a>,
+    the day most likely being written up.
+  </div>
+<% } %>
+
+<% if (counted !== null && counted > 0) { %>
+  <div class="note" style="margin-bottom:14px">
+    <b>The shelf count is recorded.</b>
+    <%= counted %> item<%= counted === 1 ? '' : 's' %> counted on <%= date %>.
+    It changes no figure yet: the book carries on from the last accepted position,
+    and the difference is shown against each item until the Railway accepts the count.
+  </div>
+<% } %>
+
+<% if (accepted) { %>
+  <div class="note" style="margin-bottom:14px">
+    <b>Count accepted.</b>
+    From the close of that day the book carries the counted figure forward. The count
+    and the book it differed from both stay on the record — accepting settles the
+    position, it does not erase the difference.
+  </div>
+<% } %>
+
+<div class="card" style="margin-bottom:14px">
+  <div class="card-h">
+    <h3>Linen — <%= date %></h3>
+    <span class="sub"><%= rr.name %> · <%= rr.total_beds %> beds</span>
+    <span class="spacer"></span>
+    <%# THE DAY THIS PAGE IS ABOUT, on the page and changeable there.
+        It opens on yesterday because the day-shift supervisor writes a day up
+        the morning after it finishes. Until this box existed the only way to
+        reach a day that had nothing recorded yet was to edit the address bar:
+        the fortnight table below lists days that already have a row, so the
+        one day he most needed was the one day with no link to it. %>
+    <form method="get" action="<%= url('/records/linen') %>" class="row" style="gap:6px;align-items:center">
+      <input type="hidden" name="rr" value="<%= rr.id %>">
+      <% if (blockId) { %><input type="hidden" name="block" value="<%= blockId %>"><% } %>
+      <% if (viewNone) { %><input type="hidden" name="block" value="none"><% } %>
+      <label class="fl" style="margin:0">Day</label>
+      <input class="fi" type="date" name="date" value="<%= date %>" max="<%= maxDate %>"
+             style="width:150px" onchange="this.form.submit()">
+      <button class="btn sm" type="submit">Show</button>
+      <span class="muted" style="font-size:11px">
+        <% if (date === maxDate) { %>today — still running
+        <% } else if (date === yesterday) { %>yesterday — the day being written up
+        <% } else { %>an earlier day<% } %></span>
+    </form>
+  </div>
+  <div class="card-b">
+    <form method="post" action="<%= url('/records/linen') %>" id="linenform">
+      <input type="hidden" name="rr" value="<%= rr.id %>">
+      <input type="hidden" name="date" value="<%= date %>">
+      <% if (blockId) { %><input type="hidden" name="block" value="<%= blockId %>"><% } %>
+      <div class="tblwrap"><table class="tbl">
+        <thead><tr>
+          <th>Item</th>
+          <th class="num">Issued<div class="muted" style="font-weight:400;font-size:10.5px">put into use on this day</div></th>
+          <th class="num ro">On the shelf<div class="muted" style="font-weight:400;font-size:10.5px">the book — not typed</div></th>
+          <th class="num ro">Sent to wash</th>
+          <th class="num ro">Back from wash</th>
+        </tr></thead>
+        <tbody>
+        <% items.forEach(function(it){
+             const r = it.row;
+             const issued = r && r.issued !== null ? r.issued : '';
+        %>
+          <tr class="li li-<%= it.code %>" data-item="<%= it.code %>" data-label="<%= it.label %>"
+              data-book="<%= it.book === null ? '' : it.book %>">
+            <td><b><%= it.label %></b>
+              <div class="muted" style="font-size:10.5px">
+                <% if (it.count === null) { %>
+                  <span class="st crit" style="font-size:10.5px"><span class="dot"></span>never counted</span>
+                <% } else if (it.countDue) { %>
+                  <span class="st warn" style="font-size:10.5px"><span class="dot"></span>counted <%= it.countAge %> days earlier</span>
+                <% } else { %>counted <%= it.countAge === 0 ? 'on this day' : it.countAge + (it.countAge === 1 ? ' day earlier' : ' days earlier') %><% } %>
+              </div></td>
+            <td class="num">
+              <% if (editable) { %>
+                <input class="fi num" type="number" min="0" style="width:88px"
+                       name="issued_<%= it.code %>" value="<%= issued %>">
+              <% } else { %><%= issued === '' ? '—' : issued %><% } %>
+            </td>
+            <%# THE SHELF IS READ-ONLY, AND THAT IS THE WHOLE CHANGE.
+                It used to be a box. A number typed into a box is true at the
+                moment it is typed and begins ageing immediately, and every
+                fault found in this register was a movement recorded after that
+                moment. The figure here is worked out from the last accepted
+                position and every movement since, so there is no moment for it
+                to age from. Counting the shelf is a separate act, below. %>
+            <td class="num tnum ro">
+              <% if (it.book === null) { %>
+                <span class="st crit" style="font-size:10.5px"><span class="dot"></span>no accepted position</span>
+                <div class="muted" style="font-size:10.5px;margin-top:2px">count the shelf below and
+                  have it accepted — until then the book has nothing to start from</div>
+              <% } else { %>
+                <b class="<%= it.book < 0 ? 'neg' : '' %>" style="font-size:15px"><%= it.book %></b>
+                <%# THE WORKING, PRINTED. A figure the screen will not explain is
+                    a figure nobody can challenge, and this one carries a penalty
+                    clause. %>
+                <div class="muted" style="font-size:10.5px;margin-top:3px">
+                  <%= it.baseline.qty %>
+                  <% if (it.since.railway)   { %> + <%= it.since.railway %> issued by Railway<% } %>
+                  <% if (it.since.returns)   { %> + <%= it.since.returns %> back<% } %>
+                  <% if (it.since.issued)    { %> − <%= it.since.issued %> issued<% } %>
+                  <% if (it.since.shelfSent) { %> − <%= it.since.shelfSent %> to wash<% } %>
+                  <% if (it.since.shelfOff)  { %> − <%= it.since.shelfOff %> written off<% } %>
+                  <div>since <%= it.baseline.implicit ? "the Railway's first issue"
+                    : (it.baseline.source === 'opening' ? 'the opening figure of ' + dt(it.baseline.on)
+                       : 'the accepted count of ' + dt(it.baseline.on)) %></div>
+                </div>
+                <% if (it.book < 0) { %>
+                  <div class="st crit" style="font-size:10.5px;margin-top:2px"><span class="dot"></span>
+                    more has gone out than the shelf could hold — something is unrecorded</div>
+                <% } %>
+                <% if (it.discrepancy !== null && it.discrepancy !== 0) { %>
+                  <div class="st warn" style="font-size:10.5px;margin-top:2px"><span class="dot"></span>
+                    counted <%= it.count.qty %> on <%= dt(it.count.on) %>,
+                    <%= it.discrepancy > 0 ? '+' : '' %><%= it.discrepancy %> against the book</div>
+                <% } %>
+              <% } %>
+              <% if (it.disturbed) { %>
+                <div class="st crit" style="font-size:10.5px;margin-top:2px"><span class="dot"></span>
+                  a day at or before the accepted count has been written to since it was
+                  accepted — the position rests on a record that has moved</div>
+              <% } %>
+              <% if (it.pending) { %>
+                <div class="st warn" style="font-size:10.5px;margin-top:2px"><span class="dot"></span>
+                  count of <%= it.pending.qty %> awaiting acceptance</div>
+              <% } %>
+            </td>
+            <td class="num tnum ro"><%= it.sent || '—' %></td>
+            <td class="num tnum ro"><%= it.back || '—' %></td>
+          </tr>
+        <% }); %>
+        </tbody>
+      </table></div>
+
+      <div class="muted" style="font-size:11.5px;margin:10px 0 14px">
+        <b>Sent to wash</b> and <b>back from wash</b> are not typed here. They come from the laundry record
+        below, which holds the vendor and the invoice — washing at a source the Railway has not approved is a
+        clause C1 deficiency in its own right, and that cannot be proved by a number on a daily sheet.
+      </div>
+
+      <%
+        /* The tender's minimum-stock condition, with its arithmetic printed.
+           A red flag with no working behind it is not a finding; it is an
+           accusation the supervisor cannot answer. */
+        const c = check;
+      %>
+      <div style="margin-bottom:14px">
+        <% if (c.met === null) { %>
+          <span class="st"><span class="dot"></span>Minimum stock cannot be tested yet</span>
+        <% } else if (c.met) { %>
+          <span class="st good"><span class="dot"></span>Minimum washed stock met</span>
+        <% } else { %>
+          <span class="st warn"><span class="dot"></span>Below the minimum washed stock</span>
+        <% } %>
+        <div class="muted" style="font-size:11.5px;margin-top:6px">
+          Schedule C — two sets of bedsheets and pillow covers readily available at all times,
+          read as <b><%= c.sets %> × <%= c.beds %> beds = <%= c.need %></b> of each, struck against
+          the book figure — which is current every day, where the last count is only as fresh as the
+          day somebody walked to the shelf.
+          <% c.parts.forEach(function(p){ %>
+            <%= p.code === 'bedsheet' ? 'Bedsheets' : 'Pillow covers' %>:
+            <b><%= p.have === null ? 'no accepted position' : p.have %></b><% if (p.have !== null) { %>
+              <%= p.ok ? '✓' : '— short by ' + (c.need - p.have) %><% } %>.
+          <% }); %>
+          If the clause is meant to be read another way at your rooms, say so — the reading is a setting, not a rule.
+        </div>
+      </div>
+
+      <% if (editable) { %>
+        <div class="row" style="gap:10px;align-items:flex-end">
+          <div style="width:170px">
+            <label class="fl">Used-linen reports</label>
+            <input class="fi" type="number" min="0" name="used_linen_reported"
+                   value="<%= todayRow && todayRow.used_linen_reported ? todayRow.used_linen_reported : '' %>">
+            <div class="muted" style="font-size:11px;margin-top:3px">crew given unwashed linen — a complaint of the day, never carried</div>
+          </div>
+          <div style="flex:1">
+            <label class="fl">Remarks</label>
+            <input class="fi" type="text" name="remarks" maxlength="300"
+                   value="<%= todayRow && todayRow.remarks ? todayRow.remarks : '' %>">
+          </div>
+          <button class="btn" type="submit">Save the day</button>
+        </div>
+      <% } else { %>
+        <div class="muted" style="font-size:12.5px">Your role has view access only.</div>
+      <% } %>
+    </form>
+  </div>
+</div>
+
+<%# ------------------------------------------------ counting the shelf %>
+<%# A COUNT IS A DIFFERENT KIND OF FACT AND HAS A DIFFERENT BUTTON.
+    It used to be a tick-box on the daily form, which meant a count and a day's
+    work were saved by one press: a supervisor correcting his issues figure at
+    four o'clock re-saved a count he had taken at nine. The two have different
+    lifetimes. This one is dated, named, and changes no figure until the
+    Railway accepts it. %>
+<div class="card" style="margin-bottom:14px">
+  <div class="card-h">
+    <h3>Count the shelf</h3>
+    <span class="sub">what is actually there, on <%= date %></span>
+    <% if (countOverdue.length) { %>
+      <span class="spacer"></span>
+      <span class="st warn"><span class="dot"></span><%= countOverdue.length %>
+        item<%= countOverdue.length === 1 ? '' : 's' %> not counted for more than <%= countEvery %> days</span>
+    <% } %>
+  </div>
+  <div class="card-b">
+    <div class="muted" style="font-size:11.5px;margin-bottom:10px">
+      Count what is on the shelf and write it here. It does not change the book figure — it is
+      compared with it, and the difference is kept, because that difference is linen that moved
+      without being written down. The Railway accepts a count to make it the position the book
+      carries forward.
+    </div>
+    <%# THE MORNING COUNT IS YESTERDAY'S CLOSING COUNT, and saying so is what
+        makes the whole thing fit a day shift. The supervisor is not there at
+        midnight; he is there at eight, before a single sheet has gone out. What
+        is on the shelf at that moment is exactly what was on it when the day
+        ended -- so it is recorded against yesterday, and can be accepted the
+        same morning, because yesterday is over. Count after issuing and it is
+        no longer yesterday's figure. %>
+    <div class="note" style="font-size:11.5px;margin-bottom:10px">
+      <b>Count first thing, before you issue anything.</b>
+      What is on the shelf before the day's first issue is what was on it when
+      <b><%= date %></b> ended, which is the day this page is on. Record it here and the
+      Railway can accept it straight away — a day is settled once it is over.
+      <% if (date === maxDate) { %>
+        <br><span class="st warn" style="font-size:10.5px"><span class="dot"></span>
+          This page is on <b>today</b>, which has not finished. A count dated today cannot be
+          accepted until tomorrow, and the night's issues are still to come — move the day at
+          the top of the page back to <%= yesterday %> unless you mean to count today.</span>
+      <% } %>
+    </div>
+    <% if (editable) { %>
+    <form method="post" action="<%= url('/records/linen/count') %>">
+      <input type="hidden" name="rr" value="<%= rr.id %>">
+      <input type="hidden" name="date" value="<%= date %>">
+      <% if (blockId) { %><input type="hidden" name="block" value="<%= blockId %>"><% } %>
+      <div class="tblwrap"><table class="tbl">
+        <thead><tr><th>Item</th><th class="num">Counted on the shelf</th>
+          <th class="num ro">The book says</th><th>Difference</th><th></th></tr></thead>
+        <tbody>
+        <% items.forEach(function(it){ %>
+          <tr class="li li-<%= it.code %>">
+            <td><b><%= it.label %></b></td>
+            <td class="num"><input class="fi num" type="number" min="0" style="width:96px"
+                   name="count_<%= it.code %>"
+                   value="<%= it.count && it.count.on === date ? it.count.qty : '' %>"></td>
+            <td class="num tnum ro"><%= it.book === null ? '—' : it.book %></td>
+            <td>
+              <% if (it.count === null) { %><span class="muted">never counted</span>
+              <% } else if (it.discrepancy === null) { %><span class="muted">no book to compare with</span>
+              <% } else if (it.discrepancy === 0) { %>
+                <span class="st good"><span class="dot"></span>agreed on <%= dt(it.count.on) %></span>
+              <% } else { %>
+                <span class="st warn"><span class="dot"></span>
+                  <%= it.discrepancy > 0 ? '+' : '' %><%= it.discrepancy %> on <%= dt(it.count.on) %></span>
+                <div class="muted" style="font-size:10.5px">counted <%= it.count.qty %>,
+                  book said <%= it.countBook %><% if (it.count.byName) { %> · <%= it.count.byName %><% } %></div>
+              <% } %>
+            </td>
+            <td>
+              <% if (it.count && !it.count.acceptedOn) { %>
+                <% if (can('linen.accept')) { %>
+                  <%# A DAY IS SETTLED ONCE IT IS OVER. The register knows a
+                      day's issues as one figure for the whole day, so today's
+                      count cannot yet be read as the closing position. %>
+                  <% if (it.count.on >= today()) { %>
+                    <span class="muted" style="font-size:11px">can be accepted tomorrow —
+                      a day is settled once it is over</span>
+                  <% } else { %>
+                    <button class="btn sm" type="submit" form="acc<%= it.count.id %>">Accept</button>
+                  <% } %>
+                <% } else { %><span class="muted" style="font-size:11px">awaiting the Railway</span><% } %>
+              <% } else if (it.count) { %>
+                <span class="muted" style="font-size:11px">accepted<%
+                  if (it.count.acceptedByName) { %> · <%= it.count.acceptedByName %><% } %></span>
+              <% } %>
+            </td>
+          </tr>
+        <% }); %>
+        </tbody>
+      </table></div>
+      <div class="row" style="gap:10px;align-items:flex-end;margin-top:10px">
+        <div style="flex:1">
+          <label class="fl">Who counted, and anything worth saying</label>
+          <input class="fi" type="text" name="note" maxlength="300"
+                 placeholder="counted with the laundry man present, one bundle still in the van">
+        </div>
+        <button class="btn" type="submit">Record the count</button>
+      </div>
+      <div class="muted" style="font-size:11px;margin-top:6px">
+        An empty box is silence, not a zero. Leave an item blank and it simply was not counted —
+        writing <b>0</b> says the shelf is bare.
+      </div>
+    </form>
+    <% } else { %>
+      <div class="muted" style="font-size:12.5px">Your role has view access only.</div>
+    <% } %>
+  </div>
+</div>
+
+<%# The accept forms, outside the table for the same reason as the return
+    forms below: a <form> inside a <tr> is hoisted out of the row by every
+    browser and the button silently stops submitting. %>
+<% if (can('linen.accept')) { %>
+<div hidden>
+  <% items.forEach(function(it){ if (!it.count || it.count.acceptedOn) return; %>
+    <form method="post" id="acc<%= it.count.id %>" action="<%= url('/records/linen/accept') %>">
+      <input type="hidden" name="rr" value="<%= rr.id %>">
+      <input type="hidden" name="date" value="<%= date %>">
+      <input type="hidden" name="count" value="<%= it.count.id %>">
+    </form>
+  <% }); %>
+</div>
+<% } %>
+
+<%
+/* Forms live outside the table. A <form> inside a <tr> is hoisted out of the
+   row by every browser and the row silently stops submitting — the same fault
+   that cost the call book a rebuild. */
+%>
+<% if (editable) { %>
+<div hidden>
+  <% outstanding.forEach(function(d){ %>
+    <form method="post" id="ret<%= d.id %>" action="<%= url('/facility/laundry/' + d.id + '/return') %>">
+      <input type="hidden" name="back" value="linen">
+      <input type="hidden" name="back_date" value="<%= date %>">
+    </form>
+  <% }); %>
+</div>
+<% } %>
+
+<div class="grid" style="grid-template-columns:1.35fr 1fr">
+  <div class="card">
+    <div class="card-h"><h3>Out at the wash</h3>
+      <span class="sub"><%= outstanding.length %> consignment<%= outstanding.length === 1 ? '' : 's' %> not fully back</span>
+      <% if (overdue.length) { %>
+        <span class="spacer"></span>
+        <span class="st crit"><span class="dot"></span><%= overdue.length %> past 48 hours</span>
+      <% } %></div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>Sent</th><th>Item</th><th>Vendor</th><th class="num ro">Sent</th>
+        <th class="num">Back</th><th>Returned on</th><th>Quality</th><% if (editable) { %><th></th><% } %></tr></thead>
+      <tbody>
+      <% outstanding.forEach(function(d){ %>
+        <tr class="li li-<%= d.item_type %>">
+          <td class="tnum"><%= dt(d.dispatch_date) %>
+            <% if (d.overdue) { %>
+              <div><span class="st crit"><span class="dot"></span><%= d.days_out %> days out</span></div>
+              <div class="muted" style="font-size:11px">clause C6</div>
+            <% } else if (d.days_out > 0) { %>
+              <div class="muted" style="font-size:11px"><%= d.days_out %> day<%= d.days_out === 1 ? '' : 's' %> out</div>
+            <% } %></td>
+          <td><b><%= (itemDefs.find(i => i[0] === d.item_type) || [null, d.item_type])[1] %></b></td>
+          <td>
+            <% if (!d.vendor_id) { %><span class="st crit"><span class="dot"></span>no vendor</span>
+            <% } else { %><%= d.vendor_name %>
+              <% if (!d.is_approved) { %><div><span class="st warn"><span class="dot"></span>not approved</span></div><% } %>
+            <% } %>
+            <% if (!d.invoice_no) { %><div class="muted" style="font-size:11px">no invoice</div><% } %>
+          </td>
+          <td class="num tnum ro"><%= d.quantity_sent %></td>
+          <td class="num">
+            <% if (editable) { %>
+              <input class="fi num" type="number" min="0" max="<%= d.quantity_sent %>" style="width:76px"
+                     form="ret<%= d.id %>" name="quantity_returned" value="<%= d.quantity_returned %>">
+            <% } else { %><%= d.quantity_returned %><% } %>
+          </td>
+          <td>
+            <% if (editable) { %>
+              <input class="fi" type="date" style="width:140px" form="ret<%= d.id %>"
+                     name="returned_on" value="<%= dt(d.returned_on) || maxDate %>"
+                     min="<%= dt(d.dispatch_date) %>" max="<%= maxDate %>">
+            <% } else { %><%= dt(d.returned_on) || '—' %><% } %>
+          </td>
+          <td>
+            <% if (editable) { %>
+              <select class="fi" style="width:110px" form="ret<%= d.id %>" name="quality_ok">
+                <option value="">not checked</option>
+                <option value="1" <%= d.quality_ok === 1 ? 'selected' : '' %>>satisfactory</option>
+                <option value="0" <%= d.quality_ok === 0 ? 'selected' : '' %>>poor</option>
+              </select>
+            <% } else { %><%= d.quality_ok === 1 ? 'satisfactory' : d.quality_ok === 0 ? 'poor' : '—' %><% } %>
+          </td>
+          <% if (editable) { %><td><button class="btn small" form="ret<%= d.id %>" type="submit">Record</button></td><% } %>
+        </tr>
+      <% }); %>
+      <% if (!outstanding.length) { %>
+        <tr><td colspan="<%= editable ? 8 : 7 %>" class="muted">Nothing is out at the wash.</td></tr>
+      <% } %>
+      </tbody>
+    </table></div>
+    <div class="card-b">
+      <% if (overdue.length) { %>
+        <div class="note warn" style="margin-bottom:10px">
+          <b><%= overduePieces %> piece<%= overduePieces === 1 ? '' : 's' %> have been at the wash beyond 48 hours</b>
+          — across <%= overdue.length %> consignment<%= overdue.length === 1 ? '' : 's' %>.
+          Schedule C, clause <b>C6</b>: failure to supply linen after washing beyond 48 hours. Counted at more
+          than <%= c6Days %> whole days, so the flag is raised only where the 48 hours have certainly passed.
+          RR-CMS records the fact and applies nothing — raising it as a deficiency is the
+          <a href="<%= url('/deficiencies/review?rr=' + rr.id) %>">reviewing officer's</a> act.
+        </div>
+      <% } %>
+      <div class="muted" style="font-size:11.5px">
+        A return is recorded against the consignment it went out on, never as a loose figure — the shortfall
+        between what was sent and what came back is only visible while the two stay tied together.
+        The full laundry register, with invoices, is on the <a href="<%= url('/facility/laundry?rr=' + rr.id) %>">laundry page</a>.
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h3>Send to the wash</h3>
+      <span class="sub"><%= vendor ? vendor.name : 'no laundry vendor on record' %></span>
+      <% if (sentOnTodayTotal) { %>
+        <span class="spacer"></span>
+        <span class="st"><span class="dot"></span><%= sentOnTodayTotal %> already sent today</span>
+      <% } %></div>
+    <div class="card-b">
+      <%# WHAT HAS ALREADY GONE TODAY, beside the box that would send it again.
+          The officer asked for this before the page needed it: a supervisor who
+          raised a challan in the morning and comes back at four has nothing on
+          the screen to remind him, and forty sheets go out twice on paper. It
+          matters more now that this page opens on YESTERDAY -- the per-item
+          "Sent to wash" column is the page's day, so today's challan appears
+          nowhere near the send box. %>
+      <% if (sentOnTodayTotal) { %>
+        <div class="note" style="font-size:11.5px;margin-bottom:10px">
+          <b>Already sent today (<%= maxDate %>):</b>
+          <% sentOnToday.forEach(function(r, n){ %><%= n ? ', ' : ' ' %><%= r.qty %>
+            <%= (itemDefs.find(function(i){ return i[0] === r.item_type; }) || [null, r.item_type])[1] %><% }); %>.
+          Check the challan before sending again — this box adds to the day, it does not replace it.
+        </div>
+      <% } %>
+      <% if (editable) { %>
+      <%
+        /* A grid, not a dropdown. The laundry man arrives once and takes a
+           bundle — forty sheets, forty covers, six nets — and the bearer counts
+           them out in front of him. He writes each count on the line it belongs
+           to and presses once. Picking an item from a list and filling the form
+           three times over for one collection is how the same bundle ends up
+           recorded as three challans, or as one. */
+      %>
+      <form method="post" action="<%= url('/facility/laundry') %>" id="sendform">
+        <input type="hidden" name="rr" value="<%= rr.id %>">
+        <% if (blockId) { %><input type="hidden" name="block" value="<%= blockId %>"><% } %>
+        <input type="hidden" name="back" value="linen">
+        <%# The same question the facility page asks. Sending fresh stock from
+            the daily screen without it would put the shelf figure back where
+            it was before this was fixed. %>
+        <div style="margin-bottom:10px"><label class="fl">Taken from</label>
+          <select class="fi" name="from_pool">
+            <option value="used">Used linen off the beds</option>
+            <option value="shelf">Fresh stock on the shelf</option>
+          </select></div>
+        <input type="hidden" name="back_date" value="<%= date %>">
+        <div class="tblwrap" style="margin-bottom:12px"><table class="tbl">
+          <thead><tr><th>Item</th><th class="num">Going to the wash</th><th class="num ro">Soiled, not yet sent</th></tr></thead>
+          <tbody>
+          <% items.forEach(function(it){ %>
+            <tr class="li li-<%= it.code %>">
+              <td><b><%= it.label %></b></td>
+              <td class="num">
+                <input class="fi num" type="number" min="0" style="width:92px"
+                       name="qty_<%= it.code %>"
+                       data-holding="<%= it.holding === null ? '' : it.holding %>">
+              </td>
+              <td class="num tnum ro"><%= it.soiled || '—' %></td>
+            </tr>
+          <% }); %>
+            <tr class="li li-other">
+              <td><b>Other</b></td>
+              <td class="num"><input class="fi num" type="number" min="0" style="width:92px" name="qty_other"></td>
+              <td class="num tnum ro">—</td>
+            </tr>
+          </tbody>
+        </table></div>
+        <div class="muted" style="font-size:11px;margin-bottom:8px">
+          <b>Soiled, not yet sent</b> is what has been issued since <%= soiledFrom %> and has not gone to the
+          wash — roughly what is lying stripped off the beds. It is not the fresh stock on the shelf; that is a
+          different pile and it is counted above. The figure is a guide, nothing depends on it.
+        </div>
+        <div id="sendcheck" class="muted" style="font-size:11.5px;margin-bottom:10px"></div>
+        <div class="row" style="gap:8px;margin-bottom:10px">
+          <div style="flex:1">
+            <label class="fl">Vendor</label>
+            <select class="fi" name="vendor_id">
+              <option value="">— not stated —</option>
+              <% vendors.forEach(function(v){ %>
+                <option value="<%= v.id %>" <%= vendor && vendor.id === v.id ? 'selected' : '' %>>
+                  <%= v.name %><%= v.is_approved ? '' : ' (not approved)' %></option>
+              <% }); %>
+            </select>
+          </div>
+          <div style="width:140px">
+            <label class="fl">Date sent</label>
+            <%# THE WASH CYCLE HAPPENS WHILE HE IS STANDING THERE, so it is
+                dated today even when the page is on yesterday. The grid above
+                is a write-up of a finished day; the laundry man at the door is
+                not. Defaulting this to the page's day would back-date almost
+                every challan by one, and clause C6's 48 hours would start a day
+                early -- the safe direction, but wrong every single time, which
+                is not a defence. It stays editable for the challan he finds in
+                a drawer. %>
+            <input class="fi" type="date" name="dispatch_date" value="<%= maxDate %>" max="<%= maxDate %>">
+          </div>
+        </div>
+        <div style="margin-bottom:12px">
+          <label class="fl">Invoice / challan no.</label>
+          <input class="fi" type="text" name="invoice_no" maxlength="60">
+        </div>
+        <button class="btn" type="submit">Record what is going</button>
+      </form>
+      <% } else { %>
+        <div class="muted" style="font-size:12.5px">Your role has view access only.</div>
+      <% } %>
+      <div class="hr"></div>
+      <div class="muted" style="font-size:11.5px">
+        Fill the whole bundle at once — one challan, one press. It is kept item by item behind the screen,
+        because washing is paid by item and the return has to be checked the same way. Curtains are paid at
+        the mosquito-net rate.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:14px">
+  <div class="card-h"><h3>Last 14 days</h3><span class="sub">what was issued, day by day</span></div>
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr><th>Date</th>
+      <% itemDefs.forEach(function(i){ %><th class="num"><%= i[1] %></th><% }); %>
+      <th>Position</th></tr></thead>
+    <tbody>
+    <% days.forEach(function(r){ const d = dt(r.record_date); const it = byDate[d] || {}; %>
+      <tr <%= d === date ? 'style="background:rgba(42,120,214,.05)"' : '' %>>
+        <td class="tnum"><%# THE BUILDING HAS TO TRAVEL WITH THE DAY. Without it, clicking a
+            date in this table dropped the building and landed on "which
+            building?" -- at Igatpuri, where every figure on the page belongs to
+            one of four, that is the whole page gone. %>
+          <a href="<%= url('/records/linen?rr=' + rr.id + '&date=' + d
+             + (blockId ? '&block=' + blockId : (viewNone ? '&block=none' : ''))) %>"><%= d %></a></td>
+        <% itemDefs.forEach(function(i){ const x = it[i[0]]; %>
+          <td class="num tnum"><%= x && x.issued !== null ? x.issued : '—' %></td>
+        <% }); %>
+<%# THE SHELF COLUMN IS GONE FROM THE HISTORY, and its absence is the point.
+    It printed the fresh_in_hand stored on each day's row -- the very figure
+    that was being asked to be both a count and a balance. There is no stored
+    shelf figure any longer, and a book figure for every one of fourteen past
+    days is fourteen more queries for a column nobody reads across. What the
+    shelf held on a past day is answered by opening that day. %>
+        <td>
+          <% if (r.used_linen_reported) { %>
+            <span class="st crit"><span class="dot"></span><%= r.used_linen_reported %> used-linen report<%= r.used_linen_reported > 1 ? 's' : '' %></span>
+          <% } else if (r.min_stock_met === 0) { %>
+            <span class="st warn"><span class="dot"></span>Below minimum stock</span>
+          <% } else if (r.min_stock_met === null) { %>
+            <span class="st"><span class="dot"></span>Stock could not be tested</span>
+          <% } else { %>
+            <span class="st good"><span class="dot"></span>Fresh</span>
+          <% } %>
+        </td>
+      </tr>
+    <% }); %>
+    <% if (!days.length) { %>
+      <tr><td colspan="<%= itemDefs.length + 2 %>" class="muted">Nothing recorded yet.</td></tr>
+    <% } %>
+    </tbody>
+  </table></div>
+</div>
+<% } %>

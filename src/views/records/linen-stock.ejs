@@ -1,0 +1,287 @@
+<%- await include('_nav') %>
+
+<%# WHICH BUILDING'S LINEN.
+    Each of Igatpuri's four buildings keeps its own store, so the shelf, the
+    day's issues, the wash and the write-offs are all facts about a building.
+    Forty-three of the forty-five running rooms are one building; for those
+    `blocks` is empty and none of this appears. %>
+<% if (blocks && blocks.length) { %>
+  <div class="card blockbar">
+    <div class="bb-row">
+      <span class="bb-lab">Building</span>
+        <% blocks.forEach(function(b){ %>
+          <a class="btn <%= blockId === b.id ? '' : 'ghost' %> small"
+             href="<%= url('/records/linen-stock') %>?rr=<%= rr.id %>&block=<%= b.id %>"><%= b.name %>
+             <span class="muted" style="font-weight:400">· <%= b.total_beds %> beds</span></a>
+        <% }); %>
+      <% if (orphans) { %>
+        <a class="btn <%= viewNone ? '' : 'ghost' %> small"
+           href="<%= url('/records/linen-stock') %>?rr=<%= rr.id %>&block=none">No building
+           <span class="pill" style="margin-left:5px"><%= orphans %></span></a>
+      <% } %>
+    </div>
+  </div>
+<% } %>
+<% if (viewNone && orphans) { %>
+  <div class="note warn" style="margin-bottom:14px">
+    <b>Records made before <%= rr.name %> had buildings.</b>
+    These <%= orphans %> row<%= orphans === 1 ? '' : 's' %> belong to no building, because none
+    existed when they were written. They are shown here so they are not lost — nothing new can be
+    recorded against "no building", because a round is done in one building and linen sits on one
+    shelf. Read them, close out anything still open, and the list will empty itself.
+  </div>
+<% } else if (viewNone) { %>
+  <%# The button that leads here only appears when there is something to see,
+      so arriving with nothing means the list has been worked through — or the
+      address was typed. Either way, saying "0 rows belong to no building" as
+      though it were a finding would be the screen inventing a problem. %>
+  <div class="note" style="margin-bottom:14px">
+    Nothing at <%= rr.name %> is on record without a building.
+  </div>
+<% } %>
+
+<% if (needBlock) { %>
+  <%# NOT AN ERROR — A QUESTION THE REGISTER CANNOT ANSWER FOR HIM.
+      Defaulting to the first building would work out one building's ledger
+      from another's opening figure, and the arithmetic would look perfectly
+      sound while being about the wrong shelf. %>
+  <div class="note warn">
+    <b>Choose the building above.</b>
+    <%= rr.name %> stands in <%= blocks.length %> buildings and each keeps its own linen —
+    nothing is defaulted, because a ledger opened from the wrong shelf is wrong in a way
+    that looks right.
+  </div>
+<% } else { %>
+
+<%
+/* WHERE EVERY FIGURE ON THIS PAGE COMES FROM.
+
+   Linen at a running room sits in one of four places, and only two of them are
+   this screen's business:
+
+     issued by Railway   here. Nothing else records what stores sent.
+     written off         here. A condemnation happens nowhere else.
+     fresh on the shelf  the DAILY register's ledger
+     in use              the DAILY register — issued, not yet sent to the wash
+     at the wash         the LAUNDRY register — sent, not yet returned
+
+   Until now three of those were typed here as well, which made a mismatch
+   between two records of one fact possible, and a mismatch like that cannot be
+   resolved: nothing says which is right on the day they differ. */
+const d10 = v => v ? String(v).slice(0, 10) : '';
+%>
+
+<% if (typeof issued !== 'undefined' && issued) { %>
+  <div class="note" style="margin-bottom:14px"><b>Saved.</b>
+    The Railway's issue figure was recorded for <%= issued %> item<%= issued === 1 ? '' : 's' %>.</div>
+<% } %>
+<% if (typeof wroff !== 'undefined' && wroff) { %>
+  <div class="note" style="margin-bottom:14px"><b>Write-off recorded.</b>
+    <%= wroff %> piece<%= wroff === 1 ? '' : 's' %> taken off the running room's holding.</div>
+<% } %>
+
+<div class="card" style="margin-bottom:16px">
+  <div class="card-h"><h3>Linen held at <%= rr.name %></h3>
+    <span class="sub">what the Railway gave, and where it is now</span></div>
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr>
+      <th>Item</th>
+      <th class="num">Issued by Railway</th>
+      <th class="num">Written off</th>
+      <th class="num">Fresh on shelf</th>
+      <th class="num">In use</th>
+      <th class="num">At the wash</th>
+      <th class="num">Accounted for</th>
+      <th>Position</th>
+    </tr></thead>
+    <tbody>
+    <% items.forEach(function(i){ %>
+      <tr>
+        <td><b><%= i.label %></b>
+          <% if (i.latest) { %>
+            <div class="muted" style="font-size:10.5px">issue figure as at <%= d10(i.latest.as_on_date) %></div>
+          <% } %></td>
+        <td class="num"><% if (i.issued === null) { %><span class="muted">not recorded</span>
+          <% } else { %><%= fmtInt(i.issued) %><% } %></td>
+        <td class="num"><% if (!i.writtenOff.total) { %>—
+          <% } else { %><%= fmtInt(i.writtenOff.total) %>
+            <div class="muted" style="font-size:10.5px"><%
+              const b = []; if (i.writtenOff.condemned) b.push(i.writtenOff.condemned + ' condemned');
+              if (i.writtenOff.lost) b.push(i.writtenOff.lost + ' lost');
+              if (i.writtenOff.damaged) b.push(i.writtenOff.damaged + ' damaged');
+            %><%= b.join(' · ') %></div>
+          <% } %></td>
+        <%# THE BOOK FIGURE. Not a stored number and not a count -- the last
+            accepted position with every movement since applied to it. Where
+            nothing has been accepted there is no book, and the honest answer is
+            that the shelf is not known, not that it is empty. %>
+        <td class="num"><% if (i.shelf === null) { %><span class="st crit"><span class="dot"></span>no accepted position</span>
+          <% } else { %><b class="<%= i.shelf < 0 ? 'neg' : '' %>"><%= fmtInt(i.shelf) %></b>
+            <div class="muted" style="font-size:10.5px">book, from
+              <%= i.shelfImplicit ? "the Railway's first issue"
+                  : (i.shelfSource === 'opening' ? 'the opening figure of ' + d10(i.shelfOn)
+                     : 'the accepted count of ' + d10(i.shelfOn)) %></div>
+            <% if (i.discrepancy !== null && i.discrepancy !== 0) { %>
+              <div class="st warn" style="font-size:10.5px"><span class="dot"></span>last count differed
+                by <%= i.discrepancy > 0 ? '+' : '' %><%= i.discrepancy %></div>
+            <% } %>
+          <% } %></td>
+        <td class="num"><%= fmtInt(i.inUse) %>
+          <div class="muted" style="font-size:10.5px">last <%= soiledWindow %> days</div></td>
+        <td class="num"><%= fmtInt(i.wash) %></td>
+        <td class="num"><% if (i.held === null) { %><span class="muted">—</span>
+          <% } else { %><b><%= fmtInt(i.held) %></b><% } %></td>
+        <td><%
+          if (i.issued === null) { %><span class="muted">nothing issued on record</span><%
+          } else if (i.held === null) { %><span class="st"><span class="dot"></span>shelf has no accepted position</span>
+            <div class="muted" style="font-size:10.5px">the sum cannot be struck until it is</div><%
+          } else if (i.unaccounted > 0) { %><span class="st warn"><span class="dot"></span><%= fmtInt(i.unaccounted) %> unaccounted</span>
+            <div class="muted" style="font-size:10.5px">issued less written off does not match what is held</div><%
+          } else if (i.unaccounted < 0) { %><span class="st warn"><span class="dot"></span><%= fmtInt(-i.unaccounted) %> more than issued</span>
+            <div class="muted" style="font-size:10.5px">the room holds more than the Railway's figure allows for</div><%
+          } else { %><span class="st good"><span class="dot"></span>accounted for</span><% } %></td>
+      </tr>
+    <% }); %>
+    </tbody>
+  </table></div>
+  <div class="tblfoot">
+    <b>Fresh on shelf</b>, <b>in use</b> and <b>at the wash</b> are not typed on this page. They are read
+    from the registers that own the events — the daily linen register and the laundry register — so this
+    screen cannot disagree with them. Only what the Railway <b>issued</b> and what has been <b>written
+    off</b> are entered here, because only those two have no other home.
+    <br><br>
+    <b>Accounted for</b> is shelf plus in use plus at the wash. <b>Unaccounted</b> is what the Railway
+    issued, less write-offs, less that sum. It is not an accusation — linen goes to the wrong room and
+    comes back — it is the figure that ought to be explained rather than left standing. Where the shelf
+    has never been counted the sum is not struck at all: saying pieces are missing because nobody has
+    counted yet would be a false charge printed by a machine.
+    <br><br>
+    <b>In use</b> counts linen issued in the last <%= soiledWindow %> days and not yet sent to the wash.
+    Linen issued longer ago than that and never sent has not been in use for a month — it has been lost
+    track of, and it shows here as unaccounted rather than hiding inside a legitimate pool.
+  </div>
+</div>
+
+<div class="grid" style="grid-template-columns:1fr 1fr">
+  <div class="card">
+    <div class="card-h"><h3>What the Railway has issued</h3>
+      <span class="sub">the running room's holding, as stores sent it</span></div>
+    <div class="card-b">
+      <% if (can('stay.manage') && !viewNone) { %>
+      <form method="post" action="<%= url('/records/linen-stock') %>">
+        <input type="hidden" name="rr" value="<%= rr.id %>">
+        <% if (blockId) { %><input type="hidden" name="block" value="<%= blockId %>"><% } %>
+        <div class="row" style="gap:8px;margin-bottom:12px;align-items:flex-end">
+          <div style="flex:0 0 170px"><label class="fl">As on</label>
+            <input class="fi" type="date" name="as_on_date" value="<%= date %>" max="<%= maxDate %>" required></div>
+          <div style="flex:1"><label class="fl">Remarks</label>
+            <input class="fi" name="remarks" placeholder="e.g. against stores indent no."></div>
+        </div>
+        <div class="tblwrap"><table class="tbl">
+          <thead><tr><th>Item</th><th class="num">Issued by Railway</th></tr></thead>
+          <tbody>
+          <% items.forEach(function(i){ %>
+            <tr>
+              <td style="white-space:nowrap"><%= i.label %></td>
+              <td class="num"><input class="fi" type="number" min="0" style="width:110px;padding:4px 7px"
+                    name="<%= i.code %>_issued"
+                    value="<%= i.issued === null ? '' : i.issued %>" placeholder="—"></td>
+            </tr>
+          <% }); %>
+          </tbody>
+        </table></div>
+        <button class="btn" type="submit" style="margin-top:12px">Save the issue figures</button>
+        <div class="muted" style="font-size:11.5px;margin-top:10px">
+          A row left blank is not saved. Zero means <i>there are none</i>, which is a different statement
+          from not having recorded it, so the form will not put one in on your behalf. Saving again for
+          the same date corrects that date rather than adding to it.
+        </div>
+      </form>
+      <% } else { %>
+        <div class="muted" style="font-size:12.5px">Your role has view access only.</div>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h3>Write off a piece of linen</h3>
+      <span class="sub">condemned, lost or damaged — one event, dated</span></div>
+    <div class="card-b">
+      <% if (can('stay.manage') && !viewNone) { %>
+      <form method="post" action="<%= url('/records/linen-stock/write-off') %>">
+        <input type="hidden" name="rr" value="<%= rr.id %>">
+        <% if (blockId) { %><input type="hidden" name="block" value="<%= blockId %>"><% } %>
+        <div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px">
+          <div style="flex:1 1 180px"><label class="fl">Item</label>
+            <select class="fi" name="item_type">
+              <% items.forEach(function(i){ %><option value="<%= i.code %>"><%= i.label %></option><% }); %>
+            </select></div>
+          <div style="flex:0 0 110px"><label class="fl">How many</label>
+            <input class="fi" type="number" min="1" name="quantity" required></div>
+          <div style="flex:0 0 155px"><label class="fl">On</label>
+            <input class="fi" type="date" name="written_off_on" value="<%= maxDate %>" max="<%= maxDate %>"></div>
+        </div>
+        <div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px">
+          <div style="flex:1 1 150px"><label class="fl">Why</label>
+            <select class="fi" name="reason">
+              <option value="condemned">Condemned — worn out</option>
+              <option value="lost">Lost</option>
+              <option value="damaged">Damaged beyond use</option>
+            </select></div>
+          <div style="flex:1 1 170px"><label class="fl">Where it was</label>
+            <select class="fi" name="from_pool">
+              <option value="unknown">— not known —</option>
+              <option value="shelf">Fresh on the shelf</option>
+              <option value="in_use">In use, on the beds</option>
+              <option value="at_laundry">At the wash</option>
+            </select></div>
+        </div>
+        <div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px">
+          <div style="flex:1 1 180px"><label class="fl">Authority</label>
+            <input class="fi" name="authority" placeholder="who ordered it written off"></div>
+          <div style="flex:1 1 180px"><label class="fl">Remarks</label>
+            <input class="fi" name="remarks" placeholder="condition, circumstances"></div>
+        </div>
+        <button class="btn" type="submit">Record the write-off</button>
+        <div class="muted" style="font-size:11.5px;margin-top:10px">
+          <b>Where it was</b> decides which pool it came out of. A sheet torn at the laundry was never on
+          the shelf; one taken off a bed was not either. Left unknown, it comes off the running room's
+          total holding without claiming to know which pool shrank.
+          <br>
+          Nothing here computes money. The contract's recovery rate is printed beside the item on the
+          laundry page and multiplied by nothing; what comes off a bill is the officer's act.
+        </div>
+      </form>
+      <% } else { %>
+        <div class="muted" style="font-size:12.5px">Your role has view access only.</div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<% if (recentWriteOffs && recentWriteOffs.length) { %>
+<div class="card" style="margin-top:16px">
+  <div class="card-h"><h3>Write-offs on record</h3>
+    <span class="sub">most recent <%= recentWriteOffs.length %></span></div>
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr><th>On</th><th>Item</th><th class="num">How many</th><th>Why</th>
+      <th>Where it was</th><th>Authority</th><th>Recorded by</th></tr></thead>
+    <tbody>
+    <% const POOL = { shelf: 'fresh on the shelf', in_use: 'in use', at_laundry: 'at the wash', unknown: 'not known' }; %>
+    <% recentWriteOffs.forEach(function(w){ %>
+      <tr>
+        <td class="tnum"><%= d10(w.written_off_on) %></td>
+        <td><%= (items.find(x => x.code === w.item_type) || { label: w.item_type }).label %></td>
+        <td class="num"><%= w.quantity %></td>
+        <td><%= w.reason %></td>
+        <td class="muted" style="font-size:11.5px"><%= POOL[w.from_pool] || w.from_pool %></td>
+        <td class="muted" style="font-size:11.5px"><%= w.authority || '—' %></td>
+        <td class="muted" style="font-size:11.5px"><%= w.by_name || '—' %><%
+          if (w.remarks) { %><div><%= w.remarks %></div><% } %></td>
+      </tr>
+    <% }); %>
+    </tbody>
+  </table></div>
+</div>
+<% } %>
+<% } %>

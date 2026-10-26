@@ -1,0 +1,235 @@
+<%
+/* The contractor's standing obligations. The remainder of P14.
+
+   Several rows are ticks and say so. Two carry a rate and a clock — D3 and D4
+   at Rs 1,000 a WEEK — and those behave like clause M5 on the wage register:
+   state the weeks, offer the clause, compute no money.
+
+   The clock starts at the Letter of Acceptance. Where no LOA date is on record
+   the due date is genuinely unknown, and the page says so rather than defaulting
+   to today and manufacturing a breach out of missing paperwork. */
+const editable = can('compliance.record');
+const d = v => v ? String(v).slice(0, 10) : '';
+const S = {
+  met:     ['good', 'In place'],
+  due:     ['neut', 'Not yet due'],
+  overdue: ['crit', 'Overdue'],
+  not_met: ['crit', 'Not in place'],
+  unknown: ['warn', 'No due date can be worked out'],
+  open:    ['neut', 'Nothing recorded'],
+};
+const overdue = rows.filter(r => r.pos.state === 'overdue' || r.pos.state === 'not_met').length;
+const inPlace = rows.filter(r => r.pos.state === 'met').length;
+const silent = rows.filter(r => !r.row).length;
+%>
+
+<form class="row" method="get" style="margin-bottom:14px;align-items:flex-end">
+  <div style="flex:0 0 260px"><label class="fl">Running room</label>
+    <select class="fi" name="rr" onchange="this.form.submit()">
+      <% rooms.forEach(function(r){ %>
+        <option value="<%= r.id %>" <%= r.id===rr.id?'selected':'' %>><%= r.name %> (<%= r.div_code %>)</option>
+      <% }); %>
+    </select></div>
+  <noscript><button class="btn" type="submit">Go</button></noscript>
+</form>
+
+<% if (saved !== null) { %>
+  <div class="note" style="margin-bottom:14px"><b>Saved.</b>
+    <%= saved %> obligation<%= +saved === 1 ? '' : 's' %> now carry something on the record for
+    <%= rr.name %>. An obligation left entirely blank stays <b>unrecorded</b> — that is not the same as
+    a supervisor saying it is not in place.</div>
+<% } %>
+<% if (note) { %>
+  <div class="note err" style="margin-bottom:14px">
+    <b>Clause <%= note %> has been raised on the deficiency register</b>, open, for the weeks it has run.
+    <a href="<%= url('/deficiencies?rr=' + rr.id) %>">Open the register</a>.
+  </div>
+<% } %>
+
+<div class="kpis" style="margin-bottom:14px">
+  <div class="kpi"><i class="strip" style="background:var(--good)"></i>
+    <div class="lab">In place</div><div class="val"><%= inPlace %></div>
+    <div class="foot">of <%= rows.length %> standing obligations</div></div>
+  <div class="kpi"><i class="strip" style="background:var(--critical)"></i>
+    <div class="lab">Overdue or not in place</div><div class="val"><%= overdue %></div>
+    <div class="foot"><% if (overdue) { %>two of these carry a weekly rate<% } else { %>nothing running<% } %></div></div>
+  <div class="kpi"><i class="strip" style="background:var(--warning)"></i>
+    <div class="lab">Nothing written down</div><div class="val"><%= silent %></div>
+    <div class="foot">nobody has looked, which is not "not there"</div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s1)"></i>
+    <div class="lab">Clocks run from</div>
+    <div class="val" style="font-size:18px"><%= anchor.from ? d(anchor.from) : '—' %></div>
+    <div class="foot"><%= anchor.basis ? anchor.basis
+      : (anchor.awaited ? 'no agreement issued yet' : 'no LOA date on record') %></div></div>
+</div>
+
+<% if (!anchor.from) { %>
+  <div class="note warn" style="margin-bottom:14px">
+    <b>No date to count from.</b>
+    <% if (!anchor.contract) { %>
+      No live agreement covers <%= rr.name %> at all, so nothing on this page can be given a due date.
+    <% } else if (anchor.awaited) { %>
+      Agreement <b><%= anchor.contract.agreement_no %></b> covers this running room, and its number says
+      what it is: <b>no agreement has been issued</b>. Any period sitting against it was assumed by the
+      pilot loader, not supplied by anybody, so it is <b>not</b> used to date anything here. The tender's
+      "within one month" has to be one month after something, and that something is the Letter of
+      Acceptance.
+    <% } else { %>
+      Agreement <b><%= anchor.contract.agreement_no %></b> covers this running room but carries
+      <b>no LOA date and no period</b>. The tender's "within one month" has to be one month after
+      something, and that something is the Letter of Acceptance.
+    <% } %>
+    Until it is on record, D3 and D4 cannot be given a due date and are <b>not</b> reported as breached —
+    a penalty must not run from a date nobody has given.
+    <% if (can('contract.edit') && anchor.contract) { %>
+      <a href="<%= url('/contractors/contracts/' + anchor.contract.id) %>">Record the LOA on the agreement</a>.
+    <% } %>
+  </div>
+<% } %>
+
+<form method="post" action="<%= url('/compliance') %>" enctype="multipart/form-data">
+<input type="hidden" name="rr" value="<%= rr.id %>">
+
+<div class="card" style="margin-bottom:14px">
+  <div class="card-h"><h3>The standing obligations</h3>
+    <span class="sub"><%= rr.name %></span></div>
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr>
+      <th style="width:28%">What the tender asks for</th>
+      <th style="width:120px">Due</th>
+      <th style="width:145px">In place on</th>
+      <th style="width:90px">Not in place</th>
+      <th style="width:20%">Reference</th>
+      <th>Remarks</th>
+      <th style="width:190px">Position</th>
+    </tr></thead>
+    <tbody>
+    <% rows.forEach(function(r){ const it = r.it, row = r.row, pos = r.pos; %>
+      <tr>
+        <td>
+          <b><%= it.name %></b>
+          <div class="muted" style="font-size:11px"><%= it.detail %></div>
+          <div class="muted" style="font-size:10.5px">
+            <%= it.source_ref %><% if (it.clause_code) { %> ·
+              <span style="color:var(--critical)">clause <%= it.clause_code %></span><% } %>
+            <% if (it.due_basis === 'recurring_months') { %> · every <%= it.recur_months %> months<% } %>
+          </div>
+        </td>
+        <td class="tnum"><%= pos.due || '—' %></td>
+        <td>
+          <% if (editable) { %>
+            <input class="fi" type="date" style="width:136px" name="met_<%= it.id %>"
+                   max="<%= today %>" value="<%= d(row && row.met_on) %>">
+          <% } else { %><span class="tnum"><%= d(row && row.met_on) || '—' %></span><% } %>
+        </td>
+        <td style="text-align:center">
+          <% if (editable) { %>
+            <input type="checkbox" name="no_<%= it.id %>" value="1"
+                   style="width:18px;height:18px;cursor:pointer"
+                   <%= row && row.not_met ? 'checked' : '' %>>
+          <% } else { %><%= row && row.not_met ? '✓' : '—' %><% } %>
+        </td>
+        <td>
+          <% if (editable) { %>
+            <input class="fi" style="width:100%" name="ref_<%= it.id %>" maxlength="120"
+                   value="<%= row && row.reference_no ? row.reference_no : '' %>">
+            <input class="fi" type="file" name="file_<%= it.id %>" accept="image/*,application/pdf" style="margin-top:4px;font-size:11px">
+          <% } else { %>
+            <span class="tnum"><%= row && row.reference_no || '—' %></span>
+          <% } %>
+          <% if (row && row.file_id) { %>
+            <div style="font-size:11px"><a href="<%= url('/compliance/file/' + row.file_id) %>" target="_blank">on record</a></div>
+          <% } %>
+        </td>
+        <td>
+          <% if (editable) { %>
+            <input class="fi" style="width:100%" name="rem_<%= it.id %>" maxlength="400"
+                   value="<%= row && row.remarks ? row.remarks : '' %>">
+          <% } else { %><span class="muted"><%= row && row.remarks || '—' %></span><% } %>
+        </td>
+        <td>
+          <span class="st <%= S[pos.state][0] %>"><span class="dot"></span><%= S[pos.state][1] %></span>
+          <% if (pos.weeks) { %>
+            <div class="muted" style="font-size:11px"><%= pos.weeks %> week<%= pos.weeks===1?'':'s' %></div>
+          <% } %>
+          <% if (r.raised) { %>
+            <div class="muted" style="font-size:10.5px;margin-top:4px">
+              <%= it.clause_code %> raised — <%= r.raised.quantity %> week<%= r.raised.quantity===1?'':'s' %>,
+              <%= r.raised.status %>
+            </div>
+          <% } %>
+        </td>
+      </tr>
+    <% }); %>
+    </tbody>
+  </table></div>
+  <div class="tblfoot">
+    <b>Most of these carry no clause.</b> An unlit name board or a missing emergency-number board is a thing
+    to put right, not a penalty, and a compliance page that read like an accusation sheet would stop being
+    used. Only <b>D3</b>, <b>D4</b> and <b>M12</b> have a rate behind them.
+    A row left entirely blank is <b>unrecorded</b>; ticking <b>not in place</b> is a supervisor's statement
+    and a different fact altogether.
+  </div>
+</div>
+
+<% if (editable) { %>
+  <div style="margin-bottom:18px">
+    <button class="btn" type="submit">Save</button>
+    <span class="muted" style="font-size:11.5px;margin-left:10px">saving again corrects the record</span>
+  </div>
+<% } else { %>
+  <div class="muted" style="font-size:12.5px;margin-bottom:18px">Your role has view access only.</div>
+<% } %>
+</form>
+
+<% const chargeable = rows.filter(r => r.it.clause_code
+     && (r.pos.state === 'overdue' || r.pos.state === 'not_met') && r.pos.weeks && !r.raised); %>
+<% if (chargeable.length && can('deficiency.record')) { %>
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-h"><h3>What can be raised</h3>
+      <span class="sub">the only three obligations here with a rate behind them</span></div>
+    <div class="card-b">
+      <% chargeable.forEach(function(r){ %>
+        <form method="post" action="<%= url('/compliance/clause') %>" style="margin-bottom:10px">
+          <input type="hidden" name="rr" value="<%= rr.id %>">
+          <input type="hidden" name="item" value="<%= r.it.id %>">
+          <div class="note err" style="margin-bottom:6px">
+            <b><%= r.it.name %></b> was due on <b><%= r.pos.due %></b> and is
+            <b><%= r.pos.weeks %> week<%= r.pos.weeks===1?'':'s' %></b> overdue.
+            Clause <b><%= r.it.clause_code %></b> reads per week.
+            <b>No rupee figure is worked out here.</b>
+          </div>
+          <button class="btn" type="submit">Raise clause <%= r.it.clause_code %> — <%= r.pos.weeks %> week<%= r.pos.weeks===1?'':'s' %></button>
+        </form>
+      <% }); %>
+    </div>
+  </div>
+<% } %>
+
+<div class="card">
+  <div class="card-h"><h3>The 18-to-60 age band</h3>
+    <span class="sub">worked out from the staff register, not ticked</span></div>
+  <div class="card-b">
+    <% if (!ages.total) { %>
+      <div class="muted">Nobody is on the roll at this running room.</div>
+    <% } else { %>
+      <div class="row" style="gap:24px">
+        <div><div class="muted" style="font-size:10.5px">ON THE ROLL</div>
+          <div style="font-size:24px;font-weight:680"><%= ages.total %></div></div>
+        <div><div class="muted" style="font-size:10.5px">UNDER 18</div>
+          <div style="font-size:24px;font-weight:680;color:<%= +ages.under_18 ? 'var(--critical)' : 'inherit' %>"><%= ages.under_18 || 0 %></div></div>
+        <div><div class="muted" style="font-size:10.5px">OVER 60</div>
+          <div style="font-size:24px;font-weight:680;color:<%= +ages.over_60 ? 'var(--critical)' : 'inherit' %>"><%= ages.over_60 || 0 %></div></div>
+        <div><div class="muted" style="font-size:10.5px">DATE OF BIRTH NOT ON RECORD</div>
+          <div style="font-size:24px;font-weight:680;color:<%= +ages.unknown ? 'var(--warning)' : 'inherit' %>"><%= ages.unknown || 0 %></div></div>
+      </div>
+      <div class="muted" style="font-size:11.5px;margin-top:10px">
+        This is arithmetic on the staff register, not a box somebody ticked — a tick is worth less than a
+        date of birth. <% if (+ages.unknown) { %><b><%= ages.unknown %> of the <%= ages.total %> have no date
+        of birth on record</b>, so nothing can be said about them either way. They are <b>not</b> counted as
+        compliant, because the register does not know.<% } else { %>Every man on the roll has a date of birth
+        on record.<% } %>
+      </div>
+    <% } %>
+  </div>
+</div>

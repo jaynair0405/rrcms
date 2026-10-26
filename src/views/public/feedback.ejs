@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title><%= title %></title>
+<style>
+  :root{--ink:#0b0b0b;--sec:#52514e;--muted:#898781;--line:#e1e0d9;--blue:#2a78d6;--good:#0ca30c;--bad:#d03b3b}
+  *{box-sizing:border-box}
+  body{margin:0;background:#f4f5f2;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);
+       font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:520px;margin:0 auto;padding:0 0 40px}
+  header{background:#12233d;color:#fff;padding:18px 20px}
+  header .t{font-size:13px;letter-spacing:.6px;text-transform:uppercase;color:#8fa4c0}
+  header h1{margin:2px 0 0;font-size:21px;letter-spacing:-.3px}
+  header .s{font-size:13px;color:#c8d4e4;margin-top:2px}
+  .card{background:#fff;margin:14px;border-radius:12px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  .q{font-size:16px;font-weight:600;margin-bottom:10px}
+  .q small{display:block;font-weight:400;font-size:13px;color:var(--muted);margin-top:2px}
+  /* Rendered 5→1 in the DOM and reversed visually, so a CSS sibling selector can
+     fill every star up to the one tapped — the behaviour people expect. */
+  .stars{display:flex;flex-direction:row-reverse;gap:6px}
+  .stars input{position:absolute;opacity:0;width:0;height:0}
+  .stars label{flex:1;text-align:center;padding:12px 0;border:1px solid var(--line);border-radius:9px;
+    cursor:pointer;font-size:22px;line-height:1;color:#c9c8c2;background:#fcfcfb;user-select:none}
+  .stars label:active{transform:scale(.96)}
+  .stars input:checked + label,
+  .stars input:checked ~ label{background:#fff8e6;border-color:#eda100;color:#eda100}
+  .scale{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:5px}
+  label.fl{display:block;font-size:13px;font-weight:600;color:var(--sec);margin-bottom:5px}
+  input.fi,select.fi,textarea.fi{width:100%;padding:12px;border:1px solid var(--line);border-radius:9px;
+    font-family:inherit;font-size:16px;background:#fcfcfb;color:var(--ink)}
+  input.fi:focus,select.fi:focus,textarea.fi:focus{outline:2px solid rgba(42,120,214,.3);border-color:var(--blue)}
+  .row2{display:flex;gap:10px}.row2>div{flex:1}
+  button{width:100%;padding:15px;background:var(--blue);color:#fff;border:0;border-radius:10px;
+    font-size:17px;font-weight:600;cursor:pointer;margin-top:4px}
+  button:active{filter:brightness(.94)}
+  .note{font-size:12.5px;color:var(--muted);margin-top:12px;text-align:center;padding:0 16px}
+  .err{background:#fdecec;border:1px solid #f3bcbc;color:#a92c2c;border-radius:9px;padding:11px 13px;
+    font-size:14px;margin:14px 14px 0}
+  /* A CLASS THAT SETS `display` BEATS THE BROWSER'S OWN [hidden] RULE.
+     The camera buttons carry `hidden` and are only revealed on a touch device,
+     but `.pickrow{display:flex}` is more specific than the user-agent's
+     `[hidden]{display:none}`, so on a Mac they appeared anyway -- and did
+     nothing, because the handlers are only attached where a camera exists.
+     Reported from the Mac on 10.09.2026. */
+  [hidden]{display:none !important}
+  .pickrow{display:flex;gap:9px;margin-bottom:9px}
+  .pick{flex:1;padding:13px 8px;background:#fcfcfb;color:var(--sec);border:1px solid var(--line);
+    border-radius:9px;font-size:15px;font-weight:600;cursor:pointer;margin-top:0;width:auto}
+  .pick:active{filter:none;background:#f1f1ee}
+  .shot{width:100%;font-size:14px;color:var(--sec)}
+  .mark{display:none;font-size:13.5px;color:var(--good);margin-top:9px;align-items:center;gap:8px}
+  .mark.on{display:flex}
+  .mark a{color:var(--bad);text-decoration:underline;cursor:pointer;font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="t">Central Railway · Running Room</div>
+    <h1><%= rr.name %></h1>
+    <div class="s"><%= rr.div_name %> Division · your feedback is confidential</div>
+  </header>
+
+  <% if (error) { %><div class="err"><%= error %></div><% } %>
+
+  <form method="post" action="<%= url('/f/' + rr.code) %>" enctype="multipart/form-data">
+    <input type="hidden" name="channel" value="qr_room">
+    <div class="card">
+      <% const HEADS = [['cleanliness','Cleanliness','Rooms, bathrooms, dining hall'],
+                        ['linen','Bed linen','Freshness of bedsheets and pillow covers'],
+                        ['behaviour','Staff behaviour','Courtesy and helpfulness of the staff']];
+         if (rr.has_meal_facility) HEADS.splice(1,0,['food','Food quality','Taste, quantity and how hot it was served']);
+         HEADS.forEach(function(h, i){ %>
+        <div style="<%= i ? 'margin-top:22px' : '' %>">
+          <div class="q"><%= h[1] %><small><%= h[2] %></small></div>
+          <div class="stars">
+            <% [5,4,3,2,1].forEach(function(v){ %>
+              <input type="radio" id="<%= h[0] %>_<%= v %>" name="<%= h[0] %>" value="<%= v %>">
+              <label for="<%= h[0] %>_<%= v %>">★</label>
+            <% }); %>
+          </div>
+          <div class="scale"><span>Poor</span><span>Very good</span></div>
+        </div>
+      <% }); %>
+    </div>
+
+    <div class="card">
+      <div style="margin-bottom:14px">
+        <label class="fl" for="comments">Anything you want to tell us? <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+        <textarea class="fi" id="comments" name="comments" rows="3" placeholder="What was good, or what needs fixing"></textarea>
+      </div>
+      <% if (staff.length) { %>
+      <div style="margin-bottom:14px">
+        <label class="fl" for="named_staff_id">Was a particular staff member especially good, or a problem?</label>
+        <select class="fi" id="named_staff_id" name="named_staff_id">
+          <option value="">— not naming anyone —</option>
+          <% staff.forEach(function(s){ %><option value="<%= s.id %>"><%= s.full_name %> (<%= s.designation %>)</option><% }); %>
+        </select>
+      </div>
+      <% } %>
+      <div class="row2">
+        <div><label class="fl" for="crew_name">Your name <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+          <input class="fi" id="crew_name" name="crew_name"></div>
+        <div><label class="fl" for="crew_id">Crew ID <span style="font-weight:400;color:var(--muted)">(optional)</span></label>
+          <input class="fi" id="crew_id" name="crew_id" inputmode="numeric"></div>
+      </div>
+    </div>
+
+    <%# THE FILE BOX IS THE LAST THING IN THE FORM, DELIBERATELY.
+        Multer reads the parts in the order the browser sends them and aborts on
+        a file over the ceiling. With the picture last, every rating and every
+        word he typed has already been read by the time that can happen. %>
+    <div class="card">
+      <div class="q">Is something wrong? Show us.
+        <small>A photograph of an untidy room, a broken fitting, or anything else
+          — it goes straight to the officer. Optional.</small></div>
+      <div class="pickrow" id="pickrow" hidden>
+        <button type="button" class="pick" id="takeshot">Take a photo</button>
+        <button type="button" class="pick" id="pickshot">Choose a photo</button>
+      </div>
+      <input class="shot" type="file" id="photo" name="photo" accept="image/*">
+      <div class="mark" id="shotmark"><span id="shotname"></span><a id="shotdrop">remove</a></div>
+    </div>
+
+    <div style="padding:0 14px"><button type="submit">Submit feedback</button></div>
+    <div class="note">Takes under a minute. Your rating decides how this running room is graded for the month.</div>
+  </form>
+</div>
+<script>
+/* Same ruling as the officers' screens, in a page that carries no app.js.
+   `accept="image/*"` alone is not enough: which chooser a phone offers is up to
+   the phone, and on Android it went straight to the gallery and never offered
+   the camera. So the choice is made here — two buttons in front of ONE input,
+   each setting or clearing `capture` a moment before opening it. One input, one
+   form part, whichever button he presses.
+
+   Only where a camera is plausible. On a desktop `capture` is ignored, so a
+   "Take a photo" button would open a file dialog and be a lie. */
+(function () {
+  var input = document.getElementById('photo');
+  var mark  = document.getElementById('shotmark');
+  var name  = document.getElementById('shotname');
+  var touch = false;
+  try { touch = window.matchMedia('(pointer: coarse)').matches; } catch (e) {}
+
+  if (touch) {
+    document.getElementById('pickrow').hidden = false;
+    input.style.display = 'none';
+    document.getElementById('takeshot').addEventListener('click', function () {
+      input.setAttribute('capture', 'environment'); input.click();
+    });
+    document.getElementById('pickshot').addEventListener('click', function () {
+      input.removeAttribute('capture'); input.click();
+    });
+  }
+
+  /* A phone gives no other sign that the picture was taken. Without this the
+     man taps Take a photo, the camera closes, the page looks unchanged, and he
+     submits believing nothing was attached. */
+  input.addEventListener('change', function () {
+    var f = input.files && input.files[0];
+    if (!f) { mark.className = 'mark'; return; }
+    name.textContent = '\u2713 ' + (f.name.length > 34 ? f.name.slice(0, 31) + '\u2026' : f.name);
+    mark.className = 'mark on';
+  });
+  document.getElementById('shotdrop').addEventListener('click', function () {
+    input.value = ''; mark.className = 'mark';
+  });
+})();
+</script>
+</body>
+</html>

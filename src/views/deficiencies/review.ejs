@@ -1,0 +1,143 @@
+<div style="margin-bottom:14px"><a href="<%= url('/deficiencies') %>">← Deficiency register</a></div>
+
+<form class="row" method="get" style="margin-bottom:14px;align-items:flex-end;gap:10px">
+  <div style="flex:0 0 250px"><label class="fl">Running room</label>
+    <select class="fi" name="rr" onchange="this.form.submit()">
+      <% rooms.forEach(function(r){ %>
+        <option value="<%= r.id %>" <%= r.id===rr.id?'selected':'' %>><%= r.name %> (<%= r.div_code %>)</option>
+      <% }); %>
+    </select></div>
+  <div style="flex:0 0 150px"><label class="fl">Review</label>
+    <select class="fi" name="period" onchange="this.form.submit()">
+      <% Object.keys(periods).forEach(function(k){ %>
+        <option value="<%= k %>" <%= k===period?'selected':'' %>><%= periods[k].label %></option>
+      <% }); %>
+    </select></div>
+  <% if (period === 'monthly') { %>
+    <div style="flex:0 0 170px"><label class="fl">Month</label>
+      <input class="fi" type="month" name="month" value="<%= on.slice(0,7) %>" onchange="this.form.submit()"></div>
+  <% } else { %>
+    <div style="flex:0 0 190px"><label class="fl">Week beginning</label>
+      <input class="fi" type="date" name="week" value="<%= on %>" onchange="this.form.submit()"></div>
+  <% } %>
+  <noscript><button class="btn" type="submit">Go</button></noscript>
+</form>
+
+<% if (typeof saved !== 'undefined' && saved !== null) { %>
+  <div class="note ok" style="margin-bottom:14px">
+    Review saved. <b><%= saved %></b> deficienc<%= saved === '1' ? 'y' : 'ies' %> recorded against the
+    contractor for this period.
+  </div>
+<% } %>
+
+<div class="card">
+  <div class="card-h">
+    <h3><%= periods[period].label %> review — <%= rr.name %></h3>
+    <span class="sub">
+      <% if (period === 'monthly') { %>for <%= on.slice(0,7) %><% } else { %>week beginning <%= on %><% } %>
+      · the clauses the daily report does not cover
+    </span>
+  </div>
+
+  <% if (locked) { %>
+    <div class="card-b"><div class="note warn">
+      One or more deficiencies from this review have already been rectified or closed. Those are history and
+      will not be touched. Anything still open will be replaced by what you save here.
+    </div></div>
+  <% } %>
+
+  <% if (!clauses.length) { %>
+    <div class="card-b"><div class="muted">No <%= periods[period].label.toLowerCase() %> clause applies to this
+      running room.</div></div>
+  <% } else { %>
+  <%# enctype, or the browser posts filenames rather than files and the
+      photograph disappears with no error anywhere. %>
+  <form method="post" action="<%= url('/deficiencies/review') %>" id="reviewform"
+        enctype="multipart/form-data">
+    <input type="hidden" name="rr" value="<%= rr.id %>">
+    <input type="hidden" name="period" value="<%= period %>">
+    <% if (period === 'monthly') { %><input type="hidden" name="month" value="<%= on.slice(0,7) %>">
+    <% } else { %><input type="hidden" name="week" value="<%= on %>"><% } %>
+
+    <div class="card-b" style="border-bottom:1px solid var(--border);padding-bottom:12px">
+      <div class="row" style="gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn ghost small" type="button" id="allcomplied">All complied</button>
+        <div class="spacer"></div>
+        <div id="reviewcount" class="muted" style="font-size:12.5px"></div>
+      </div>
+    </div>
+
+    <div class="tblwrap"><table class="tbl" id="reviewtable">
+      <thead><tr><th style="width:70px">Clause</th><th>What is required</th>
+        <th style="width:330px">Position</th><th style="width:90px" class="num">How many</th>
+        <th>What was seen</th></tr></thead>
+      <tbody>
+      <% clauses.forEach(function(c){ const f = found[c.id]; %>
+        <tr>
+          <td><b><%= c.clause_code %></b>
+            <div class="muted" style="font-size:10.5px"><%= c.group_name %></div></td>
+          <td style="font-size:12.3px"><%= c.description %>
+            <% if (c.rate) { %>
+              <div class="muted" style="font-size:10.5px">Schedule rate ₹<%= c.rate %><%= c.unit ? ' ' + c.unit : '' %>
+                — reference only, nothing is computed here</div>
+            <% } %></td>
+          <td>
+            <div class="marks" role="radiogroup" aria-label="<%= c.clause_code %>">
+              <% [['complied','Complied'],['not_complied','Not complied'],['na','Not applicable']].forEach(function(o){ %>
+                <label class="mark">
+                  <input type="radio" name="c_<%= c.id %>" value="<%= o[0] %>"
+                         <%= f && o[0] === 'not_complied' ? 'checked' : '' %>><span><%= o[1] %></span>
+                </label>
+              <% }); %>
+            </div>
+            <%# THE PHOTOGRAPH ALREADY ON RECORD, always shown. Outside the box
+                below for the reason the cleaning register learnt on 10.09.2026:
+                putting it inside meant a finding corrected to Complied hid its
+                own evidence. %>
+            <% if (f && f.evidence_file_id) { %>
+              <a href="<%= url('/photo/' + f.evidence_file_id) %>" target="_blank"
+                 title="what was seen" style="display:block;margin:6px 0 2px">
+                <img src="<%= url('/photo/' + f.evidence_file_id) %>" alt="what was seen"
+                     style="height:40px;width:auto;max-width:96px;object-fit:cover;
+                            border:1px solid var(--border);border-radius:4px"></a>
+              <div class="muted" style="font-size:10.5px">on record<% if (!f.evidence_file_id) { %><% } %></div>
+            <% } %>
+            <%# Offered only where the answer is Not complied — a review of
+                thirty clauses with a file box on every row is a form nobody
+                finishes. Never demanded: a finding without a photograph is
+                still a finding. %>
+            <div class="failphoto" data-for="c_<%= c.id %>"
+                 <%= f ? '' : 'hidden' %>>
+              <input class="fi" type="file" name="p_<%= c.id %>" accept="image/*"
+                     style="margin-top:4px;font-size:10.5px;padding:3px">
+              <% if (f && f.evidence_file_id) { %>
+                <div class="muted" style="font-size:10.5px">Choosing another replaces it.</div>
+              <% } %>
+            </div>
+          </td>
+          <td class="num"><input class="fi" type="number" min="1" name="q_<%= c.id %>"
+                value="<%= f ? f.quantity : 1 %>" style="width:72px;padding:4px 6px"></td>
+          <td><input class="fi" name="o_<%= c.id %>" style="padding:4px 7px;font-size:12px"
+                value="<%= f && f.description ? f.description : '' %>"
+                placeholder="optional, but it is what an appeal turns on"></td>
+        </tr>
+      <% }); %>
+      </tbody>
+    </table></div>
+
+    <div class="card-b" style="border-top:1px solid var(--border)">
+      <button class="btn" type="submit">Save the review</button>
+      <div class="muted" style="font-size:11.5px;margin-top:8px">
+        Saving again corrects this review rather than adding to it — but only what is still open. A deficiency
+        already rectified or closed is history and is left alone.
+        <br>
+        <b>M10</b> is the tender's own catch-all for an irregularity the schedule does not name, so nothing has
+        to be forced into the wrong clause.
+        <br>
+        No amount is computed anywhere. These are the rows the penalty engine will read once the schedule is
+        settled.
+      </div>
+    </div>
+  </form>
+  <% } %>
+</div>

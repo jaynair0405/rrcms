@@ -1,0 +1,195 @@
+<%
+  const open      = call.lines.filter(l => l.ack_outcome === 'pending');
+  const bad       = call.lines.filter(l => l.ack_outcome === 'refused' || l.ack_outcome === 'not_present');
+  const unadvised = bad.filter(l => !l.lobby_advised_at);
+  const t = v => v ? String(v).slice(11, 16) : '—';
+  const LABEL = { acknowledged: 'Acknowledged', refused: 'Refused', not_present: 'Not in the running room', pending: 'Not yet served' };
+%>
+
+<div class="row" style="align-items:center;gap:10px;margin-bottom:14px">
+  <a class="btn ghost" href="<%= url('/records/call-book?rr=' + call.running_room_id + '&date=' + String(call.working_date).slice(0,10)) %>">Back to the sheet</a>
+  <div class="spacer"></div>
+  <div class="muted" style="font-size:12px"><%= rr.name %></div>
+</div>
+
+<% if (note === 'ack') { %><div class="note ok" style="margin-bottom:14px">Acknowledgement recorded. The time was stamped by the system, not typed.</div><% } %>
+<% if (note === 'outcome') { %><div class="note" style="margin-bottom:14px">Outcome recorded.</div><% } %>
+<% if (note === 'repeated') { %><div class="note ok" style="margin-bottom:14px">Recorded that the lobby was told.</div><% } %>
+<% if (note === 'cancelled') { %><div class="note warn" style="margin-bottom:14px">This call has been marked withdrawn by the lobby.</div><% } %>
+<% if (note === 'changed') { %><div class="note warn" style="margin-bottom:14px">The crew has been changed. The new man has acknowledged nothing, so the call is open again and the lobby has to be told afresh.</div><% } %>
+
+<div class="card" style="margin-bottom:16px">
+  <div class="card-h">
+    <h3>Train <%= call.train_no || '—' %><%= call.train_name ? ' · ' + call.train_name : '' %></h3>
+    <span class="sub">rang at <%= t(call.call_received_at) %><%= call.received_from ? ' · from ' + call.received_from : '' %></span>
+  </div>
+  <div class="card-b">
+    <div class="row" style="gap:26px;flex-wrap:wrap;font-size:12.5px">
+      <div><div class="muted" style="font-size:11px">Sign on at</div>
+        <div class="tnum" style="font-size:17px"><%= t(call.sign_on_at) %></div></div>
+      <div><div class="muted" style="font-size:11px">Lobby rang</div>
+        <div class="tnum" style="font-size:17px"><%= t(call.call_received_at) %></div></div>
+      <div><div class="muted" style="font-size:11px">Crew on this call</div>
+        <div class="tnum" style="font-size:17px"><%= call.lines.length %></div></div>
+      <% if (call.lobby) { %><div><div class="muted" style="font-size:11px">Lobby</div>
+        <div style="font-size:15px"><%= call.lobby %></div></div><% } %>
+    </div>
+    <% if (call.remarks) { %><div class="muted" style="font-size:12px;margin-top:10px"><%= call.remarks %></div><% } %>
+    <% if (call.cancelled_at) { %>
+      <div class="note warn" style="margin-top:12px"><b>Withdrawn by the lobby</b> at <%= t(call.cancelled_at) %> —
+        <%= call.cancelled_reason %></div>
+    <% } %>
+  </div>
+</div>
+
+<% call.lines.forEach(function(l){ %>
+  <div class="card" style="margin-bottom:12px">
+    <div class="card-h">
+      <h3><%= l.crew_name %><% if (l.crew_role) { %> <span class="pill"><%= l.crew_role %></span><% } %></h3>
+      <span class="sub"><%= l.bed_no ? 'bed ' + l.bed_no : 'no bed recorded' %><%
+        %><%= l.crew_id_no ? ' · ' + l.crew_id_no : '' %><%
+        %><%= l.crew_source === 'div_master' ? ' · from the division staff list' : ' · name entered here, not verified' %></span>
+    </div>
+    <div class="card-b">
+      <% if (l.ack_outcome === 'pending' && !call.cancelled_at) { %>
+        <% if (can('stay.manage')) { %>
+          <div class="note" style="margin-bottom:12px;font-size:12.5px">
+            Hand the phone to <b><%= l.crew_name %></b> and let him press his own name. The time is stamped by
+            the system at that moment — it cannot be typed, and it cannot be written up later.
+          </div>
+          <form method="post" action="<%= url('/records/call-book/' + call.id + '/ack') %>" style="margin-bottom:12px">
+            <input type="hidden" name="line" value="<%= l.id %>">
+            <button class="btn" type="submit"
+                    style="width:100%;padding:22px;font-size:19px;font-weight:600;letter-spacing:.3px">
+              I am <%= l.crew_name %> — call received
+            </button>
+          </form>
+
+          <details>
+            <summary class="muted" style="font-size:12px;cursor:pointer">He did not acknowledge</summary>
+            <form method="post" action="<%= url('/records/call-book/' + call.id + '/outcome') %>"
+                  style="margin-top:10px;padding:12px;border:1px solid var(--border);border-radius:8px">
+              <input type="hidden" name="line" value="<%= l.id %>">
+              <label class="fl">What happened</label>
+              <select class="fi" name="outcome" style="margin-bottom:10px">
+                <option value="not_present">He was not in the running room</option>
+                <option value="refused">He would not acknowledge</option>
+              </select>
+              <label style="display:flex;gap:8px;align-items:flex-start;font-size:12.5px;margin-bottom:10px">
+                <input type="checkbox" name="advised" value="1" checked>
+                <span>I have telephoned the crew booking lobby about this</span></label>
+              <label class="fl">Who at the lobby was told</label>
+              <input class="fi" name="advised_to" maxlength="120" placeholder="name or designation" style="margin-bottom:10px">
+              <button class="btn warn" type="submit">Record it</button>
+              <div class="muted" style="font-size:11px;margin-top:8px">
+                Schedule A requires the lobby to be advised <b>immediately, with the time</b>, when a man does
+                not acknowledge or is not in the running room. Recording that you did is your own protection
+                as much as the Railway's record.
+              </div>
+            </form>
+          </details>
+        <% } else { %>
+          <div class="muted" style="font-size:12.5px">Not yet served. Serving is done by the running room.</div>
+        <% } %>
+
+      <% } else { %>
+        <div class="row" style="gap:24px;flex-wrap:wrap;align-items:flex-start">
+          <div>
+            <div class="muted" style="font-size:11px">Outcome</div>
+            <div style="margin-top:3px">
+              <% if (l.ack_outcome === 'acknowledged') { %>
+                <span class="st good"><span class="dot"></span><%= LABEL[l.ack_outcome] %></span>
+              <% } else if (l.ack_outcome === 'pending') { %>
+                <span class="st warn"><span class="dot"></span><%= LABEL[l.ack_outcome] %></span>
+              <% } else { %>
+                <span class="st crit"><span class="dot"></span><%= LABEL[l.ack_outcome] %></span>
+              <% } %>
+            </div>
+          </div>
+          <% if (l.ack_outcome === 'acknowledged') { %>
+            <div><div class="muted" style="font-size:11px">Acknowledged at</div>
+              <div class="tnum" style="font-size:17px"><%= t(l.ack_recorded_at || l.acknowledged_at) %></div>
+              <div class="muted" style="font-size:10.5px">
+                <%= l.ack_method === 'tap' ? 'pressed by the crew, stamped by the system'
+                    : l.ack_method === 'signature' ? 'signed on screen' : 'signed on the paper book' %></div></div>
+          <% } %>
+          <% if (l.lobby_advised_at) { %>
+            <div><div class="muted" style="font-size:11px">Lobby advised at</div>
+              <div class="tnum" style="font-size:17px"><%= t(l.lobby_advised_at) %></div>
+              <% if (l.lobby_advised_to) { %><div class="muted" style="font-size:10.5px"><%= l.lobby_advised_to %></div><% } %></div>
+          <% } else if (l.ack_outcome === 'refused' || l.ack_outcome === 'not_present') { %>
+            <div><div class="muted" style="font-size:11px">Lobby advised</div>
+              <div class="st crit" style="margin-top:5px"><span class="dot"></span>Not recorded</div></div>
+          <% } %>
+          <% if (call.sign_on_at && l.served_at) { %>
+            <div><div class="muted" style="font-size:11px">Against sign-on</div>
+              <% const mins = Math.round((new Date(String(l.served_at).replace(' ','T')) - new Date(String(call.sign_on_at).replace(' ','T'))) / 60000); %>
+              <div class="tnum" style="font-size:17px"><%= mins > 0 ? mins + ' min after' : Math.abs(mins) + ' min before' %></div>
+              <div class="muted" style="font-size:10.5px">served <%= t(l.served_at) %></div></div>
+          <% } %>
+        </div>
+
+        <% if (can('stay.manage') && !call.cancelled_at) { %>
+          <div class="hr"></div>
+          <form method="post" action="<%= url('/records/call-book/' + call.id + '/late') %>">
+            <input type="hidden" name="line" value="<%= l.id %>">
+            <label style="display:flex;gap:8px;align-items:flex-start;font-size:12.5px;margin-bottom:8px">
+              <input type="checkbox" name="late" value="1" <%= l.crew_reported_late ? 'checked' : '' %>>
+              <span>The lobby has reported that <b><%= l.crew_name %></b> went <b>late on duty</b></span></label>
+            <input class="fi" name="remarks" maxlength="300" placeholder="what the lobby said, if anything"
+                   value="<%= l.remarks || '' %>" style="margin-bottom:8px">
+            <button class="btn ghost" type="submit" style="font-size:12px">Save</button>
+          </form>
+          <% if (l.crew_reported_late) { %>
+            <div class="note warn" style="margin-top:10px;font-size:12.5px">
+              Late on duty is the <b>second limb</b> of Schedule C item 6. Where the call was also served
+              late, this is a case the Railway can raise —
+              <a href="<%= url('/deficiencies') %>">record it against clause C5</a>.
+              RR-CMS computes no amount.
+            </div>
+          <% } %>
+        <% } %>
+      <% } %>
+    </div>
+  </div>
+<% }); %>
+
+<div class="card">
+  <div class="card-h"><h3>Back to the lobby</h3>
+    <span class="sub">"the acknowledgement … shall be repeated to crew lobby"</span></div>
+  <div class="card-b">
+    <% if (call.repeated_to_lobby_at) { %>
+      <span class="st good"><span class="dot"></span>Repeated to the lobby at <%= t(call.repeated_to_lobby_at) %></span>
+      <% if (call.repeated_to) { %><div class="muted" style="font-size:11.5px;margin-top:5px">told to <%= call.repeated_to %></div><% } %>
+    <% } else if (call.cancelled_at) { %>
+      <div class="muted" style="font-size:12.5px">The call was withdrawn, so there is nothing to repeat.</div>
+    <% } else if (can('stay.manage')) { %>
+      <% if (open.length) { %>
+        <div class="note warn" style="font-size:12.5px;margin-bottom:10px">
+          <%= open.length %> of the <%= call.lines.length %> men on this call have not been settled yet. The
+          lobby cannot be told the call is complete until every man is either acknowledged, refused or
+          reported not present.
+        </div>
+      <% } %>
+      <form method="post" action="<%= url('/records/call-book/' + call.id + '/repeat') %>">
+        <div class="row" style="gap:8px;align-items:flex-end">
+          <div style="flex:1;max-width:280px"><label class="fl">Who at the lobby was told</label>
+            <input class="fi" name="repeated_to" maxlength="120" placeholder="name or designation"></div>
+          <button class="btn" type="submit" <%= open.length ? 'disabled' : '' %>>I have repeated it to the lobby</button>
+        </div>
+      </form>
+    <% } else { %>
+      <span class="st warn"><span class="dot"></span>Not yet repeated to the lobby</span>
+    <% } %>
+
+    <% if (can('stay.manage') && !call.cancelled_at) { %>
+      <div class="hr"></div>
+      <div class="muted" style="font-size:11.5px">
+        The lobby withdrew this call, or changed a man? Both are changes with a reason and both are kept, so
+        they are done under
+        <a href="<%= url('/records/call-book/changes?rr=' + call.running_room_id + '&date=' + String(call.working_date).slice(0,10)) %>">Changes
+        &amp; withdrawals</a> — not here, and not on the sheet.
+      </div>
+    <% } %>
+  </div>
+</div>

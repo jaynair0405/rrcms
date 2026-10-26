@@ -1,0 +1,172 @@
+<%- await include('_nav') %>
+
+<%
+  const FREQ = { daily:'Daily', weekly:'Weekly', fortnightly:'Fortnightly', monthly:'Monthly',
+                 half_yearly:'Half-yearly', yearly:'Yearly', as_required:'As required' };
+  const late = rows.filter(function(r){ return r.shortfall_days > 0; }).length;
+  // Quantities come back from MySQL as DECIMAL strings. 100.00 kg a month is
+  // read as a typing slip by anyone keeping a store register, so trailing
+  // zeroes are dropped -- and only trailing zeroes, because 34.99 is a rate.
+  function qty(v){ if (v === null || v === undefined) return ''; return String(Number(v)); }
+  function money(v){ return Number(v).toLocaleString('en-IN', { minimumFractionDigits: 2 }); }
+  // A contract that priced the item carries its rate; the generic schedule does not.
+  const priced = items.filter(function(i){ return i.rate !== null && i.rate !== undefined; });
+  // Three different kinds of obligation live in this one table. The supervisor
+  // deposits cleaning materials in the store monthly; the newspapers arrive
+  // daily; the fittings are a handover. Naming the groups is the difference
+  // between a schedule and a list.
+  const CAT = { cleaning: 'Cleaning materials',
+                press:    'Newspapers and magazines',
+                fittings: 'Fittings supplied to the running room' };
+  const CATNONE = 'Other items in the schedule';
+%>
+
+<div class="kpis" style="margin-bottom:14px">
+  <div class="kpi"><div class="strip" style="background:var(--s1)"></div>
+    <div class="lab">Items in the schedule</div><div class="val"><%= items.length %></div>
+    <div class="foot">Schedules C and D</div></div>
+  <div class="kpi"><div class="strip" style="background:var(--critical)"></div>
+    <div class="lab">Supplied short</div><div class="val"><%= short %></div>
+    <div class="foot">less than the due quantity</div></div>
+  <div class="kpi"><div class="strip" style="background:var(--warning)"></div>
+    <div class="lab">Supplied late</div><div class="val"><%= late %></div>
+    <div class="foot">after the due date</div></div>
+</div>
+
+<div class="grid" style="grid-template-columns:1.5fr 1fr">
+  <div class="card">
+    <div class="card-h"><h3>Supply register</h3><span class="sub"><%= rr.name %></span></div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>Due</th><th>Item</th><th>Frequency</th><th class="num">Due</th>
+        <th class="num">Supplied</th><th>Brand</th><th>Position</th></tr></thead>
+      <tbody>
+      <% rows.forEach(function(r){ %>
+        <tr>
+          <td class="tnum"><%= r.due_date %></td>
+          <td><%= r.name %> <span class="muted">(<%= r.unit %>)</span>
+              <span class="pill" style="margin-left:4px">Sch <%= r.schedule_code %></span></td>
+          <td class="muted"><%= FREQ[r.supply_frequency] || r.supply_frequency %></td>
+          <td class="num"><%= r.quantity_due %></td>
+          <td class="num"><%= r.quantity_supplied %></td>
+          <td><% if (r.brand_supplied) { %><%= r.brand_supplied %><% } else { %><span class="muted">—</span><% } %></td>
+          <td><% if (r.quantity_supplied < r.quantity_due) { %>
+                <span class="st crit"><span class="dot"></span>Short by <%= r.quantity_due - r.quantity_supplied %></span>
+              <% } else if (r.shortfall_days > 0) { %>
+                <span class="st warn"><span class="dot"></span><%= r.shortfall_days %> day<%= r.shortfall_days>1?'s':'' %> late</span>
+              <% } else if (!r.supplied_on) { %>
+                <span class="st neut"><span class="dot"></span>Awaited</span>
+              <% } else { %><span class="st good"><span class="dot"></span>In full, on time</span><% } %></td>
+        </tr>
+      <% }); %>
+      <% if (!rows.length) { %><tr><td colspan="7" class="muted">Nothing recorded yet.</td></tr><% } %>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h3>Record a supply</h3></div>
+    <div class="card-b">
+      <% if (can('stay.manage')) { %>
+      <form method="post" action="<%= url('/facility/consumables') %>">
+        <input type="hidden" name="rr" value="<%= rr.id %>">
+        <div style="margin-bottom:10px"><label class="fl">Item</label>
+          <select class="fi" name="consumable_item_id" required>
+            <% items.forEach(function(it){ %>
+              <option value="<%= it.id %>"><%= it.name %> — <% if (it.qty_per_unit) { %><%= qty(it.qty_per_unit) %> <%= it.unit %> <% } %><%= (FREQ[it.supply_frequency] || it.supply_frequency).toLowerCase() %></option>
+            <% }); %>
+          </select></div>
+        <div class="row" style="gap:8px;margin-bottom:10px">
+          <div style="flex:1"><label class="fl">Due on</label>
+            <input class="fi" type="date" name="due_date" value="<%= date %>" required></div>
+          <div style="flex:1"><label class="fl">Supplied on</label>
+            <input class="fi" type="date" name="supplied_on"></div>
+        </div>
+        <div class="row" style="gap:8px;margin-bottom:10px">
+          <div style="flex:1"><label class="fl">Quantity due</label>
+            <input class="fi" type="number" min="0" name="quantity_due" required></div>
+          <div style="flex:1"><label class="fl">Quantity supplied</label>
+            <input class="fi" type="number" min="0" name="quantity_supplied" value="0"></div>
+        </div>
+        <div style="margin-bottom:10px"><label class="fl">Brand supplied</label>
+          <input class="fi" type="text" name="brand_supplied" placeholder="must be from the approved list"></div>
+        <div style="margin-bottom:12px"><label class="fl">Remarks</label>
+          <input class="fi" type="text" name="remarks"></div>
+        <button class="btn" type="submit">Save entry</button>
+      </form>
+      <% } else { %>
+        <div class="muted" style="font-size:12.5px">Your role has view access only.</div>
+      <% } %>
+      <div class="hr"></div>
+      <div class="muted" style="font-size:11.5px">
+        Days late are worked out from the due date and the supply date — the figure is recorded, never
+        converted to money here.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:14px">
+  <div class="card-h"><h3>What is owed each month</h3>
+    <span class="sub"><%= rr.name %> — the schedule this running room is supplied against</span></div>
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr><th>Item</th><th>Pack</th><th class="num">Due each month</th>
+      <th>Frequency</th><th>Approved brands</th></tr></thead>
+    <tbody>
+    <% var seen = null; items.forEach(function(it){
+         var lab = it.category ? (CAT[it.category] || it.category) : CATNONE;
+         if (lab !== seen) { seen = lab; %>
+      <tr><td colspan="5" style="background:var(--plane);font-weight:600"><%= lab %></td></tr>
+    <% } %>
+      <tr>
+        <td><%= it.name %></td>
+        <td class="muted"><% if (it.pack_size) { %><%= it.pack_size %><% } else { %>—<% } %></td>
+        <td class="num"><% if (it.qty_per_unit) { %><%= qty(it.qty_per_unit) %> <span class="muted"><%= it.unit %></span>
+          <% } else { %><span class="muted">as required</span><% } %></td>
+        <td class="muted"><%= FREQ[it.supply_frequency] || it.supply_frequency %></td>
+        <td><% if (it.approved_brands) { %><%= it.approved_brands %><% } else { %><span class="muted">any ISI-marked</span><% } %></td>
+      </tr>
+    <% }); %>
+    </tbody>
+  </table></div>
+  <div class="card-b muted" style="font-size:11.5px">
+    A monthly figure is shown only where the contract states a quantity. Where it says
+    "as per requirement", nothing is shown — the schedule is not given a number RR-CMS invented.
+  </div>
+</div>
+
+<% if (priced.length) { %>
+<div class="card" style="margin-top:14px">
+  <div class="card-h"><h3>What the contract sanctioned</h3>
+    <span class="sub">quantities and rates as the annexure prints them</span></div>
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr><th>Item</th><th class="num">For the contract</th><th class="num">Rate</th>
+      <th class="num">Amount</th><th>Rate reference</th></tr></thead>
+    <tbody>
+    <% var total = 0; priced.forEach(function(it){ total += Number(it.qty_contract) * Number(it.rate); %>
+      <tr>
+        <td><%= it.name %>
+          <%# The note lives HERE and not on the working list above. A supervisor
+              drawing stock needs the figure, not its derivation. But the figure
+              on this page departs from the signed sheet on six lines, and the
+              only person who will ever notice is someone checking a bill against
+              that sheet -- which is what this card is for. %>
+          <% if (it.contract_note) { %>
+            <div class="muted" style="font-size:11px;margin-top:2px"><%= it.contract_note %></div>
+          <% } %></td>
+        <td class="num"><%= qty(it.qty_contract) %> <span class="muted"><%= it.unit %></span></td>
+        <td class="num tnum"><%= money(it.rate) %></td>
+        <td class="num tnum"><%= money(Number(it.qty_contract) * Number(it.rate)) %></td>
+        <td class="muted" style="font-size:11.5px"><% if (it.rate_ref) { %><%= it.rate_ref %><% } else { %>—<% } %></td>
+      </tr>
+    <% }); %>
+      <tr><td colspan="3"><strong>Total</strong></td>
+        <td class="num tnum"><strong><%= money(total) %></strong></td><td></td></tr>
+    </tbody>
+  </table></div>
+  <div class="card-b muted" style="font-size:11.5px">
+    The amount column is the annexure's own quantity times its own rate. No screen in RR-CMS
+    turns a shortfall into money — a short supply is recorded as a quantity and a number of days,
+    and the penalty is the officer's to apply.
+  </div>
+</div>
+<% } %>

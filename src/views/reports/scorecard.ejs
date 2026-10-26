@@ -1,0 +1,103 @@
+<%- await include('_nav') %>
+
+<%
+  const rated = rows.filter(function(r){ return r.rating !== null; });
+  const belowBand = rated.filter(function(r){ return r.rating <= 4.01; }).length;
+  const covered = rows.filter(function(r){ return r.coverage_pct !== null; });
+  const ratingRows = rated.slice().sort(function(a,b){ return b.rating - a.rating; })
+    .map(function(r){ return { label: r.name, value: r.rating,
+      tone: r.rating > 4.01 ? null : 'critical',
+      note: r.rr_count + ' RR' }; });
+  const coverRows = covered.slice().sort(function(a,b){ return b.coverage_pct - a.coverage_pct; })
+    .map(function(r){ return { label: r.name, value: r.coverage_pct,
+      tone: r.coverage_pct >= 50 ? null : 'critical' }; });
+%>
+
+<div class="kpis" style="margin-bottom:14px">
+  <div class="kpi"><i class="strip" style="background:var(--s1)"></i>
+    <div class="lab">Contractors in view</div><div class="val"><%= rows.length %></div>
+    <div class="foot">holding a live agreement</div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s4)"></i>
+    <div class="lab">Average occupant rating</div>
+    <div class="val"><%= rated.length ? (rated.reduce(function(a,r){return a+r.rating;},0)/rated.length).toFixed(2) : '—' %> <small>/ 5</small></div>
+    <div class="foot"><%= monthLabel %></div></div>
+  <div class="kpi"><i class="strip" style="background:var(--critical)"></i>
+    <div class="lab">In the penalty band</div><div class="val"><%= belowBand %></div>
+    <div class="foot">rated 4.01 or below</div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s2)"></i>
+    <div class="lab">Sites meeting the 50% floor</div>
+    <div class="val"><%= rows.reduce(function(a,r){return a+r.meeting;},0) %> <small>/ <%= rows.reduce(function(a,r){return a+r.periods;},0) %></small></div>
+    <div class="foot">below the floor the grading penalty is not leviable</div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s8)"></i>
+    <div class="lab">Open deficiencies</div>
+    <div class="val"><%= fmtInt(rows.reduce(function(a,r){return a+r.def_open;},0)) %></div>
+    <div class="foot">of <%= fmtInt(rows.reduce(function(a,r){return a+r.def_total;},0)) %> raised in six months</div></div>
+</div>
+
+<div class="grid" style="grid-template-columns:1fr 1fr;margin-bottom:14px">
+  <div class="card">
+    <div class="card-h"><h3>Average occupant rating</h3><span class="sub"><%= monthLabel %> · all grading heads</span></div>
+    <div class="chartbox">
+      <%- chart.hbar(ratingRows, { width: 560, max: 5, title: 'Average occupant rating by contractor',
+            valueFmt: function(v){ return Number(v).toFixed(2); },
+            threshold: { value: 4.01, label: '4.01 — penalty band boundary' } }) %>
+    </div>
+    <div class="tblfoot">Red where the average is 4.01 or below, which is where the tender's
+      <span title="(5 minus R) over 5, times 10 per cent of the monthly bill">(5&nbsp;−&nbsp;R)/5</span>
+      grading formula starts to bite. No amount is computed here.</div>
+  </div>
+  <div class="card">
+    <div class="card-h"><h3>Feedback coverage</h3><span class="sub"><%= monthLabel %> · share of occupants who rated</span></div>
+    <div class="chartbox">
+      <%- chart.hbar(coverRows, { width: 560, max: 100, title: 'Feedback coverage by contractor',
+            valueFmt: function(v){ return Number(v).toFixed(1) + '%'; },
+            threshold: { value: 50, label: '50% floor' } }) %>
+    </div>
+    <div class="tblfoot">Below 50% the grading penalty is not leviable at all, so coverage is a
+      contract control in its own right — not just a data-quality figure.</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-h"><h3>Scorecard</h3><span class="sub"><%= monthLabel %> · deficiencies and inspections over six months</span></div>
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr>
+      <th>Contractor</th><th class="num">RRs</th><th class="num">Beds</th>
+      <th class="num">Rating</th><th>Coverage</th><th class="num">Floor met</th>
+      <th class="num">Open def.</th><th class="num">Inspections</th><th class="num">Compliant</th>
+      <th class="num">On roll</th><th class="num">Sanctioned</th><th>Position</th>
+    </tr></thead>
+    <tbody>
+    <% rows.forEach(function(r){ %>
+      <tr>
+        <td><a href="<%= url('/contractors/' + r.id) %>"><%= r.name %></a>
+            <span class="muted"><%= r.code %></span>
+            <% if (r.is_blacklisted) { %><span class="pill r" style="margin-left:4px">blacklisted</span><% } %></td>
+        <td class="num"><%= r.rr_count %></td>
+        <td class="num"><%= fmtInt(r.beds) %></td>
+        <td class="num"><% if (r.rating === null) { %><span class="muted">—</span>
+            <% } else if (r.rating > 4.01) { %><span class="st good"><span class="dot"></span><%= r.rating.toFixed(2) %></span>
+            <% } else { %><span class="st crit"><span class="dot"></span><%= r.rating.toFixed(2) %></span><% } %></td>
+        <td><% if (r.coverage_pct === null) { %><span class="muted">—</span>
+            <% } else { %><%- chart.meter(r.coverage_pct, { floor: 50, label: r.coverage_pct + '% coverage' }) %>
+              <span class="muted" style="margin-left:6px"><%= r.coverage_pct.toFixed(1) %>%</span><% } %></td>
+        <td class="num"><%= r.meeting %>/<%= r.periods %></td>
+        <td class="num"><% if (r.def_open) { %><span class="st warn"><span class="dot"></span><%= r.def_open %></span>
+            <% } else { %>0<% } %></td>
+        <td class="num"><%= fmtInt(r.insp_total) %></td>
+        <td class="num"><%= r.compliant_pct === null ? '—' : r.compliant_pct + '%' %></td>
+        <td class="num"><%= fmtInt(r.on_roll) %><% if (r.unscreened) { %>
+            <div class="muted" style="font-size:11px"><%= r.unscreened %> unscreened</div><% } %></td>
+        <td class="num"><%= fmtInt(r.sanctioned) %></td>
+        <td><% if (r.gap > 0) { %><span class="st crit"><span class="dot"></span><%= r.gap %> short</span>
+            <% } else if (r.gap < 0) { %><span class="st neut"><span class="dot"></span><%= -r.gap %> over</span>
+            <% } else { %><span class="st good"><span class="dot"></span>Full strength</span><% } %></td>
+      </tr>
+    <% }); %>
+    <% if (!rows.length) { %><tr><td colspan="12" class="muted">No contractor holds a running room within your access.</td></tr><% } %>
+    </tbody>
+  </table></div>
+  <div class="tblfoot">Rating and coverage are for <%= monthLabel %>. Deficiencies and inspections
+    count the last six months. Short strength is sanctioned minus on-roll, from Schedule&nbsp;A as
+    scaled for each site — it is a staffing figure, not a deduction.</div>
+</div>

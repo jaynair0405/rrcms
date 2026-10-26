@@ -1,0 +1,328 @@
+<%- await include('_nav') %>
+<%- await include('_cbtabs') %>
+
+<% if (saved) { %><div class="note ok" style="margin-bottom:14px">Row saved.</div><% } %>
+
+<div class="kpis" style="margin-bottom:16px">
+  <div class="kpi"><i class="strip" style="background:var(--s1)"></i>
+    <div class="lab">Calls this month</div><div class="val"><%= fmtInt(month.total || 0) %></div>
+    <div class="foot"><%= fmtInt(month.men || 0) %> crew called · <%= rr.name %></div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s3)"></i>
+    <div class="lab">Acknowledged</div><div class="val"><%= fmtInt(month.acknowledged || 0) %></div>
+    <div class="foot"><% if (month.pending) { %><span class="st warn"><span class="dot"></span><%= fmtInt(month.pending) %> still open</span>
+      <% } else { %><span class="st good"><span class="dot"></span>none left open</span><% } %></div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s4)"></i>
+    <div class="lab">Refused or not present</div>
+    <div class="val"><%= fmtInt((month.refused || 0) + (month.absent || 0)) %></div>
+    <div class="foot"><% if (month.unadvised) { %><span class="st crit"><span class="dot"></span><%= fmtInt(month.unadvised) %> with no advice to the lobby</span>
+      <% } else { %><span class="st good"><span class="dot"></span>lobby advised in every case</span><% } %></div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s8)"></i>
+    <div class="lab">Late on duty</div><div class="val"><%= fmtInt(month.late_on_duty || 0) %></div>
+    <div class="foot"><%= fmtInt(month.cases || 0) %> served after sign-on <span class="muted">— Sch. C item 6</span></div></div>
+</div>
+
+<div class="tabs" style="margin-bottom:0">
+  <% [['mail','Mail / Express'], ['goods','Goods']].forEach(function(sv){ %>
+    <a class="tab <%= service===sv[0]?'active':'' %>" style="text-decoration:none"
+       href="<%= url('/records/call-book?rr=' + rr.id + '&date=' + date + '&service=' + sv[0]) %>"><%= sv[1] %></a>
+  <% }); %>
+</div>
+
+<div class="card">
+  <div class="card-h">
+    <h3>Call sheet — <%= rr.name %>, <%= date %>
+      <span class="pill" style="font-size:9.5px;vertical-align:middle"><%= service === 'goods' ? 'GOODS' : 'MAIL' %></span></h3>
+    <span class="sub"><%= service === 'goods'
+      ? 'goods workings are on no timetable — write what the lobby gives you'
+      : 'the trains crews are called for here, in time order' %></span>
+  </div>
+
+  <% if (!listedTrains && service === 'mail') { %>
+    <div class="card-b">
+      <div class="note warn" style="font-size:12.5px">
+        <b>No trains are on this running room's list yet</b>, so there is nothing to pre-fill and every row has
+        to be typed. The list is seeded from the control office's loco link with
+        <code>node db/import-call-sheet.js</code><% if (can('callsheet.manage')) { %>, or entered by hand under
+        <a href="<%= url('/records/call-sheet-trains?rr=' + rr.id) %>">Trains on the sheet</a><% } %>.
+      </div>
+    </div>
+  <% } %>
+
+  <%# One form per row, declared here and referenced by form="" from the cells.
+      Hidden, carries only what identifies the row; everything the bearer types
+      lives in the row itself. %>
+  <div hidden>
+    <% rows.forEach(function(r){ const c = r.call, t = r.train; %>
+      <form method="post" action="<%= url('/records/call-book/row') %>"
+            id="r<%= t ? 't' + t.id : 'c' + c.id %>">
+        <input type="hidden" name="rr" value="<%= rr.id %>">
+        <input type="hidden" name="date" value="<%= date %>">
+        <input type="hidden" name="service" value="<%= service %>">
+        <% if (t) { %><input type="hidden" name="sheet_train_id" value="<%= t.id %>"><% } %>
+        <% if (c) { %><input type="hidden" name="call_id" value="<%= c.id %>"><% } %>
+      </form>
+      <%# The row a special gets slotted into. A special that turns up between
+          two booked trains can simply be added at the bottom with its time and
+          it sorts into place — but a bearer looking at the sheet wants to put
+          it WHERE it belongs, so every row can open one blank beneath it. One,
+          not many: a sheet of half-filled blanks is worse than no blanks. %>
+      <form method="post" action="<%= url('/records/call-book/row') %>"
+            id="i<%= t ? 't' + t.id : 'c' + c.id %>">
+        <input type="hidden" name="rr" value="<%= rr.id %>">
+        <input type="hidden" name="date" value="<%= date %>">
+        <input type="hidden" name="service" value="<%= service %>">
+      </form>
+    <% }); %>
+    <% for (let g = 0; g < blanks; g++) { %>
+      <form method="post" action="<%= url('/records/call-book/row') %>" id="rg<%= g %>">
+        <input type="hidden" name="rr" value="<%= rr.id %>">
+        <input type="hidden" name="date" value="<%= date %>">
+        <input type="hidden" name="service" value="<%= service %>">
+      </form>
+    <% } %>
+    <form method="post" action="<%= url('/records/call-book/row') %>" id="radd">
+      <input type="hidden" name="rr" value="<%= rr.id %>">
+      <input type="hidden" name="date" value="<%= date %>">
+      <input type="hidden" name="service" value="<%= service %>">
+    </form>
+  </div>
+
+  <div class="tblwrap"><table class="tbl" id="callsheet">
+    <thead><tr>
+      <th style="width:64px">Sign on</th>
+      <th style="width:150px">Train</th>
+      <th>Loco Pilot</th>
+      <th>Asst. Loco Pilot</th>
+      <th style="width:78px">Rang at</th>
+      <th style="width:150px">Status</th>
+      <th style="width:96px"></th>
+    </tr></thead>
+    <tbody>
+    <% rows.forEach(function(r){
+         const c = r.call, t = r.train;
+         const lineOf = role => c ? (c.lines || []).find(l => l.crew_role === role) : null;
+         const lp = lineOf('LP'), alp = lineOf('ALP');
+         const done = c && c.done;
+         const state = l => !l ? '' : l.ack_outcome === 'acknowledged' ? 'good'
+                         : l.ack_outcome === 'pending' ? 'warn' : 'crit'; %>
+      <%# A <form> cannot live inside a <tr> -- the browser hoists it out of the
+          table and the row silently stops submitting. So each row's form is
+          declared once, outside the table, and every control in the row points
+          at it with form="". Plain HTML, no JavaScript needed. %>
+      <% const fid = 'r' + (t ? 't' + t.id : 'c' + c.id); %>
+      <tr class="cbrow<%= done ? ' cbdone' : '' %>"<%= done ? ' style="opacity:.5"' : '' %>>
+
+        <td class="tnum">
+          <% if (can('stay.manage') && !done) { %>
+            <input class="fi" form="<%= fid %>" type="time" name="sign_on" style="padding:4px 4px;font-size:12px;width:78px"
+                   value="<%= c && c.sign_on_at ? String(c.sign_on_at).slice(11,16) : (t && t.sign_on_time ? t.sign_on_time : '') %>">
+          <% } else { %>
+            <%= c && c.sign_on_at ? String(c.sign_on_at).slice(11,16) : (t && t.sign_on_time ? t.sign_on_time : '—') %>
+          <% } %>
+          <% if (t && t.arrives_at) { %><div class="muted" style="font-size:10px">tr <%= t.arrives_at %></div><% } %>
+        </td>
+
+        <td class="tnum">
+          <% if (t) { %>
+            <b><%= t.train_no %></b><%= t.direction !== 'OTHER' ? ' ' : '' %><span class="pill" style="font-size:9px"><%= t.direction %></span>
+            <% if (t.train_name) { %><div class="muted" style="font-size:10.5px"><%= t.train_name %></div><% } %>
+            <% if (t.run_days !== 'DAILY') { %><div class="muted" style="font-size:10px">runs <%= t.run_days %></div><% } %>
+          <% } else if (can('stay.manage') && !done) { %>
+            <input class="fi" form="<%= fid %>" name="train_no" maxlength="12" placeholder="train / goods"
+                   style="padding:4px 6px;font-size:12px" value="<%= c ? (c.train_no || '') : '' %>">
+            <div class="muted" style="font-size:10px">added by hand</div>
+          <% } else { %>
+            <b><%= c && c.train_no ? c.train_no : '—' %></b>
+            <div class="muted" style="font-size:10px">added by hand</div>
+          <% } %>
+        </td>
+
+        <% ['LP','ALP'].forEach(function(role){ const l = role === 'LP' ? lp : alp; %>
+          <td>
+            <% if (l && l.ack_outcome !== 'pending') { %>
+              <div style="font-size:12.5px"><%= l.crew_name %></div>
+              <div class="st <%= state(l) %>" style="font-size:10px"><span class="dot"></span>
+                <%= l.ack_outcome === 'acknowledged' ? 'acknowledged ' + String(l.ack_recorded_at || '').slice(11,16)
+                    : l.ack_outcome === 'refused' ? 'refused' : 'not in the room' %></div>
+            <% } else if (can('stay.manage') && !done) { %>
+              <div class="crewcell" data-role="<%= role %>">
+                <input class="fi crewname" form="<%= fid %>" name="n_<%= role %>" list="crewlist"
+                       autocomplete="off" data-role="<%= role %>"
+                       style="padding:4px 7px;font-size:12px"
+                       value="<%= l ? l.crew_name : '' %>" placeholder="<%= role %> name">
+                <input form="<%= fid %>" type="hidden" name="h_<%= role %>" value="">
+                <input class="fi" form="<%= fid %>" name="b_<%= role %>" maxlength="12" placeholder="bed"
+                       style="padding:3px 6px;font-size:11px;width:64px;margin-top:3px"
+                       value="<%= l && l.bed_no ? l.bed_no : '' %>">
+              </div>
+            <% } else { %>
+              <span class="muted" style="font-size:12px"><%= l ? l.crew_name : '—' %></span>
+            <% } %>
+          </td>
+        <% }); %>
+
+        <td class="tnum">
+          <% if (can('stay.manage') && !done) { %>
+            <input class="fi" form="<%= fid %>" type="time" name="received" data-now="Now"
+                   style="padding:4px 4px;font-size:12px;width:78px"
+                   value="<%= c && c.call_received_at ? String(c.call_received_at).slice(11,16) : '' %>">
+          <% } else { %>
+            <%= c && c.call_received_at ? String(c.call_received_at).slice(11,16) : '—' %>
+          <% } %>
+        </td>
+
+        <td>
+          <% if (!c) { %><span class="muted" style="font-size:11.5px">not called</span>
+          <% } else if (c.cancelled_at) { %><span class="st"><span class="dot"></span>Withdrawn</span>
+          <% } else if (c.open) { %><span class="st warn"><span class="dot"></span><%= c.open %> not settled</span>
+          <% } else if (c.bad.length) { %><span class="st crit"><span class="dot"></span><%= c.bad.length %> not acknowledged</span>
+          <% } else if (c.repeated_to_lobby_at) { %><span class="st good"><span class="dot"></span>Done · lobby told</span>
+          <% } else { %><span class="st warn"><span class="dot"></span>Lobby not told</span><% } %>
+          <% if (c && c.unadvised) { %><div class="st crit" style="margin-top:2px;font-size:10px"><span class="dot"></span><%= c.unadvised %> unadvised</div><% } %>
+          <% if (c && c.late) { %><div class="st crit" style="margin-top:2px;font-size:10px"><span class="dot"></span>late on duty</div><% } %>
+        </td>
+
+        <td>
+          <% if (can('stay.manage') && !done) { %>
+            <button class="btn ghost" type="submit" form="<%= fid %>" style="font-size:11px;padding:3px 8px">Save</button>
+            <% if (c) { %>
+              <a class="btn" style="font-size:11px;padding:3px 8px;text-decoration:none;margin-top:3px;display:inline-block"
+                 href="<%= url('/records/call-book/' + c.id) %>">Serve</a>
+            <% } else { %>
+              <button class="btn" type="submit" name="then" value="serve" form="<%= fid %>"
+                      style="font-size:11px;padding:3px 8px;margin-top:3px">Save &amp; serve</button>
+            <% } %>
+            <button class="btn ghost cbinsert-open" type="button" data-for="<%= fid %>"
+                    title="Slot a special in below this row"
+                    style="font-size:11px;padding:2px 7px;margin-top:3px">+ row</button>
+          <% } else if (c) { %>
+            <a class="btn ghost" style="font-size:11px;padding:3px 8px;text-decoration:none"
+               href="<%= url('/records/call-book/' + c.id) %>">Open</a>
+          <% } %>
+        </td>
+      </tr>
+
+      <%# A special that turns up between two booked trains. Hidden until asked
+          for, so the sheet is not a field of empty boxes; revealed by the +
+          button, one at a time. With scripting off the row below the table
+          does the same job — a time typed there sorts it into place. %>
+      <% if (can('stay.manage') && !done) { %>
+        <tr class="cbinsert" data-for="<%= fid %>" hidden>
+          <td class="tnum"><input class="fi" form="i<%= fid.slice(1) %>" type="time" name="sign_on"
+                 style="padding:4px 4px;font-size:12px;width:78px"></td>
+          <td><input class="fi" form="i<%= fid.slice(1) %>" name="train_no" maxlength="12"
+                 placeholder="special / goods" style="padding:4px 6px;font-size:12px">
+              <div class="muted" style="font-size:10px">slotted in here</div></td>
+          <% ['LP','ALP'].forEach(function(role){ %>
+            <td><div class="crewcell" data-role="<%= role %>">
+              <input class="fi crewname" form="i<%= fid.slice(1) %>" name="n_<%= role %>"
+                     list="crewlist" autocomplete="off" data-role="<%= role %>"
+                     style="padding:4px 7px;font-size:12px" placeholder="<%= role %> name">
+              <input form="i<%= fid.slice(1) %>" type="hidden" name="h_<%= role %>" value="">
+              <input class="fi" form="i<%= fid.slice(1) %>" name="b_<%= role %>" maxlength="12"
+                     placeholder="bed" style="padding:3px 6px;font-size:11px;width:64px;margin-top:3px">
+            </div></td>
+          <% }); %>
+          <td class="tnum"><input class="fi" form="i<%= fid.slice(1) %>" type="time" name="received"
+                 data-now="Now" style="padding:4px 4px;font-size:12px;width:78px"></td>
+          <td><span class="muted" style="font-size:11.5px">a special, or a train running late
+              from yesterday, that belongs at this point in the sheet</span></td>
+          <td><button class="btn" type="submit" name="then" value="serve"
+                      form="i<%= fid.slice(1) %>" style="font-size:11px;padding:3px 8px">Add</button>
+              <button class="btn ghost cbinsert-cancel" type="button"
+                      style="font-size:10.5px;padding:2px 7px;margin-top:3px">Cancel</button></td>
+        </tr>
+      <% } %>
+    <% }); %>
+
+    <%# A goods sheet has nothing to pre-fill: the workings are on no timetable.
+        So it opens as blank lines, which is what the paper book is. %>
+    <% for (let g = 0; g < blanks; g++) { %>
+      <tr class="cbrow cbblank">
+        <td class="tnum"><input class="fi" form="rg<%= g %>" type="time" name="sign_on"
+               style="padding:4px 4px;font-size:12px;width:78px"></td>
+        <td><input class="fi" form="rg<%= g %>" name="train_no" maxlength="12"
+               placeholder="goods working" style="padding:4px 6px;font-size:12px"></td>
+        <% ['LP','ALP'].forEach(function(role){ %>
+          <td><div class="crewcell" data-role="<%= role %>">
+            <input class="fi crewname" form="rg<%= g %>" name="n_<%= role %>" list="crewlist"
+                   autocomplete="off" data-role="<%= role %>"
+                   style="padding:4px 7px;font-size:12px" placeholder="<%= role %> name">
+            <input form="rg<%= g %>" type="hidden" name="h_<%= role %>" value="">
+            <input class="fi" form="rg<%= g %>" name="b_<%= role %>" maxlength="12" placeholder="bed"
+                   style="padding:3px 6px;font-size:11px;width:64px;margin-top:3px">
+          </div></td>
+        <% }); %>
+        <td class="tnum"><input class="fi" form="rg<%= g %>" type="time" name="received"
+               data-now="Now" style="padding:4px 4px;font-size:12px;width:78px"></td>
+        <td><span class="muted" style="font-size:11.5px">&nbsp;</span></td>
+        <td><button class="btn ghost" type="submit" form="rg<%= g %>"
+                    style="font-size:11px;padding:3px 8px">Save</button></td>
+      </tr>
+    <% } %>
+
+    <% if (can('stay.manage')) { %>
+      <tr class="cbadd">
+        <td class="tnum"><input class="fi" form="radd" type="time" name="sign_on" style="padding:4px 4px;font-size:12px;width:78px"></td>
+        <td id="trainpick" data-search="<%= hasMaster ? url('/records/train-search') : '' %>"
+            data-rr="<%= rr.id %>">
+          <input class="fi" form="radd" name="train_no" maxlength="12" placeholder="goods / special"
+                 autocomplete="off" style="padding:4px 6px;font-size:12px">
+          <input type="hidden" form="radd" name="train_name" value="">
+          <div class="muted" style="font-size:10px" id="trainnote">not on the list</div>
+        </td>
+        <% ['LP','ALP'].forEach(function(role){ %>
+          <td><div class="crewcell" data-role="<%= role %>">
+            <input class="fi crewname" form="radd" name="n_<%= role %>" list="crewlist"
+                   autocomplete="off" data-role="<%= role %>"
+                   style="padding:4px 7px;font-size:12px" placeholder="<%= role %> name">
+            <input form="radd" type="hidden" name="h_<%= role %>" value="">
+            <input class="fi" form="radd" name="b_<%= role %>" maxlength="12" placeholder="bed"
+                   style="padding:3px 6px;font-size:11px;width:64px;margin-top:3px">
+          </div></td>
+        <% }); %>
+        <td class="tnum"><input class="fi" form="radd" type="time" name="received" data-now="Now"
+                                style="padding:4px 4px;font-size:12px;width:78px"></td>
+        <td><span class="muted" style="font-size:11.5px">a train running late from
+          yesterday, a goods working, a special</span></td>
+        <td><button class="btn" type="submit" name="then" value="serve" form="radd"
+                    style="font-size:11px;padding:3px 8px">Add</button></td>
+      </tr>
+    <% } %>
+    </tbody>
+  </table></div>
+
+  <div class="card-b" style="border-top:1px solid var(--border)">
+    <div class="muted" style="font-size:11.5px" id="crewlines"
+         data-search="<%= hasMaster ? url('/records/crew-search') : '' %>" data-rr="<%= rr.id %>">
+      <% if (service === 'goods') { %>
+        Goods workings are on no timetable, so there is nothing to pre-fill and the sheet opens as blank
+        lines — which is what the paper book is. Fill a line and save it; the row keeps its place by the time
+        you put on it. A goods row does not need a number: a working identified by its crew and its time is
+        enough, and inventing a number to satisfy a form would be worse.
+      <% } else { %>
+        Rows come from this running room's list of trains, filtered to the ones that run today and ordered by
+        sign-on time — the same way the control office sheet is built. A row greys out once every man on it is
+        settled and the lobby has been told.
+        <br><br>
+        <b>A special that turns up between two booked trains</b> can be added either way: on the last row with
+        its time, which sorts it into place, or with the <b>+ row</b> button on the row above it, which opens
+        one blank line exactly where it belongs. One blank at a time — a sheet of half-filled boxes is worse
+        than no boxes at all.
+      <% } %>
+      <% if (hasMaster) { %>
+        Names search the division staff list; a train manager or a crew from another division will not be on
+        it, and is recorded as typed.
+      <% } %>
+      <br><br>
+      <b>Withdrawals and crew changes are not done here</b> — they carry a reason and are kept, so they live
+      under <a href="<%= url('/records/call-book/changes?rr=' + rr.id + '&date=' + date) %>">Changes &amp;
+      withdrawals</a>. An acknowledged man cannot be quietly replaced on this sheet.
+    </div>
+    <datalist id="crewlist">
+      <% crew.forEach(function(c){ %>
+        <option value="<%= c.crew_id_no ? c.full_name + ' (' + c.crew_id_no + ')' : c.full_name %>"></option>
+      <% }); %>
+    </datalist>
+  </div>
+</div>

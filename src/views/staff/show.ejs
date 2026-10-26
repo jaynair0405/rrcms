@@ -1,0 +1,510 @@
+<div style="margin-bottom:14px"><a href="<%= url('/staff') %>">← Contract staff</a></div>
+
+<% if (saved) { %>
+  <div class="note" style="margin-bottom:14px">The particulars have been saved.</div>
+<% } %>
+
+<% if (st.is_test_data) { %>
+  <div class="note warn" style="margin-bottom:14px">
+    <b>The particulars on this record are invented.</b> Phone, bank, EPF, ESIC, the documents and
+    the screening approval were generated so the muster and the monthly pack could be tested.
+    Nothing here came from the Railway. Every such number begins <b>TEST/</b> or <b>90000</b>.
+  </div>
+<% } %>
+
+<div class="card" style="margin-bottom:14px"><div class="card-b">
+  <div class="row" style="align-items:flex-start">
+    <%
+      // The passport photograph is what goes on the identity card the tender
+      // requires every deployed worker to carry. At a running room there is
+      // rarely a scanner and often no photograph at all, so it can be taken
+      // here — the camera control appears only where the browser allows it.
+    %>
+    <div style="flex:0 0 96px;margin-right:14px">
+      <% if (photo) { %>
+        <a href="<%= url('/staff/' + st.id + '/documents/' + photo.id + '/file') %>" target="_blank" rel="noopener">
+          <img src="<%= url('/staff/' + st.id + '/documents/' + photo.id + '/file') %>" alt="Photograph of <%= st.full_name %>"
+               style="width:96px;height:120px;object-fit:cover;border-radius:6px;border:1px solid var(--border-strong);display:block">
+        </a>
+      <% } else { %>
+        <div style="width:96px;height:120px;border-radius:6px;border:1px dashed var(--border-strong);
+                    display:flex;align-items:center;justify-content:center;text-align:center;
+                    color:var(--text-muted);font-size:11px;padding:6px;line-height:1.35">
+          No photograph<br>on record
+        </div>
+      <% } %>
+    </div>
+
+    <% if (can('staff.edit') && st.is_active) { %>
+      <%
+        // Two file boxes on one page is one too many. This one is labelled for
+        // the photograph and nothing else, its button says what it does, and
+        // the button stays disabled until a picture is actually chosen -- so
+        // pressing it with nothing selected, which is what a person does when
+        // they picked their file in the Documents box further down, is no
+        // longer possible.
+      %>
+      <div style="flex:0 0 226px;margin-right:16px">
+        <form method="post" action="<%= url('/staff/' + st.id + '/documents') %>" id="photoform"
+              enctype="multipart/form-data">
+          <input type="hidden" name="doc_type" value="photograph">
+          <label class="fl" for="photofile">Passport photograph</label>
+          <input class="fi" id="photofile" type="file" name="scan" accept="image/*"
+                 style="font-size:11.5px;padding:5px"
+                 data-camera="portrait"
+                 data-camera-label="Take the photograph"
+                 data-camera-title="Photograph — <%= st.full_name %>"
+                 data-camera-hint="Head and shoulders, plain background, face filling most of the frame."
+                 data-camera-file="photo"
+                 data-camera-submit="1"
+                 data-requires-file="photoupload">
+          <button class="btn small" type="submit" id="photoupload" style="margin-top:8px">
+            <%= photo ? 'Replace the photograph' : 'Upload the photograph' %></button>
+          <div class="muted" style="font-size:11px;margin-top:6px;line-height:1.4">
+            This box is only for the photograph. Certificates go in the
+            <b>Documents</b> section further down.
+          </div>
+        </form>
+      </div>
+    <% } %>
+    <div style="flex:1">
+      <div style="font-size:22px;font-weight:680;letter-spacing:-.5px"><%= st.full_name %></div>
+      <div class="muted" style="font-size:12.5px;margin-top:2px">
+        <%= st.staff_code %> · <%= st.designation %> · <%= st.skill_category.replace('_','-') %> ·
+        <a href="<%= url('/running-rooms/' + st.rr_id) %>"><%= st.rr_name %></a> (<%= st.div_code %>) · <%= st.contractor %>
+      </div>
+    </div>
+    <div style="text-align:right">
+      <% if (!st.is_active) { %>
+        <div class="st crit" style="font-size:13px"><span class="dot"></span>No longer on roll</div>
+      <% } else if (ready) { %>
+        <div class="st good" style="font-size:13px"><span class="dot"></span>Cleared for deployment</div>
+      <% } else { %>
+        <div class="st crit" style="font-size:13px"><span class="dot"></span>Not cleared for deployment</div>
+      <% } %>
+      <div style="margin-top:8px"><a class="btn ghost small" href="<%= url('/staff/' + st.id + '/id-card') %>" target="_blank">Identity card</a></div>
+    </div>
+  </div>
+  <div class="hr"></div>
+  <%
+    // A blank is a finding, not an empty space. Every particular the contract
+    // needs is shown whether or not it is held, and the ones missing are
+    // counted -- a person loaded from a typed roster has almost none of them.
+    const MISSING_LABEL = 'not on record';
+    const gaps = [
+      ['DATE OF JOINING', st.date_of_joining],
+      ['PHONE',           st.phone],
+      ['EPF NUMBER',      st.epf_no],
+      ['ESIC NUMBER',     st.esic_no],
+      ['BANK ACCOUNT',    st.bank_account_no],
+      ['FATHER\'S NAME',  st.father_name],
+    ];
+    const missing = gaps.filter(g => !g[1]).length;
+  %>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px 18px;font-size:12.5px">
+    <% gaps.forEach(function(g){ %>
+      <div><div class="muted" style="font-size:10.5px"><%= g[0] %></div>
+        <% if (g[1]) { %><b class="tnum"><%= g[1] %></b>
+        <% } else { %><b class="tnum" style="color:var(--critical-ink);font-weight:600"><%= MISSING_LABEL %></b><% } %>
+      </div>
+    <% }); %>
+    <div><div class="muted" style="font-size:10.5px">ID CARD</div><b class="tnum"><%= st.id_card_no || 'not issued' %></b></div>
+    <% if (st.requires_qualification) { %>
+    <div><div class="muted" style="font-size:10.5px">QUALIFICATION</div><b>Required for this post</b></div>
+    <% } %>
+  </div>
+
+  <% if (can('staff.edit') && st.is_active) { %>
+    <div class="hr"></div>
+    <details<%= missing ? ' open' : '' %>>
+      <summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--s1)">
+        <%= missing ? missing + ' particular(s) not on record — fill them in' : 'Correct the particulars' %>
+      </summary>
+      <form method="post" action="<%= url('/staff/' + st.id + '/particulars') %>" id="particulars"
+            style="margin-top:12px">
+        <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(190px,1fr))">
+          <div><label class="fl">Full name</label>
+            <input class="fi" name="full_name" value="<%= st.full_name %>" required></div>
+          <div><label class="fl">Father's name</label>
+            <input class="fi" name="father_name" value="<%= st.father_name || '' %>"></div>
+          <div><label class="fl">Date of birth</label>
+            <input class="fi" type="date" name="date_of_birth"
+                   value="<%= st.date_of_birth ? String(st.date_of_birth).slice(0,10) : '' %>"></div>
+          <div><label class="fl">Gender</label>
+            <select class="fi" name="gender">
+              <option value="">—</option>
+              <% [['M','Male'],['F','Female'],['O','Other']].forEach(function(g){ %>
+                <option value="<%= g[0] %>" <%= st.gender === g[0] ? 'selected' : '' %>><%= g[1] %></option>
+              <% }); %>
+            </select></div>
+          <div><label class="fl">Date of joining</label>
+            <input class="fi" type="date" name="date_of_joining"
+                   value="<%= st.date_of_joining ? String(st.date_of_joining).slice(0,10) : '' %>"></div>
+          <div><label class="fl">Phone</label>
+            <input class="fi" name="phone" inputmode="numeric" value="<%= st.phone || '' %>"></div>
+          <div><label class="fl">Bank account no.</label>
+            <input class="fi" name="bank_account_no" value="<%= st.bank_account_no || '' %>"></div>
+          <div><label class="fl">IFSC</label>
+            <input class="fi" name="bank_ifsc" value="<%= st.bank_ifsc || '' %>"
+                   style="text-transform:uppercase"></div>
+          <div><label class="fl">EPF number</label>
+            <input class="fi" name="epf_no" value="<%= st.epf_no || '' %>"></div>
+          <div><label class="fl">ESIC number</label>
+            <input class="fi" name="esic_no" value="<%= st.esic_no || '' %>"></div>
+        </div>
+        <div style="margin-top:10px"><label class="fl">Address</label>
+          <input class="fi" name="address" value="<%= st.address || '' %>"></div>
+        <div class="row" style="margin-top:12px;align-items:center">
+          <button class="btn" type="submit">Save the particulars</button>
+          <span class="muted" style="font-size:11.5px">
+            The running room, contractor and designation are not changed here — moving a person
+            between sites is a contract event, recorded through leaving and replacement.
+            <% if (st.screening_status === 'approved') { %>
+              Screening approval is not affected; the change is recorded in the audit trail.
+            <% } %>
+          </span>
+        </div>
+      </form>
+    </details>
+  <% } %>
+</div></div>
+
+<%
+  // The month's attendance as a calendar. A register of dates tells an officer
+  // nothing at a glance; a month laid out as it is on a wall does. Sundays are
+  // shaded, so a row of unbroken "present" across every Sunday of the month is
+  // visible for what it is.
+  const MK = { present:['P','var(--good)','#fff'], reliever:['R','var(--good)','#fff'],
+               absent:['A','var(--critical)','#fff'], leave:['L','var(--warning)','#3a2c05'],
+               weekly_off:['W','var(--warning)','#3a2c05'] };
+  const byDay = {};
+  (attendance || []).forEach(function(a){
+    byDay[String(a.attendance_date).slice(0,10)] = a;
+  });
+  const y = +month.slice(0,4), mo = +month.slice(5,7);
+  const daysInMonth = new Date(Date.UTC(y, mo, 0)).getUTCDate();
+  const firstDow = new Date(Date.UTC(y, mo - 1, 1)).getUTCDay();   // 0 = Sunday
+  const monthLabel = new Date(Date.UTC(y, mo - 1, 1))
+    .toLocaleString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+  const prevMonth = mo === 1 ? (y - 1) + '-12' : y + '-' + String(mo - 1).padStart(2,'0');
+  const nextMonth = mo === 12 ? (y + 1) + '-01' : y + '-' + String(mo + 1).padStart(2,'0');
+  const counts = {};
+  Object.values(byDay).forEach(function(a){ counts[a.status] = (counts[a.status] || 0) + 1; });
+  const presentDays = (counts.present || 0) + (counts.reliever || 0);
+%>
+
+<div class="card" style="margin-bottom:14px">
+  <div class="card-h"><h3>Attendance — <%= monthLabel %></h3>
+    <span class="sub"><%= presentDays %> day(s) present of <%= Object.keys(byDay).length %> marked</span>
+    <div class="spacer"></div>
+    <a class="btn ghost small" href="<%= url('/staff/' + st.id) %>?month=<%= prevMonth %>">← <%= prevMonth %></a>
+    <a class="btn ghost small" style="margin-left:6px"
+       href="<%= url('/staff/' + st.id) %>?month=<%= nextMonth %>"><%= nextMonth %> →</a>
+  </div>
+  <div class="card-b">
+    <% if (!Object.keys(byDay).length) { %>
+      <p class="muted" style="margin:0">No muster has been marked for this person in <%= monthLabel %>.</p>
+    <% } else { %>
+      <div style="display:grid;grid-template-columns:repeat(7,minmax(34px,1fr));gap:5px;max-width:430px">
+        <% ['S','M','T','W','T','F','S'].forEach(function(d, i){ %>
+          <div class="muted" style="font-size:10.5px;text-align:center;font-weight:600;
+               <%= i === 0 ? 'color:var(--critical-ink)' : '' %>"><%= d %></div>
+        <% }); %>
+        <% for (let b = 0; b < firstDow; b++) { %><div></div><% } %>
+        <% for (let d = 1; d <= daysInMonth; d++) {
+             const key = `${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+             const a = byDay[key];
+             const m = a && MK[a.status];
+             const sunday = new Date(Date.UTC(y, mo - 1, d)).getUTCDay() === 0; %>
+          <div title="<%= key %><%= a ? ' — ' + a.status.replace('_',' ') : ' — not marked' %>"
+               style="aspect-ratio:1;border-radius:6px;display:flex;flex-direction:column;
+                      align-items:center;justify-content:center;font-size:11px;line-height:1.1;
+                      border:1px solid <%= sunday ? 'rgba(208,59,59,.35)' : 'var(--border)' %>;
+                      <%= m ? 'background:' + m[1] + ';color:' + m[2] + ';font-weight:700' : 'color:var(--text-muted)' %>">
+            <span style="font-size:9.5px;opacity:.85"><%= d %></span>
+            <% if (m) { %><span><%= m[0] %></span><% } %>
+          </div>
+        <% } %>
+      </div>
+      <div class="row" style="gap:12px;margin-top:12px;font-size:11.5px" class="muted">
+        <% Object.entries(MK).forEach(function(e){ %>
+          <span style="display:inline-flex;align-items:center;gap:5px">
+            <span style="width:14px;height:14px;border-radius:4px;display:inline-block;
+                         background:<%= e[1][1] %>"></span>
+            <%= e[0].replace('_',' ') %><%= counts[e[0]] ? ' · ' + counts[e[0]] : '' %></span>
+        <% }); %>
+      </div>
+      <div class="muted" style="font-size:11px;margin-top:8px">
+        A day with no mark is a day the muster was not kept for this person, not a day off.
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<% if (strength && st.is_active) {
+     const over = (+strength.on_roll || 0) - (+strength.sanctioned_count || 0); %>
+  <% if (over > 0) { %>
+    <div class="note warn" style="margin-bottom:14px">
+      <b><%= st.designation %></b> at <%= st.rr_name %> is <b><%= over %> over</b> its sanctioned
+      strength — <%= strength.on_roll %> on roll against <%= strength.sanctioned_count %> sanctioned
+      under Schedule&nbsp;A. That is allowed; the Railway pays against the schedule, not the register.
+      It is shown here so it is noticed now rather than at bill time.
+    </div>
+  <% } else if (over < 0) { %>
+    <div class="note" style="margin-bottom:14px">
+      <b><%= st.designation %></b> at <%= st.rr_name %> is <b><%= -over %> short</b> of its sanctioned
+      strength — <%= strength.on_roll %> on roll against <%= strength.sanctioned_count %> sanctioned.
+    </div>
+  <% } %>
+<% } %>
+
+<div class="grid" style="grid-template-columns:1fr 1.3fr;margin-bottom:14px">
+  <div class="card">
+    <div class="card-h"><h3>Deployment readiness</h3><span class="sub">the tender's pre-deployment checklist</span></div>
+    <div class="card-b">
+      <% checklist.forEach(function(c){ %>
+        <div style="display:flex;align-items:center;gap:9px;margin-bottom:8px">
+          <span class="st <%= c.scanned ? 'good' : c.held ? 'warn' : 'crit' %>"><span class="dot"></span></span>
+          <span style="font-size:12.6px"><%= c.label %></span>
+          <span style="margin-left:auto;font-size:11.5px" class="muted">
+            <%= c.scanned ? 'scan on file' : c.held ? 'recorded, no scan' : 'missing' %></span>
+        </div>
+      <% }); %>
+      <div class="muted" style="font-size:11.3px;margin-top:10px">
+        <b><%= scannedCount %></b> of <%= checklist.length %> required documents have the certificate itself
+        attached. A reference number records that a document was produced; the scan is what proves it.
+      </div>
+      <div class="hr"></div>
+      <div style="display:flex;align-items:center;gap:9px">
+        <span class="st <%= st.screening_status==='approved' ? 'good' : st.screening_status==='rejected' ? 'crit':'warn' %>"><span class="dot"></span></span>
+        <span style="font-size:12.6px"><b>Railway screening</b></span>
+        <span style="margin-left:auto;font-size:11.5px" class="muted">
+          <%= st.screening_status %><%= st.screened_on ? ' on ' + st.screened_on : '' %></span>
+      </div>
+      <% if (st.rejection_reason) { %>
+        <div class="note err" style="margin-top:10px"><b>Rejected:</b> <%= st.rejection_reason %></div>
+      <% } %>
+
+      <%# The RR In-charge sees this panel too, but only the provisional
+          button: admitting a man is his, approving and rejecting are the
+          Sr. DEE's. %>
+      <% if (can('staff.admit') && st.screening_status !== 'approved') { %>
+        <div class="hr"></div>
+        <form method="post" action="<%= url('/staff/' + st.id + '/screen') %>">
+          <label class="fl" for="reason">Reason (required only when rejecting)</label>
+          <input class="fi" id="reason" name="reason" placeholder="e.g. police verification not produced">
+          <div class="row" style="margin-top:10px;gap:8px">
+            <% if (can('staff.screen')) { %>
+              <button class="btn" name="decision" value="approve" type="submit">Approve for deployment</button>
+            <% } %>
+            <button class="btn warn" name="decision" value="provisional" type="submit"
+                    title="He is already working; nobody has screened him yet">Admit provisionally</button>
+            <% if (can('staff.screen')) { %>
+              <button class="btn ghost" name="decision" value="reject" type="submit"
+                style="color:var(--critical);border-color:var(--critical)">Reject</button>
+            <% } else { %>
+              <span class="muted" style="font-size:11.5px;align-self:center">Approving or rejecting
+                is the Sr. DEE's decision.</span>
+            <% } %>
+          </div>
+        </form>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h3>Documents</h3><span class="sub">expiry tracked where applicable</span></div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>Document</th><th>Reference</th><th>Issued</th><th>Valid till</th><th>Status</th><th>Scan</th></tr></thead>
+      <tbody>
+      <% documents.forEach(function(d){
+           const expired = d.valid_till && d.valid_till < today;
+           const soon = d.valid_till && !expired && (new Date(d.valid_till) - new Date(today)) < 60*86400000; %>
+        <tr><td><%= DOC_LABELS[d.doc_type] || d.doc_type %></td>
+          <td class="tnum"><%= d.reference_no || '—' %></td>
+          <td class="tnum"><%= d.issued_on || '—' %></td>
+          <td class="tnum"><%= d.valid_till || '—' %></td>
+          <td><% if (expired) { %><span class="st crit"><span class="dot"></span>Expired</span>
+              <% } else if (soon) { %><span class="st warn"><span class="dot"></span>Expiring</span>
+              <% } else { %><span class="st good"><span class="dot"></span>Valid</span><% } %></td>
+          <td><% if (d.file_id) { %>
+                <a href="<%= url('/staff/' + st.id + '/documents/' + d.id + '/file') %>" target="_blank" rel="noopener">Open</a>
+              <% } else { %><span class="st warn"><span class="dot"></span>not attached</span><% } %></td></tr>
+      <% }); %>
+      <% if (!documents.length) { %><tr><td colspan="6" class="muted">No documents on file.</td></tr><% } %>
+      </tbody>
+    </table></div>
+    <% if (can('staff.edit')) { %>
+    <div class="card-b" style="border-top:1px solid var(--border)">
+      <form method="post" action="<%= url('/staff/' + st.id + '/documents') %>" id="docform"
+            enctype="multipart/form-data" class="row" style="gap:8px;align-items:flex-end;flex-wrap:wrap">
+        <div style="flex:0 0 210px"><label class="fl">Document</label>
+          <select class="fi" name="doc_type" required>
+            <%
+              // The passport photograph is deliberately absent here. It has its
+              // own box beside the person's name, and offering it in two places
+              // meant somebody could choose it here, type a reference, and be
+              // refused for not attaching a picture -- with the picture box
+              // sitting somewhere else on the screen entirely.
+              Object.entries(DOC_LABELS)
+                .filter(function(e){ return e[0] !== 'photograph'; })
+                .forEach(function(e){ %><option value="<%= e[0] %>"><%= e[1] %></option><% });
+            %>
+          </select></div>
+        <div style="flex:0 0 150px"><label class="fl">Reference no.</label><input class="fi" name="reference_no"></div>
+        <div style="flex:0 0 140px"><label class="fl">Issued on</label><input class="fi" type="date" name="issued_on"></div>
+        <div style="flex:0 0 140px"><label class="fl">Valid till</label><input class="fi" type="date" name="valid_till"></div>
+        <div style="flex:0 0 250px"><label class="fl">Scan or photograph</label>
+          <input class="fi" type="file" name="scan" accept="image/*,application/pdf"
+                 data-camera="document" data-camera-label="Photograph the paper"
+                 data-camera-title="Photograph the document"
+                 data-camera-hint="Lay the paper flat, fill the frame, and check the writing is readable before using it."
+                 data-camera-file="document"></div>
+        <button class="btn" type="submit">Add</button>
+      </form>
+      <div class="muted" style="font-size:11.5px;margin-top:8px">
+        A certificate may be recorded before its scan arrives — the reference and
+        expiry are useful on their own. The passport photograph is the exception,
+        and is taken in its own box beside the name.
+        <%= accepted %>. The file type is checked against the actual bytes, not the file name.
+        Scans are stored outside the web root and are reachable only through this staff member,
+        by someone who may see this running room.
+      </div>
+    </div>
+    <% } %>
+  </div>
+</div>
+
+<div class="grid" style="grid-template-columns:1.2fr 1fr">
+  <div class="card">
+    <div class="card-h"><h3>Uniform &amp; shoe issue</h3><span class="sub">2 sets per 6 months · 1 pair of shoes per year</span></div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>Item</th><th class="num">Qty</th><th>Issued on</th><th>Next due</th><th>Acknowledged</th></tr></thead>
+      <tbody>
+      <% issues.forEach(function(i){
+           const overdue = i.due_next_on && i.due_next_on < today; %>
+        <tr><td style="text-transform:capitalize"><%= i.issue_type %></td>
+          <td class="num"><%= i.quantity %></td>
+          <td class="tnum"><%= i.issued_on %></td>
+          <td class="tnum"><%= i.due_next_on || '—' %>
+            <% if (overdue) { %> <span class="st warn"><span class="dot"></span>overdue</span><% } %></td>
+          <td><% if (i.acknowledged) { %><span class="st good"><span class="dot"></span>Signed</span>
+              <% } else { %><span class="muted">not signed</span><% } %></td></tr>
+      <% }); %>
+      <% if (!issues.length) { %><tr><td colspan="5" class="muted">Nothing issued yet.</td></tr><% } %>
+      </tbody>
+    </table></div>
+    <% if (can('staff.edit')) { %>
+    <div class="card-b" style="border-top:1px solid var(--border)">
+      <form method="post" action="<%= url('/staff/' + st.id + '/issues') %>" class="row" style="gap:8px;align-items:flex-end">
+        <div style="flex:0 0 140px"><label class="fl">Item</label>
+          <select class="fi" name="issue_type"><option value="uniform">Uniform</option><option value="shoes">Shoes</option></select></div>
+        <div style="flex:0 0 90px"><label class="fl">Qty</label><input class="fi" type="number" name="quantity" value="2" min="1" max="10"></div>
+        <div style="flex:0 0 150px"><label class="fl">Issued on</label>
+          <input class="fi" type="date" name="issued_on" value="<%= today %>"></div>
+        <button class="btn" type="submit">Record issue</button>
+      </form>
+      <div class="muted" style="font-size:11.5px;margin-top:8px">The next due date is set automatically — six months for uniform, one year for shoes.</div>
+    </div>
+    <% } %>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h3>Occupant rating</h3><span class="sub">from feedback naming this person</span></div>
+    <div class="card-b">
+      <% if (avg === null) { %>
+        <div class="muted" style="font-size:12.5px">No occupant feedback has named this staff member.</div>
+      <% } else { %>
+        <div style="display:flex;align-items:baseline;gap:10px">
+          <div style="font-size:30px;font-weight:680;letter-spacing:-1px"><%= avg.toFixed(2) %></div>
+          <div class="muted" style="font-size:12.5px">out of 5 · <%= mentions %> mention<%= mentions>1?'s':'' %></div>
+          <div style="margin-left:auto">
+            <% if (recommendation === 'retain') { %><span class="pill g">Recommend retaining</span>
+            <% } else if (recommendation === 'replace') { %><span class="pill r">Recommend replacing</span>
+            <% } else { %><span class="pill y">Monitor</span><% } %>
+          </div>
+        </div>
+        <div class="hr"></div>
+        <% named.slice(0,5).forEach(function(f){ %>
+          <div style="display:flex;gap:9px;align-items:flex-start;margin-bottom:9px">
+            <span class="st <%= f.rating_overall >= 4 ? 'good' : f.rating_overall >= 3 ? 'warn' : 'crit' %>" style="margin-top:3px"><span class="dot"></span></span>
+            <div style="font-size:12.3px">
+              <%= f.comments || '(rating only, no comment)' %>
+              <div class="muted" style="font-size:10.5px"><%= String(f.submitted_at).slice(0,10) %> · <%= Number(f.rating_overall).toFixed(1) %> / 5 · <%= f.rr_name %></div>
+            </div>
+          </div>
+        <% }); %>
+      <% } %>
+      <div class="hr"></div>
+      <div class="muted" style="font-size:11.5px">The tender allows staff with poor grading or repeated complaints
+      to be removed by the contractor on the Railway's advice, without the frequent-replacement penalty applying.</div>
+    </div>
+  </div>
+</div>
+
+<div class="grid" style="grid-template-columns:1.4fr 1fr">
+  <div class="card">
+    <div class="card-h"><h3>Replacement history</h3><span class="sub">changes without Railway permission are a contract issue</span></div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>Effective</th><th>Post</th><th>Out</th><th>In</th><th>Reason</th><th>Permission</th></tr></thead>
+      <tbody>
+      <% replacements.forEach(function(r){ %>
+        <tr><td class="tnum"><%= String(r.effective_date).slice(0,10) %></td>
+          <td><%= r.designation %></td>
+          <td><%= r.outgoing_name || '—' %></td>
+          <td><% if (r.incoming_name) { %><%= r.incoming_name %>
+              <% } else { %><span class="muted">not yet appointed</span><% } %></td>
+          <td style="font-size:11.8px"><%= r.reason %></td>
+          <td><% if (r.railway_permission) { %>
+                <span class="st good"><span class="dot"></span>Obtained</span>
+                <% if (r.permitted_name) { %><div class="muted" style="font-size:10.8px"><%= r.permitted_name %><%= r.permitted_on ? ' · ' + String(r.permitted_on).slice(0,10) : '' %></div><% } %>
+              <% } else if (can('staff.screen')) { %>
+                <form method="post" action="<%= url('/staff/' + st.id + '/replacements/' + r.id + '/permit') %>" style="margin:0">
+                  <button class="btn small" type="submit">Permit</button>
+                </form>
+              <% } else { %><span class="st warn"><span class="dot"></span>Not obtained</span><% } %></td></tr>
+      <% }); %>
+      <% if (!replacements.length) { %><tr><td colspan="6" class="muted">No replacements recorded.</td></tr><% } %>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h3><%= st.is_active ? 'Mark as left' : 'No longer on roll' %></h3>
+      <span class="sub"><%= st.is_active ? 'removes them from the muster' : 'kept for the record' %></span></div>
+    <div class="card-b">
+      <% if (!st.is_active) { %>
+        <div class="st crit" style="font-size:13px"><span class="dot"></span>
+          Left on <%= String(st.date_of_leaving || '').slice(0,10) || 'an unrecorded date' %></div>
+        <div class="muted" style="font-size:11.5px;margin-top:8px">
+          They no longer appear on the muster, in the on-roll count or on a monthly certificate.
+          The record is kept because signed documents from earlier months refer to it.
+        </div>
+      <% } else if (can('staff.edit')) { %>
+        <form method="post" action="<%= url('/staff/' + st.id + '/leave') %>">
+          <div style="margin-bottom:10px"><label class="fl">Date of leaving</label>
+            <input class="fi" type="date" name="date_of_leaving" value="<%= today %>" required></div>
+          <div style="margin-bottom:10px"><label class="fl">Reason</label>
+            <input class="fi" name="reason" required placeholder="resigned, absent without leave, replaced on the Railway's advice"></div>
+          <div style="margin-bottom:12px"><label class="fl">Replaced by</label>
+            <select class="fi" name="replacement_staff_id">
+              <option value="">— not yet appointed —</option>
+              <% candidates.forEach(function(c){ %>
+                <option value="<%= c.id %>"><%= c.full_name %> (<%= c.staff_code %>)</option>
+              <% }); %>
+            </select>
+            <div class="muted" style="font-size:11.3px;margin-top:3px">
+              Only people already on roll in the same post at this running room.</div></div>
+          <button class="btn" type="submit">Mark as left</button>
+        </form>
+        <div class="hr"></div>
+        <div class="muted" style="font-size:11.5px">
+          This writes a replacement record whether or not a successor is named. The Railway's permission
+          is recorded separately, by an officer, on the left.
+        </div>
+      <% } else { %>
+        <div class="muted" style="font-size:12.5px">Your role has view access only.</div>
+      <% } %>
+    </div>
+  </div>
+</div>

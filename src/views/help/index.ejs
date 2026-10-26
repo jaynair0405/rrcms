@@ -1,0 +1,123 @@
+<%
+/* WHAT TO DO, WHERE, AND WHOSE JOB IT IS.
+   Written because the officer said the plainest possible thing about a system
+   with forty screens: "now even i have to open many links to find which is
+   where." Three questions are answered, in this order, because that is the
+   order they get asked in: what do I do today, where do I find a thing, and
+   who does the thing I cannot.
+
+   A step is a LINK only where the reader's own permissions would let him in.
+   Offering a screen and then refusing it teaches him to distrust the next line
+   too, so a step he cannot open is plain text and says whose it is. */
+const openable = { '/wages': 'wages.view', '/staff': 'staff.view', '/food-safety': 'fssai.view',
+                   '/records/muster': 'rr.view', '/records/linen': 'rr.view',
+                   '/records/cleaning': 'rr.view', '/records/meals': 'rr.view',
+                   '/records/complaints': 'rr.view', '/records/call-book': 'rr.view',
+                   '/records/linen-stock': 'rr.view', '/facility/consumables': 'rr.view',
+                   '/facility/assets': 'rr.view', '/facility/pest': 'rr.view',
+                   '/facility/cctv': 'rr.view', '/facility/menu': 'rr.view',
+                   '/incidents': 'rr.view', '/inspections': 'rr.view',
+                   '/deficiencies': 'rr.view', '/certificates': 'rr.view',
+                   '/account/password': null };
+const may = p => { const need = openable[p]; return need === undefined || need === null || can(need); };
+%>
+
+<div class="card" style="margin-bottom:16px">
+  <div class="card-h">
+    <h3>How this works — <%= role.title %></h3>
+    <span class="sub"><%= mine ? 'your job, in the order you do it' : 'somebody else’s job — you are reading it' %></span>
+    <div class="spacer"></div>
+    <% if (roles.length > 1) { %>
+      <form method="get" action="<%= url('/help') %>" class="row" style="gap:6px;align-items:center">
+        <select class="fi" name="role" style="width:210px" onchange="this.form.submit()">
+          <% roles.forEach(function(r){ %>
+            <option value="<%= r[0] %>" <%= r[0] === roleCode ? 'selected' : '' %>><%= r[1] %></option>
+          <% }); %>
+        </select>
+      </form>
+    <% } %>
+  </div>
+  <div class="card-b">
+    <p style="margin:0;max-width:70ch"><%= role.lead %></p>
+  </div>
+</div>
+
+<% role.sections.forEach(function(sec){ %>
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-h"><h3><%= sec.when %></h3>
+      <% if (sec.steps.length) { %><span class="sub"><%= sec.steps.length %> step<%= sec.steps.length === 1 ? '' : 's' %></span><% } %>
+    </div>
+    <div class="card-b">
+      <% if (sec.why) { %>
+        <div class="note" style="font-size:12px;margin-bottom:12px;max-width:78ch"><%= sec.why %></div>
+      <% } %>
+      <ol style="margin:0;padding-left:20px;max-width:80ch">
+        <% sec.steps.forEach(function(st){ %>
+          <li style="margin-bottom:<%= st.note ? '12px' : '6px' %>">
+            <% if (may(st.at)) { %>
+              <a href="<%= url(st.at) %>"><b><%= st.do %></b></a>
+            <% } else { %>
+              <b><%= st.do %></b>
+              <span class="muted" style="font-size:11.5px">— not open to your role</span>
+            <% } %>
+            <% if (st.note) { %>
+              <div class="muted" style="font-size:11.8px;margin-top:3px"><%= st.note %></div>
+            <% } %>
+          </li>
+        <% }); %>
+      </ol>
+    </div>
+  </div>
+<% }); %>
+
+<div class="grid" style="grid-template-columns:1fr 1fr">
+  <div class="card">
+    <div class="card-h"><h3>Where to find what</h3><span class="sub">the thing, and the screen it lives on</span></div>
+    <div class="tblwrap"><table class="tbl">
+      <tbody>
+      <% role.findIt.forEach(function(f){ %>
+        <tr>
+          <td><%= f[0] %></td>
+          <td style="width:1%;white-space:nowrap">
+            <% if (may(f[1])) { %><a href="<%= url(f[1]) %>">Open</a>
+            <% } else { %><span class="muted" style="font-size:11.5px">not your role</span><% } %>
+          </td>
+        </tr>
+      <% }); %>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h3>Not yours to do</h3><span class="sub">and who does it instead</span></div>
+    <div class="card-b">
+      <div class="muted" style="font-size:11.8px;margin-bottom:10px;max-width:60ch">
+        These are the Railway’s acts. They are separated from yours on purpose: a contractor
+        who could approve his own men, sign his own muster or settle his own stock figure
+        would be marking his own homework, and the record would prove nothing to anybody.
+      </div>
+      <div class="tblwrap"><table class="tbl">
+        <thead><tr><th>The act</th><th>Whose it is</th></tr></thead>
+        <tbody>
+        <% role.notMine.forEach(function(n){ %>
+          <tr><td><%= n[0] %></td><td class="muted"><%= n[1] %></td></tr>
+        <% }); %>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+
+<% if (pendingRoles.length) { %>
+  <div class="card" style="margin-top:14px">
+    <div class="card-h"><h3>Still being written</h3></div>
+    <div class="card-b">
+      <div class="muted" style="font-size:12px;max-width:78ch">
+        <%= pendingRoles.map(function(r){ return r[1]; }).join(' · ') %>.
+        The sequence of a man’s day belongs to the man who works it. These are written with the
+        Railway one at a time rather than guessed from a list of permissions, which is how a help
+        page ends up describing a system nobody recognises.
+      </div>
+    </div>
+  </div>
+<% } %>

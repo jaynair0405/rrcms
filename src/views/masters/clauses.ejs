@@ -1,0 +1,24 @@
+<div style="margin-bottom:14px"><a href="<%= url('/masters') %>">← Master data</a></div>
+<div class="note warn" style="margin-bottom:14px">
+  <b>Rates are stored but never applied.</b> Deficiencies are recorded against these clause IDs with a quantity and
+  evidence, and no amount is computed anywhere in this build. When the penalty schedule under review is finalised,
+  a single migration adds the calculation over the rows already captured — nothing needs re-entry.
+</div>
+<div class="card"><div class="tblwrap"><table class="tbl">
+  <thead><tr><th>Clause</th><th>Head</th><th>Nature of deficiency</th><th class="num">Rate (₹)</th><th>Unit</th>
+    <th>Frequency</th><th>Daily checklist</th></tr></thead>
+  <tbody>
+  <% rows.forEach(function(r){ %>
+    <tr <%= r.is_formula ? 'style="background:var(--plane)"' : '' %>>
+      <td><span class="pill <%= r.is_formula ? 'r':'b' %>"><%= r.clause_code %></span></td>
+      <td class="muted" style="font-size:11.5px"><%= r.group_name %></td>
+      <td><%= r.description %>
+        <% if (r.is_formula) { %><div class="muted" style="font-size:11px;margin-top:2px"><%= r.formula_note %></div><% } %></td>
+      <td class="num"><%= r.rate === null ? '—' : fmtInt(r.rate) %></td>
+      <td class="muted" style="font-size:11.5px"><%= r.unit %></td>
+      <td><span class="pill <%= r.frequency==='daily'?'b':r.frequency==='weekly'?'y':'g' %>"><%= r.frequency.replace('_',' ') %></span></td>
+      <td><% if (r.in_daily_checklist) { %><span class="st good"><span class="dot"></span>Yes</span><% } else { %><span class="muted">—</span><% } %></td>
+    </tr>
+  <% }); %>
+  </tbody>
+</table></div></div>

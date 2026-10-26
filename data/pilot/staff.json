@@ -1,0 +1,127 @@
+{
+  "_note": [
+    "Rosters as supplied by the Railway, transcribed exactly as written.",
+    "",
+    "'designation' is the contractor's word for the post. 'maps_to' is the",
+    "Schedule A code it is loaded as. Where the two differ, the difference is",
+    "recorded rather than hidden -- an officer looking at the screen should be",
+    "able to see that the man the contractor calls a Head Cook occupies what",
+    "the schedule calls a Cook.",
+    "",
+    "These lists are CATERING STAFF ONLY. Supervisor, Call Boy, Security,",
+    "Gardner and Sweeper are sanctioned at every one of these sites and are",
+    "not in the lists; they are expected separately and will show as vacant",
+    "against sanction until supplied.",
+    "",
+    "No date of joining, bank account, EPF, ESIC or document is on record for",
+    "any of these people. Every one of them therefore loads with screening",
+    "status 'pending' and cannot be deployed until the Railway screens them --",
+    "which is the correct state, not a gap in the loader."
+  ],
+
+  "designation_map": {
+    "Head Cook": "head_cook",
+    "Cook": "cook_veg",
+    "Assistant Cook": "asst_cook",
+    "Asstt. Cook": "asst_cook",
+    "Helper": "asst_cook",
+    "Table Boy": "table_boy",
+    "Bearer": "table_boy",
+    "Utensil Cleaner": "utensil_wash",
+    "Utensil Washing": "utensil_wash",
+    "Manager": "manager",
+    "Supervisor": "supervisor",
+    "Call Boy": "call_boy",
+    "Security Guard": "security",
+    "Gardner": "gardner",
+    "Sweeper": "sweeper"
+  },
+
+  "rosters": {
+    "IGP": {
+      "source": "igp_staff_list.docx",
+      "staff": [
+        { "name": "Ganesh Sadgir", "designation": "Cook" },
+        { "name": "Bhaskar Sadgir", "designation": "Cook" },
+        { "name": "Ramdhan Sadgir", "designation": "Cook" },
+        { "name": "Namdev Honner", "designation": "Cook" },
+        { "name": "Sandhya Pandit", "designation": "Cook" },
+        { "name": "Suresha Yadav", "designation": "Cook" },
+        { "name": "Pavna Varhade", "designation": "Cook" },
+        { "name": "Vijaya Kamble", "designation": "Cook" },
+        { "name": "Jyoti Dive", "designation": "Cook" },
+        { "name": "Chitra Telore", "designation": "Cook" },
+        { "name": "Renuka Dive", "designation": "Cook" },
+        { "name": "Meena Tonde", "designation": "Cook" },
+        { "name": "Vinayak Edapurkar", "designation": "Table Boy" },
+        { "name": "Dipak Jadhav", "designation": "Utensil Cleaner" },
+        { "name": "Yuvaraj Sadgir", "designation": "Table Boy" },
+        { "name": "Anil Gohil", "designation": "Table Boy" },
+        { "name": "Bharat Lode", "designation": "Table Boy" },
+        { "name": "Mayur Pabalekar", "designation": "Table Boy" },
+        { "name": "Ganesh Karpe", "designation": "Table Boy" },
+        { "name": "Tukaram Karvar", "designation": "Table Boy" },
+        { "name": "Akash Jadhav", "designation": "Table Boy" },
+        { "name": "Kishor Bodekar", "designation": "Table Boy" },
+        { "name": "Sharad Honner", "designation": "Utensil Cleaner" },
+        { "name": "Mohan Shinde", "designation": "Table Boy" },
+        { "name": "Jaibai Gire", "designation": "Utensil Cleaner" },
+        { "name": "Dinesh Kumale", "designation": "Table Boy" },
+        { "name": "Kunjit Jaiswal", "designation": "Table Boy" },
+        { "name": "Amar Sadgir", "designation": "Table Boy" },
+        { "name": "Sagar Halkunde", "designation": "Table Boy" },
+        { "name": "Kalpana Dabake", "designation": "Cook" },
+        { "name": "Savitri Jagtap", "designation": "Cook" }
+      ]
+    },
+
+    "LNL": {
+      "source": "LNL_staff.docx",
+      "staff": [
+        { "name": "Jyoti Adagale", "designation": "Head Cook" },
+        { "name": "Jyoti Chauhan", "designation": "Cook" },
+        { "name": "Lata Bai", "designation": "Cook" },
+        { "name": "Amol Londhe", "designation": "Helper" },
+        { "name": "Anita Ambekar", "designation": "Head Cook" },
+        { "name": "Sangeeta Shinde", "designation": "Cook" },
+        { "name": "Meena Padvakar", "designation": "Head Cook" },
+        { "name": "Bayeda Bai Rokade", "designation": "Cook" },
+        { "name": "Gangubai Jadhav", "designation": "Cook" },
+        { "name": "Panchshila Mule", "designation": "Helper" },
+        { "name": "Parvati Chauhan", "designation": "Helper" }
+      ]
+    },
+
+    "ROHA": {
+      "source": "Roha_staff.docx",
+      "staff": [
+        { "name": "Ranjit Singh", "designation": "Head Cook" },
+        { "name": "Anil Dhokare", "designation": "Head Cook" },
+        { "name": "Mahadev Salunkhe", "designation": "Head Cook" },
+        { "name": "Anant Botkar", "designation": "Head Cook" },
+        { "name": "Nazid Anjum", "designation": "Head Cook" },
+        { "name": "Dinesh Mishra", "designation": "Head Cook" },
+        { "name": "Vimal Dhanwade", "designation": "Assistant Cook" },
+        { "name": "Dharati Dahenfekar", "designation": "Assistant Cook" },
+        { "name": "Aruna Saigatankar", "designation": "Assistant Cook" },
+        { "name": "Ashwini", "designation": "Assistant Cook" },
+        { "name": "Chaya Thakur", "designation": "Assistant Cook" },
+        { "name": "Humera Sayyed", "designation": "Assistant Cook" },
+        { "name": "Khushilal", "designation": "Table Boy" },
+        { "name": "Sachin Ranjekar", "designation": "Table Boy" },
+        { "name": "Rahul Dubale", "designation": "Table Boy" },
+        { "name": "Wasim Dalvi", "designation": "Table Boy" },
+        { "name": "Arvind Patel", "designation": "Table Boy" },
+        { "name": "Chandrashekar", "designation": "Table Boy" },
+        { "name": "Arif Nauband", "designation": "Utensil Cleaner" },
+        { "name": "Ayan Salman", "designation": "Utensil Cleaner" },
+        { "name": "Mohd Hasan", "designation": "Utensil Cleaner" }
+      ]
+    },
+
+    "JNPT": {
+      "source": "not supplied - contract not yet finalised",
+      "staff": []
+    }
+  }
+}

@@ -1,0 +1,429 @@
+<%- await include('_nav') %>
+
+<%# WHICH BUILDING'S LINEN.
+    Each of Igatpuri's four buildings keeps its own store, so the shelf, the
+    day's issues, the wash and the write-offs are all facts about a building.
+    Forty-three of the forty-five running rooms are one building; for those
+    `blocks` is empty and none of this appears. %>
+<% if (blocks && blocks.length) { %>
+  <div class="card blockbar">
+    <div class="bb-row">
+      <span class="bb-lab">Building</span>
+        <% blocks.forEach(function(b){ %>
+          <a class="btn <%= blockId === b.id ? '' : 'ghost' %> small"
+             href="<%= url('/facility/laundry') %>?rr=<%= rr.id %>&block=<%= b.id %>"><%= b.name %>
+             <span class="muted" style="font-weight:400">· <%= b.total_beds %> beds</span></a>
+        <% }); %>
+      <% if (orphans) { %>
+        <a class="btn <%= viewNone ? '' : 'ghost' %> small"
+           href="<%= url('/facility/laundry') %>?rr=<%= rr.id %>&block=none">No building
+           <span class="pill" style="margin-left:5px"><%= orphans %></span></a>
+      <% } %>
+    </div>
+  </div>
+<% } %>
+<% if (viewNone && orphans) { %>
+  <div class="note warn" style="margin-bottom:14px">
+    <b>Records made before <%= rr.name %> had buildings.</b>
+    These <%= orphans %> row<%= orphans === 1 ? '' : 's' %> belong to no building, because none
+    existed when they were written. They are shown here so they are not lost — nothing new can be
+    recorded against "no building", because a round is done in one building and linen sits on one
+    shelf. Read them, close out anything still open, and the list will empty itself.
+  </div>
+<% } else if (viewNone) { %>
+  <%# The button that leads here only appears when there is something to see,
+      so arriving with nothing means the list has been worked through — or the
+      address was typed. Either way, saying "0 rows belong to no building" as
+      though it were a finding would be the screen inventing a problem. %>
+  <div class="note" style="margin-bottom:14px">
+    Nothing at <%= rr.name %> is on record without a building.
+  </div>
+<% } %>
+
+<% if (needBlock) { %>
+  <%# NOT AN ERROR — A QUESTION THE REGISTER CANNOT ANSWER FOR HIM.
+      Defaulting to the first building would work out one building's ledger
+      from another's opening figure, and the arithmetic would look perfectly
+      sound while being about the wrong shelf. %>
+  <div class="note warn">
+    <b>Choose the building above.</b>
+    <%= rr.name %> stands in <%= blocks.length %> buildings and each keeps its own linen —
+    nothing is defaulted, because a ledger opened from the wrong shelf is wrong in a way
+    that looks right.
+  </div>
+<% } else { %>
+
+<%
+  /* Names come from the seeded schedule, not from a map kept by hand here — a
+     view that carries its own copy of the contract's item list is a second
+     place for it to be wrong. */
+  const ITEMS = Object.fromEntries(schedule.map(x => [x.item_type, x.name]));
+  const d10 = v => String(v).slice(0, 10);
+%>
+
+<%# THE ORDER OF THIS PAGE IS THE ORDER OF THE WORK.
+    Send, receive, read the return, read the dispatch register. It used to open
+    on five summary tiles and keep both forms below them, which put the two
+    things a supervisor comes here to DO underneath the things an officer comes
+    here to READ. The tiles have not been removed; they have been put where a
+    summary belongs, at the head of the registers it summarises. %>
+
+<% if (unapproved.length || noVendor.length) { %>
+  <div class="note err" style="margin-bottom:14px">
+    <b><%= unapproved.length + noVendor.length %> of the last <%= rows.length %> dispatches</b> went to a
+    washing centre the Railway has not approved<% if (unapprovedPieces) { %> —
+    <%= fmtInt(unapprovedPieces) %> pieces<% } %>.
+    <% if (noVendor.length) { %>
+      <%= noVendor.length %> of them name no washing centre at all, which is the same breach wearing a
+      different hat: the linen went somewhere and the register cannot say where.
+    <% } %>
+    <div style="margin-top:6px;font-size:12px">
+      Clause C1 makes this a deficiency in its own right, quite apart from how well the linen came back.
+      Raise it from the <a href="<%= url('/inspections/new') %>?rr=<%= rr.id %>">inspection checklist</a> so
+      it carries into the month; no amount is computed here.
+    </div>
+  </div>
+<% } %>
+
+<% if (!vendor) { %>
+  <div class="note warn" style="margin-bottom:14px">
+    No approved laundry is on record for <b><%= rr.name %></b>. Clause C1 treats washing at any other
+    source as a deficiency, so the approved washing centre should be recorded before dispatches are entered.
+  </div>
+<% } else if (!vendor.is_approved) { %>
+  <div class="note err" style="margin-bottom:14px">
+    <b><%= vendor.name %></b> is attached to this running room but is not marked approved.
+  </div>
+<% } %>
+
+<%# ------------------------------------------------------------ 1. SEND %>
+<div class="card" style="margin-bottom:14px">
+  <div class="card-h"><h3>Send to the wash</h3>
+    <span class="sub"><% if (vendor) { %><%= vendor.name %><% if (vendor.licence_no) { %> · licence <%= vendor.licence_no %><% } %>
+      <% } else { %>no approved washing centre on record<% } %></span></div>
+  <div class="card-b">
+    <%# WHAT HAS ALREADY GONE TODAY, BEFORE HE TYPES.
+        The daily linen register prints a "Sent to wash" column, so a man
+        filling that screen can see he has already sent. This page held the
+        same dispatches in a register of the last forty, by date, with no
+        total — which is not the same as being able to see them. Found by the
+        officer thinking about the man rather than the code: send twenty bed
+        sheets from the daily screen in the morning, come here in the
+        afternoon, forget, and send the same twenty again.
+
+        It is stated, not enforced. A second consignment of the same item on
+        the same day is ordinary — the laundry man comes twice — so refusing
+        it would make the register lie about a real dispatch. %>
+    <% if (sentTodayTotal) { %>
+      <div class="note" style="margin-bottom:12px">
+        <b>Already gone today<% if (block) { %> from <%= block.name %><% } %>:</b>
+        <%= Object.keys(sentToday).map(function(k){
+              return sentToday[k].qty + ' × ' + (ITEMS[k] || k)
+                + (sentToday[k].consignments > 1 ? ' (' + sentToday[k].consignments + ' consignments)' : '');
+            }).join(' · ') %>
+        <div class="muted" style="font-size:11.3px;margin-top:5px">
+          Sending the same item again today is not refused — the laundry man may come twice —
+          but check this is a second bundle and not the first one entered again. The daily
+          linen register and this page write to the same record, so a consignment entered
+          there is already counted here.
+        </div>
+      </div>
+    <% } else { %>
+      <div class="muted" style="font-size:11.5px;margin-bottom:12px">
+        Nothing has gone to the wash today<% if (block) { %> from <%= block.name %><% } %>.
+      </div>
+    <% } %>
+    <% if (can('stay.manage') && !viewNone) { %>
+    <form method="post" action="<%= url('/facility/laundry') %>">
+      <input type="hidden" name="rr" value="<%= rr.id %>">
+        <% if (blockId) { %><input type="hidden" name="block" value="<%= blockId %>"><% } %>
+      <div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end">
+        <div style="flex:0 0 150px"><label class="fl">Sent on</label>
+          <input class="fi" type="date" name="dispatch_date" value="<%= date %>" max="<%= todayStr %>" required></div>
+        <div style="flex:0 0 190px"><label class="fl">Item</label>
+          <select class="fi" name="item_type" id="washitem"
+                  data-sent='<%- JSON.stringify(Object.keys(sentToday).reduce(function(a,k){ a[k]=sentToday[k].qty; return a; }, {})) %>'>
+            <% Object.keys(ITEMS).forEach(function(k){ %><option value="<%= k %>"><%= ITEMS[k] %></option><% }); %>
+          </select>
+          <%# The line under the box names the item he is looking at, so the
+              warning is about the thing in front of him rather than a list he
+              has to read. %>
+          <div class="muted" id="washitemsent" style="font-size:11px;margin-top:4px"></div></div>
+        <div style="flex:0 0 120px"><label class="fl">Quantity sent</label>
+          <input class="fi" type="number" min="1" name="quantity_sent" required></div>
+        <%# WHERE IT IS COMING FROM.
+            Almost every dispatch is used linen stripped off the beds, which was
+            never on the fresh shelf — so the shelf figure is right to ignore
+            it, and that is the default. Linen taken off the SHELF and sent was
+            on it, and the shelf must drop by that much or the same pieces are
+            counted twice: once on the shelf and once at the wash. Nobody was
+            ever asked, so the register could not tell the two apart. %>
+        <div style="flex:0 0 210px"><label class="fl">Taken from</label>
+          <select class="fi" name="from_pool">
+            <option value="used">Used linen off the beds</option>
+            <option value="shelf">Fresh stock on the shelf</option>
+          </select>
+          <div class="muted" style="font-size:10.5px;margin-top:3px">
+            Fresh stock sent to the wash comes off the shelf figure.
+          </div></div>
+        <div style="flex:1 1 200px"><label class="fl">Washing centre</label>
+          <select class="fi" name="vendor_id">
+            <option value="">— not recorded —</option>
+            <% vendors.forEach(function(v){ %>
+              <option value="<%= v.id %>" <%= vendor && v.id===vendor.id?'selected':'' %>><%= v.name %><%= v.is_approved ? '' : ' (not approved)' %></option>
+            <% }); %>
+          </select></div>
+        <div style="flex:0 0 150px"><label class="fl">Invoice no.</label>
+          <input class="fi" type="text" name="invoice_no" placeholder="as on the bill"></div>
+        <div style="flex:1 1 180px"><label class="fl">Remarks</label>
+          <input class="fi" type="text" name="quality_remarks" placeholder="challan, condition"></div>
+        <div><button class="btn" type="submit">Save dispatch</button></div>
+      </div>
+      <div class="muted" style="font-size:11.3px;margin-top:8px">
+        Nothing is received here. When this linen comes back it is taken in below, against this
+        consignment, so the shortfall between what went and what returned stays attached to the
+        batch it belongs to. The invoice is what makes the washing centre provable — clause C1.
+      </div>
+          <script>
+      (function () {
+        var sel = document.getElementById('washitem');
+        var out = document.getElementById('washitemsent');
+        if (!sel || !out) return;
+        var sent = {};
+        try { sent = JSON.parse(sel.getAttribute('data-sent') || '{}'); } catch (e) { return; }
+        function say() {
+          var n = sent[sel.value] || 0;
+          var name = sel.options[sel.selectedIndex].textContent.trim();
+          out.textContent = n
+            ? n + ' ' + name.toLowerCase() + (n === 1 ? '' : 's') + ' already went today — check this is a second bundle'
+            : '';
+          out.className = n ? 'st warn' : 'muted';
+          out.style.fontSize = '11px';
+          out.style.marginTop = '4px';
+        }
+        sel.addEventListener('change', say); say();
+      })();
+      </script>
+</form>
+    <% } else { %>
+      <div class="muted" style="font-size:12.5px">Your role has view access only.</div>
+    <% } %>
+  </div>
+</div>
+
+<%# --------------------------------------------------------- 2. RECEIVE
+    A consignment coming back is the second half of the only transaction this
+    page has. It was once a small link in the fifth column of a table that
+    scrolls sideways, which is the same as not being on the screen at all. %>
+<% const openRows = rows.filter(function(r){ return r.quantity_returned < r.quantity_sent; }); %>
+<% if (can('stay.manage') && !viewNone && openRows.length) { %>
+<div class="card" style="margin-bottom:14px">
+  <div class="card-h"><h3>Coming back from the wash</h3>
+    <span class="sub"><%= openRows.length %> consignment<%= openRows.length === 1 ? '' : 's' %> still out</span></div>
+  <div class="card-b">
+    <div class="muted" style="font-size:11.5px;margin-bottom:10px">
+      Each block below is one consignment, named by what went out and the day it went.
+      Take the linen back against the block it belongs to — that is what keeps the
+      shortfall visible.
+    </div>
+    <% openRows.forEach(function(r){ %>
+      <form method="post" action="<%= url('/facility/laundry/' + r.id + '/return') %>"
+            style="border:1px solid var(--line);border-radius:8px;padding:11px 12px;margin-bottom:10px">
+        <div style="font-size:13px;margin-bottom:9px">
+          <b><%= ITEMS[r.item_type] || r.item_type %></b>
+          <span class="muted">— <%= r.quantity_sent %> sent on <%= d10(r.dispatch_date) %><%
+            if (r.vendor_name) { %> to <%= r.vendor_name %><% } %><%
+            if (r.quantity_returned) { %> · <%= r.quantity_returned %> already back<% } %></span>
+          <% if (r.is_overdue) { %>
+            <span class="st crit" style="margin-left:6px"><span class="dot"></span>overdue — <%= r.days_out %> days out</span>
+          <% } %>
+        </div>
+        <div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end">
+          <div style="flex:0 0 165px"><label class="fl">Total back, out of <%= r.quantity_sent %></label>
+            <input class="fi" type="number" min="0" max="<%= r.quantity_sent %>"
+                   name="quantity_returned" value="<%= r.quantity_sent %>" required></div>
+          <div style="flex:0 0 150px"><label class="fl">Received on</label>
+            <input class="fi" type="date" name="returned_on" value="<%= todayStr %>"
+                   min="<%= d10(r.dispatch_date) %>" max="<%= todayStr %>"></div>
+          <div style="flex:0 0 200px"><label class="fl">Wash quality</label>
+            <select class="fi" name="quality_ok">
+              <option value="">— not checked —</option>
+              <option value="1">Accepted</option>
+              <option value="0">Rejected — rewash required</option>
+            </select></div>
+          <div style="flex:1 1 190px"><label class="fl">Remarks</label>
+            <input class="fi" name="quality_remarks" placeholder="stains, tears, short return"></div>
+          <div><button class="btn" type="submit">Receive this consignment</button></div>
+        </div>
+        <div class="muted" style="font-size:11.3px;margin-top:7px">
+          Fewer back than went out leaves this consignment open for the balance. The shortfall is
+          shown against the contract's recovery rate and multiplied by nothing.
+        </div>
+      </form>
+    <% }); %>
+  </div>
+</div>
+<% } %>
+
+<%# --------------------------------------------------- 3. RETURN REGISTER
+    Ordered on the RETURN, which is the only order a washing bill can be
+    checked in. The window is the longest return period this running room's
+    contract sets for any item — not a number chosen here. Anything not fully
+    back sits at the top in red and never scrolls out of the window, because
+    linen that never came back is precisely what a date window would drop. %>
+<div class="card" style="margin-bottom:14px">
+  <div class="card-h"><h3>Return register</h3>
+    <span class="sub">returns of the last <%= windowDays %> day<%= windowDays === 1 ? '' : 's' %><%
+      if (stillOut.length) { %>, and everything still out<% } %></span>
+    <% if (stillOut.length) { %>
+      <span class="spacer"></span>
+      <span class="st crit"><span class="dot"></span><%= stillOut.length %> not back<%
+        if (stillOutPieces) { %> — <%= fmtInt(stillOutPieces) %> piece<%= stillOutPieces === 1 ? '' : 's' %><% } %></span>
+    <% } %></div>
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr><th>Back on</th><th>Item</th><th>Sent on</th><th class="num">Sent</th>
+      <th class="num">Back</th><th class="num">Short</th><th class="num">Days</th>
+      <th>Washing centre</th><th>Quality</th></tr></thead>
+    <tbody>
+    <% retRows.forEach(function(r){ %>
+      <tr<%= r.open ? ' style="background:rgba(200,40,40,.055)"' : '' %>>
+        <td class="tnum">
+          <% if (r.open) { %>
+            <span class="st crit"><span class="dot"></span>not back</span>
+            <div class="muted" style="font-size:10.5px"><%= r.days_out %> day<%= r.days_out === 1 ? '' : 's' %> out</div>
+          <% } else { %><%= d10(r.returned_on) %><% } %>
+        </td>
+        <td><%= r.item_name %>
+          <div class="muted" style="font-size:10.5px">
+            <% if (r.due_days === null) { %>no period set
+            <% } else { %>allowed <%= r.due_days %> day<%= r.due_days === 1 ? '' : 's' %><% } %>
+          </div></td>
+        <td class="tnum"><%= d10(r.dispatch_date) %></td>
+        <td class="num"><%= r.quantity_sent %></td>
+        <td class="num"><%= r.quantity_returned %></td>
+        <td class="num"><% if (r.shortfall) { %>
+              <span class="st crit"><span class="dot"></span><%= r.shortfall %></span>
+            <% } else { %>—<% } %></td>
+        <td class="num tnum"><% if (r.open) { %>—
+          <% } else { %><%= r.days_taken %>
+            <% if (r.late) { %><div class="st crit" style="font-size:10.5px"><span class="dot"></span>late</div><% } %>
+          <% } %></td>
+        <td><% if (r.vendor_name) { %><%= r.vendor_name %><% if (!r.is_approved) { %>
+              <span class="pill r" style="margin-left:5px">not approved</span><% } %>
+            <% } else { %><span class="st crit"><span class="dot"></span>not recorded</span><% } %></td>
+        <td><% if (r.quality_ok === 1) { %><span class="st good"><span class="dot"></span>Accepted</span>
+            <% } else if (r.quality_ok === 0) { %><span class="st crit"><span class="dot"></span>Rejected</span>
+            <% } else { %><span class="st neut"><span class="dot"></span>Not checked</span><% } %>
+            <% if (r.quality_remarks) { %><div class="muted" style="font-size:11.3px"><%= r.quality_remarks %></div><% } %></td>
+      </tr>
+    <% }); %>
+    <% if (!retRows.length) { %>
+      <tr><td colspan="9" class="muted">Nothing has come back in the last <%= windowDays %> days,
+        and nothing is out at the wash.</td></tr>
+    <% } %>
+    </tbody>
+  </table></div>
+  <div class="tblfoot">
+    <b><%= windowDays %> days</b> is the longest return period this running room's contract sets for any
+    item — at IGP the blanket cover's seven. A shorter window would drop a consignment that is still
+    legitimately at the wash. <b>Days</b> is whole days between going and coming back, and <b>late</b>
+    is said only where the contract sets a period; an item it is silent about is never called late.
+    <b>Short</b> is what did not come back. It stays on this register however old it is — a consignment
+    that never returned is the one thing a date window must not be allowed to hide.
+  </div>
+</div>
+
+<div class="kpis" style="margin-bottom:14px">
+  <div class="kpi"><div class="strip" style="background:var(--s1)"></div>
+    <div class="lab">Dispatches on record</div><div class="val"><%= rows.length %></div>
+    <div class="foot">most recent 40</div></div>
+  <div class="kpi"><div class="strip" style="background:var(--warning)"></div>
+    <div class="lab">Not fully returned</div><div class="val"><%= pending %></div>
+    <div class="foot">sent quantity still out</div></div>
+  <div class="kpi"><div class="strip" style="background:var(--critical)"></div>
+    <div class="lab">Back later than the contract allows</div><div class="val"><%= overdue.length %></div>
+    <div class="foot"><% if (overdue.length) { %>
+      <span class="st crit"><span class="dot"></span><span data-clause="C6" data-rr="<%= rr.id %>" title="What this clause says here">clause C6</span><% if (overduePieces) { %> — <%= fmtInt(overduePieces) %> pieces<% } %></span>
+      <% } else { %><span class="st good"><span class="dot"></span>all back in time</span><% } %></div></div>
+  <div class="kpi"><div class="strip" style="background:var(--critical)"></div>
+    <div class="lab">Without laundry invoice</div><div class="val"><%= noInvoice %></div>
+    <div class="foot"><span data-clause="C1" data-rr="<%= rr.id %>" title="What this clause says here">clause C1</span> needs the proof</div></div>
+  <div class="kpi"><div class="strip" style="background:var(--critical)"></div>
+    <div class="lab">Washed at a non-approved source</div>
+    <div class="val"><%= unapproved.length + noVendor.length %></div>
+    <div class="foot"><% if (unapproved.length || noVendor.length) { %>
+      <span class="st crit"><span class="dot"></span><span data-clause="C1" data-rr="<%= rr.id %>" title="What this clause says here">clause C1</span> breach</span>
+      <% } else { %><span class="st good"><span class="dot"></span>all approved</span><% } %></div></div>
+</div>
+
+<%# ------------------------------------------------- 4. DISPATCH REGISTER
+    The record, ordered on the day the linen LEFT. Work is not done here. %>
+<div class="card" style="margin-bottom:14px">
+  <div class="card-h"><h3>Laundry dispatch register</h3><span class="sub"><%= rr.name %></span></div>
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr><th>Sent</th><th>Item</th><th>Washing centre</th><th class="num">Sent</th>
+      <th class="num">Back</th><th>Invoice</th><th>Quality</th></tr></thead>
+    <tbody>
+    <% rows.forEach(function(r){ %>
+      <tr>
+        <td class="tnum"><%= d10(r.dispatch_date) %>
+          <% if (r.quantity_returned < r.quantity_sent) { %>
+            <div class="muted" style="font-size:10.5px"><%= r.days_out %> day<%= r.days_out === 1 ? '' : 's' %> out</div>
+          <% } %></td>
+        <td><%= ITEMS[r.item_type] || r.item_type %>
+          <div class="muted" style="font-size:10.5px">
+            <% if (r.due_days === null) { %>no period set
+            <% } else { %>due back in <%= r.due_days %> day<%= r.due_days === 1 ? '' : 's' %><% } %>
+            <% if (r.from_pool === 'shelf') { %> · from the shelf<% } %>
+          </div>
+          <% if (r.is_overdue) { %>
+            <div class="st crit" style="font-size:10.5px"><span class="dot"></span>overdue</div>
+          <% } %></td>
+        <td><% if (r.vendor_name) { %><%= r.vendor_name %><% if (!r.is_approved) { %>
+              <span class="pill r" style="margin-left:5px">not approved</span><% } %>
+            <% } else { %><span class="muted">not recorded</span><% } %></td>
+        <td class="num"><%= r.quantity_sent %></td>
+        <td class="num"><% if (r.quantity_returned < r.quantity_sent) { %>
+              <span class="st warn"><span class="dot"></span><%= r.quantity_returned %></span>
+            <% } else { %><%= r.quantity_returned %><% } %></td>
+        <td><% if (r.invoice_no) { %><%= r.invoice_no %>
+            <% } else { %><span class="st crit"><span class="dot"></span>missing</span><% } %></td>
+        <td><% if (r.quality_ok === 1) { %><span class="st good"><span class="dot"></span>Accepted</span>
+            <% } else if (r.quality_ok === 0) { %><span class="st crit"><span class="dot"></span>Rejected</span>
+            <% } else { %><span class="st neut"><span class="dot"></span>Not checked</span><% } %>
+            <% if (r.quality_remarks) { %><div class="muted" style="font-size:11.3px"><%= r.quality_remarks %></div><% } %></td>
+      </tr>
+    <% }); %>
+    <% if (!rows.length) { %><tr><td colspan="7" class="muted">No dispatch recorded yet.</td></tr><% } %>
+    </tbody>
+  </table></div>
+</div>
+
+<div class="card">
+  <div class="card-h"><h3>What the contract says</h3>
+    <span class="sub">the schedule both registers run on</span></div>
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr><th>Item</th><th class="num">Back within</th><th>Washed</th>
+      <th class="num">If lost</th></tr></thead>
+    <tbody>
+    <% schedule.filter(function(x){ return x.item_type !== 'other'; }).forEach(function(x){ %>
+      <tr class="li li-<%= x.item_type %>">
+        <td><%= x.name %></td>
+        <td class="num tnum"><% if (x.delivery_days === null) { %>—
+          <% } else { %><%= x.delivery_days %> day<%= x.delivery_days === 1 ? '' : 's' %><% } %></td>
+        <td class="muted" style="font-size:11.5px"><%= x.wash_frequency || '—' %><%
+          if (x.per_bed) { %> · <%= x.per_bed %> per bed<% } %></td>
+        <td class="num tnum"><%= x.recovery_rate === null ? '—' : 'Rs ' + Number(x.recovery_rate).toFixed(2) %></td>
+      </tr>
+    <% }); %>
+    </tbody>
+  </table></div>
+  <div class="tblfoot">
+    Read off the executed contract, not off the earlier tender paper. <b>Back within</b> is what these
+    registers flag on — bed sheets next day, a blanket cover in seven — and it replaced a flat 48 hours
+    that was wrong in both directions at once. <b>If lost</b> is the recovery rate per unit as the contract
+    prints it; <b>nothing here multiplies it</b>. A shortfall of eleven bed sheets is eleven bed sheets
+    beside Rs 170 a unit, and what comes off the bill is the officer's act.
+  </div>
+</div>
+<% } %>

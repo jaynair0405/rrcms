@@ -1,0 +1,89 @@
+<%- await include('_tabs') %>
+
+<div class="kpis" style="margin-bottom:16px">
+  <div class="kpi"><i class="strip" style="background:var(--s1)"></i>
+    <div class="lab">Feedback received</div><div class="val"><%= fmtInt(counts.total || 0) %></div>
+    <div class="foot">within your access</div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s4)"></i>
+    <div class="lab">Average rating</div>
+    <div class="val"><%= counts.avg_overall === null || counts.avg_overall === undefined ? '—' : Number(counts.avg_overall).toFixed(2) %> <small>/ 5</small></div>
+    <div class="foot"><span class="st <%= (counts.avg_overall||0) > 4 ? 'good' : 'warn' %>"><span class="dot"></span><%= (counts.avg_overall||0) > 4 ? 'above the 4.01 threshold' : 'below 4.01 — penalty band' %></span></div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s2)"></i>
+    <div class="lab">Open items</div><div class="val"><%= fmtInt(counts.open || 0) %></div>
+    <div class="foot">awaiting action</div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s8)"></i>
+    <div class="lab">Critical</div><div class="val"><%= fmtInt(counts.critical || 0) %></div>
+    <div class="foot">rated 2 or below</div></div>
+</div>
+
+<form class="row" method="get" style="margin-bottom:14px">
+  <select class="fi" name="rr" style="max-width:220px"><option value="">All running rooms</option>
+    <% rooms.forEach(function(r){ %><option value="<%= r.id %>" <%= String(rr)===String(r.id)?'selected':'' %>><%= r.name %></option><% }); %>
+  </select>
+  <select class="fi" name="status" style="max-width:160px"><option value="">Any status</option>
+    <% ['open','under_action','closed'].forEach(function(s){ %><option value="<%= s %>" <%= status===s?'selected':'' %>><%= s.replace('_',' ') %></option><% }); %>
+  </select>
+  <select class="fi" name="severity" style="max-width:160px"><option value="">Any severity</option>
+    <% ['critical','major','normal'].forEach(function(s){ %><option value="<%= s %>" <%= severity===s?'selected':'' %>><%= s %></option><% }); %>
+  </select>
+  <select class="fi" name="sort" style="max-width:180px">
+    <option value="open" <%= sort==='open'?'selected':'' %>>Open items first</option>
+    <option value="new"  <%= sort==='new' ?'selected':'' %>>Newest first</option>
+  </select>
+  <button class="btn" type="submit">Filter</button>
+  <div class="spacer"></div>
+  <% if (todayCount) { %>
+    <a class="pill b" style="text-decoration:none" href="<%= url('/feedback') %>?sort=new"><%= todayCount %> received today</a>
+  <% } %>
+  <span class="muted" style="font-size:12px;margin-left:8px"><%= rows.length %> shown</span>
+</form>
+
+<div class="card"><div class="tblwrap"><table class="tbl">
+  <thead><tr><th>Received</th><th>Running room</th><th>From</th><th>Ratings</th><th>Comment</th>
+    <th>Staff named</th><th>Severity</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+  <% rows.forEach(function(f){ %>
+    <tr>
+      <td class="tnum"><%= String(f.submitted_at).slice(0,16) %>
+        <% if (String(f.submitted_at).slice(0,10) === todayStr) { %>
+          <div><span class="pill b" style="font-size:9.5px;padding:1px 6px">TODAY</span></div>
+        <% } %>
+        <div class="muted" style="font-size:10.5px"><%= f.channel.replace('_',' ') %></div></td>
+      <td><a href="<%= url('/running-rooms/' + f.rr_id) %>"><%= f.rr_name %></a>
+        <span class="muted" style="font-size:10.5px"><%= f.div_code %></span></td>
+      <td><% if (f.crew_name) { %><%= f.crew_name %><% if (f.crew_id_entered) { %><div class="muted" style="font-size:10.5px">ID <%= f.crew_id_entered %></div><% } %>
+          <% } else { %><span class="muted">anonymous</span><% } %></td>
+      <td style="font-size:11.5px" class="tnum">
+        <% [['C',f.rating_cleanliness],['F',f.rating_food],['L',f.rating_linen],['B',f.rating_behaviour]]
+             .filter(x=>x[1]!==null).forEach(function(x){ %>
+          <span class="pill" style="margin-right:3px"><%= x[0] %> <%= Number(x[1]).toFixed(1) %></span>
+        <% }); %>
+        <div style="margin-top:3px"><b><%= f.rating_overall === null ? '—' : Number(f.rating_overall).toFixed(2) %></b> overall</div>
+      </td>
+      <td style="font-size:11.8px;max-width:280px"><%= f.comments || '—' %>
+        <%# WHAT THE CREW MEMBER PHOTOGRAPHED. A picture sent from the QR form
+            holds the record open whatever the stars said, because nobody
+            photographs a running room to report that it was fine. %>
+        <% (f.photos || []).forEach(function(id){ %>
+          <a href="<%= url('/photo/' + id) %>" target="_blank" title="sent by the crew"
+             style="display:inline-block;margin:5px 5px 0 0">
+            <img src="<%= url('/photo/' + id) %>" alt="sent by the crew"
+                 style="height:44px;width:auto;max-width:100px;object-fit:cover;
+                        border:1px solid var(--border);border-radius:4px"></a>
+        <% }); %>
+      </td>
+      <td style="font-size:11.8px"><%= f.named_staff || '—' %></td>
+      <td><% if (f.severity==='critical') { %><span class="st crit"><span class="dot"></span>Critical</span>
+          <% } else if (f.severity==='major') { %><span class="st warn"><span class="dot"></span>Major</span>
+          <% } else { %><span class="muted">Normal</span><% } %></td>
+      <td><% if (f.status==='closed') { %><span class="st good"><span class="dot"></span>Closed</span>
+          <% } else { %><span class="st warn"><span class="dot"></span><%= f.status.replace('_',' ') %></span><% } %></td>
+      <td><% if (f.status !== 'closed' && can('feedback.close')) { %>
+            <form method="post" action="<%= url('/feedback/' + f.id + '/close') %>">
+              <button class="btn ghost small" type="submit">Close</button></form>
+          <% } %></td>
+    </tr>
+  <% }); %>
+  <% if (!rows.length) { %><tr><td colspan="9" class="muted">No feedback matches.</td></tr><% } %>
+  </tbody>
+</table></div></div>

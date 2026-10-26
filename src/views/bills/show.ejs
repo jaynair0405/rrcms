@@ -1,0 +1,184 @@
+<div style="margin-bottom:14px"><a href="<%= url('/bills') %>">← Bills</a></div>
+
+<div class="grid" style="grid-template-columns:1.3fr 1fr;margin-bottom:16px">
+  <div class="card">
+    <div class="card-h"><h3><%= b.contractor_name %> — <%= String(b.period_month).slice(0,7) %></h3>
+      <span class="sub"><%= b.rr_name || 'all sites on the agreement' %> · <%= b.agreement_no || 'no agreement number' %></span></div>
+    <div class="card-b">
+      <div class="kv">
+        <div><span class="k">Bill number</span><span class="v"><%= b.bill_no || '—' %></span></div>
+        <div><span class="k">Submitted on</span><span class="v"><%= b.submitted_on ? String(b.submitted_on).slice(0,10) : 'not recorded' %></span></div>
+        <div><span class="k">Due by</span><span class="v"><%= b.due_on ? String(b.due_on).slice(0,10) : '—' %></span></div>
+        <div><span class="k">Position</span><span class="v"><%= b.status_label %></span></div>
+        <% if (b.checked_by_name) { %><div><span class="k">Checked by</span><span class="v"><%= b.checked_by_name %></span></div><% } %>
+        <% if (b.passed_by_name) { %><div><span class="k">Passed by</span><span class="v"><%= b.passed_by_name %><%= b.passed_on ? ' on ' + String(b.passed_on).slice(0,10) : '' %></span></div><% } %>
+        <% if (b.paid_on) { %><div><span class="k">Paid on</span><span class="v"><%= String(b.paid_on).slice(0,10) %></span></div><% } %>
+      </div>
+      <% if (!b.submitted_on && b.due_on && String(b.due_on).slice(0,10) < today()) { %>
+        <div class="note err" style="margin-top:12px">
+          The due date has passed and no submission date is recorded. Clause <b>D5</b> (₹50,000, first three
+          months of the contract) and clause <b>D6</b> (₹20,000 a month thereafter) both turn on this date.
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h3>What it comes to</h3></div>
+    <div class="card-b">
+      <table class="tbl">
+        <tbody>
+          <tr><td>Schedule A — manpower</td><td class="num">₹<%= fmtInt(b.gross_schedule_a) %></td></tr>
+          <tr><td>Schedule B — subsidised meals
+            <% if (b.schedule_b_source_ref) { %><div class="muted" style="font-size:10.5px">per <%= b.schedule_b_source_ref %></div><% } %></td>
+            <td class="num">₹<%= fmtInt(b.gross_schedule_b) %></td></tr>
+          <tr><td>Schedule C — linen and bed attending</td><td class="num">₹<%= fmtInt(b.gross_schedule_c) %></td></tr>
+          <tr><td>Schedule D — consumables and records</td><td class="num">₹<%= fmtInt(b.gross_schedule_d) %></td></tr>
+          <tr><td><b>Gross</b></td><td class="num"><b>₹<%= fmtInt(b.gross_total) %></b>
+            <% if (!sumsTo) { %><div class="st crit" style="font-size:10.5px"><span class="dot"></span>does not add up</div><% } %></td></tr>
+          <tr><td>Deductions</td><td class="num">₹0
+            <div class="muted" style="font-size:10.5px">nothing computed — schedule under review</div></td></tr>
+          <tr><td><b>Net payable</b></td><td class="num"><b>₹<%= fmtInt(b.net_payable) %></b></td></tr>
+        </tbody>
+      </table>
+      <% if (b.remarks) { %><div class="hr"></div><div class="muted" style="font-size:12px"><%= b.remarks %></div><% } %>
+    </div>
+  </div>
+</div>
+
+<% if (can('bill.prepare') && !['passed','paid'].includes(b.status)) { %>
+<div class="card" style="margin-bottom:16px">
+  <div class="card-h"><h3>The figures</h3>
+    <span class="sub">typed from the schedules — only the addition is checked</span></div>
+  <div class="card-b">
+    <form method="post" action="<%= url('/bills/' + b.id + '/figures') %>">
+      <div class="row" style="gap:8px;margin-bottom:10px">
+        <div style="flex:1"><label class="fl">Bill number</label>
+          <input class="fi" name="bill_no" value="<%= b.bill_no || '' %>"></div>
+        <div style="flex:1"><label class="fl">Submitted by the contractor on</label>
+          <input class="fi" type="date" name="submitted_on"
+                 value="<%= b.submitted_on ? String(b.submitted_on).slice(0,10) : '' %>"></div>
+      </div>
+      <div class="row" style="gap:8px;margin-bottom:10px">
+        <div style="flex:1"><label class="fl">Schedule A</label>
+          <input class="fi" type="number" step="0.01" min="0" name="gross_schedule_a" value="<%= b.gross_schedule_a %>"></div>
+        <div style="flex:1"><label class="fl">Schedule B</label>
+          <input class="fi" type="number" step="0.01" min="0" name="gross_schedule_b" value="<%= b.gross_schedule_b %>"></div>
+        <div style="flex:1"><label class="fl">Schedule C</label>
+          <input class="fi" type="number" step="0.01" min="0" name="gross_schedule_c" value="<%= b.gross_schedule_c %>"></div>
+        <div style="flex:1"><label class="fl">Schedule D</label>
+          <input class="fi" type="number" step="0.01" min="0" name="gross_schedule_d" value="<%= b.gross_schedule_d %>"></div>
+      </div>
+      <div style="margin-bottom:10px"><label class="fl">Where the Schedule B figure came from</label>
+        <input class="fi" name="schedule_b_source_ref" value="<%= b.schedule_b_source_ref || '' %>"
+               placeholder="RRMS meal statement reference — the tender bills meals on RRMS records"></div>
+      <div style="margin-bottom:12px"><label class="fl">Remarks</label>
+        <input class="fi" name="remarks" value="<%= b.remarks || '' %>" maxlength="500"></div>
+      <button class="btn" type="submit">Save the figures</button>
+      <div class="muted" style="font-size:11.5px;margin-top:8px">
+        The gross is added up here rather than typed, so a bill whose parts do not match its total is caught
+        at the counter and not at the audit. The net equals the gross while the deduction stands at zero.
+      </div>
+    </form>
+  </div>
+</div>
+<% } %>
+
+<div class="grid" style="grid-template-columns:1.2fr 1fr">
+  <div class="card">
+    <div class="card-h"><h3>The documents that must come with it</h3>
+      <span class="sub"><%= missing.length ? missing.length + ' still awaited' : 'all in' %></span></div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>Document</th><th>Received</th><th>Scan</th><th></th></tr></thead>
+      <tbody>
+      <% docs.forEach(function(d){ %>
+        <tr>
+          <td style="font-size:12.3px"><%= labels[d.doc_type] || d.doc_type %>
+            <% if (d.remarks) { %><div class="muted" style="font-size:10.5px"><%= d.remarks %></div><% } %></td>
+          <td><% if (d.is_received) { %>
+                <span class="st good"><span class="dot"></span><%= d.received_on ? String(d.received_on).slice(0,10) : 'yes' %></span>
+                <% if (d.verified_by_name) { %><div class="muted" style="font-size:10.5px"><%= d.verified_by_name %></div><% } %>
+              <% } else { %><span class="st warn"><span class="dot"></span>awaited</span><% } %></td>
+          <td><% if (d.file_id) { %><span class="pill">attached</span><% } else { %><span class="muted">—</span><% } %></td>
+          <td><% if (can('bill.prepare') && !['passed','paid'].includes(b.status)) { %>
+              <form method="post" action="<%= url('/bills/' + b.id + '/document') %>"
+                    enctype="multipart/form-data" class="row" style="gap:4px;flex-wrap:wrap">
+                <input type="hidden" name="doc_type" value="<%= d.doc_type %>">
+                <input type="hidden" name="is_received" value="<%= d.is_received ? '0' : '1' %>">
+                <input class="fi" type="date" name="received_on" style="width:135px;padding:4px 6px;font-size:12px"
+                       value="<%= today() %>">
+                <input class="fi" type="file" name="scan" accept="image/*,application/pdf" style="width:150px;padding:2px;font-size:11px"
+                       accept="image/*,application/pdf">
+                <button class="btn ghost small" type="submit"><%= d.is_received ? 'Mark awaited' : 'Received' %></button>
+              </form>
+            <% } %></td>
+        </tr>
+      <% }); %>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-h"><h3>Move it along</h3></div>
+      <div class="card-b">
+        <% if (can('bill.prepare')) { %>
+          <% const next = { draft:['submitted','under_check'], submitted:['under_check','returned'],
+                            under_check:['passed','returned'], passed:['paid','returned'],
+                            paid:[], returned:['under_check'] }[b.status] || []; %>
+          <% if (!next.length) { %><div class="muted" style="font-size:12.5px">Nothing further.</div><% } %>
+          <% next.forEach(function(to){ %>
+            <form method="post" action="<%= url('/bills/' + b.id + '/status') %>" style="margin-bottom:10px">
+              <input type="hidden" name="status" value="<%= to %>">
+              <% if (to === 'returned') { %>
+                <label class="fl">Why it is going back</label>
+                <input class="fi" name="remarks" required maxlength="500" style="margin-bottom:6px">
+              <% } %>
+              <% if (to === 'paid') { %>
+                <label class="fl">Paid on</label>
+                <input class="fi" type="date" name="paid_on" value="<%= today() %>" style="margin-bottom:6px">
+              <% } %>
+              <button class="btn <%= to === 'returned' ? 'ghost' : '' %>" type="submit">
+                <%= statuses[to][0] %></button>
+            </form>
+          <% }); %>
+          <div class="hr"></div>
+          <div class="muted" style="font-size:11.5px">
+            A bill cannot be passed while a required document is awaited, or before the date the contractor
+            submitted it is recorded — the two late-submission clauses turn on that date. Passing is the
+            divisional officer's; preparing and checking is not.
+          </div>
+        <% } else { %>
+          <div class="muted" style="font-size:12.5px">Your role has view access only.</div>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><h3>Deficiencies in this period</h3>
+        <span class="sub">shown, not costed</span></div>
+      <div class="tblwrap"><table class="tbl">
+        <thead><tr><th>Clause</th><th class="num">Cases</th><th class="num">Units</th><th>Schedule rate</th></tr></thead>
+        <tbody>
+        <% defs.forEach(function(d){ %>
+          <tr>
+            <td><b><%= d.clause_code %></b>
+              <div class="muted" style="font-size:10.5px"><%= d.description %></div></td>
+            <td class="num"><%= d.cases %></td>
+            <td class="num"><%= d.units %></td>
+            <td style="font-size:11.5px"><%= d.rate ? '₹' + d.rate : '—' %>
+              <div class="muted" style="font-size:10.5px"><%= d.unit || '' %></div></td>
+          </tr>
+        <% }); %>
+        <% if (!defs.length) { %><tr><td colspan="4" class="muted">None recorded for this period.</td></tr><% } %>
+        </tbody>
+      </table></div>
+      <div class="card-b">
+        <div class="muted" style="font-size:11.5px">
+          The rate is printed beside each clause and <b>multiplied by nothing</b>. These are the rows the
+          penalty arithmetic will read once the schedule is settled.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

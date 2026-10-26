@@ -1,0 +1,17 @@
+<div class="card" style="max-width:640px">
+  <div class="card-b">
+    <div style="font-size:34px;font-weight:700;letter-spacing:-1.5px;color:var(--text-muted)"><%= status %></div>
+    <h2 style="margin:4px 0 6px;font-size:18px"><%= title %></h2>
+    <p class="muted" style="font-size:13px"><%= message %></p>
+    <% if (role) { %><p class="muted" style="font-size:12.5px">You are signed in as <b><%= role %></b>.</p><% } %>
+    <% if (held) { %>
+      <div class="note" style="text-align:left;margin:14px 0">
+        <b>Who can open this page:</b> <%= held %>.
+        <div style="margin-top:6px">If you need access, ask your System Administrator to change your role —
+        the permissions are held as data, not in the code.</div>
+      </div>
+    <% } %>
+    <% if (detail) { %><pre style="font-size:11px;background:var(--plane);padding:12px;border-radius:8px;overflow:auto"><%= detail %></pre><% } %>
+    <a class="btn ghost" href="<%= url('/') %>">Back to dashboard</a>
+  </div>
+</div>

@@ -1,0 +1,304 @@
+<%
+  const TONE = { ok:'g', warn:'y', err:'r' };
+  const RESULT = { satisfactory:['g','Satisfactory'], needs_improvement:['y','Needs improvement'],
+                   unsatisfactory:['r','Unsatisfactory'] };
+  const STATUS = { issued:'Issued', suspended:'Suspended', cancelled:'Cancelled',
+                   surrendered:'Surrendered', expired:'Expired' };
+  const mayEdit = can('fssai.edit');
+%>
+
+<div class="row" style="margin-bottom:14px">
+  <a class="btn small ghost" href="<%= url('/food-safety') %>">← All kitchens</a>
+  <div class="spacer"></div>
+  <% if (can('fssai.inspect')) { %>
+    <a class="btn small" href="<%= url('/food-safety/' + rr.id + '/inspect') %>">Carry out inspection</a>
+  <% } %>
+</div>
+
+<div class="note <%= state.tone === 'ok' ? '' : state.tone %>" style="margin-bottom:14px">
+  <% if (state.key === 'none') { %>
+    No FSSAI licence is on record for <b><%= rr.name %></b>, and this room has a meal facility.
+    Under section 31 of the FSS Act no person may carry on a food business without a licence for
+    the premises. If the contractor holds one, lodge the Form C below.
+  <% } else if (state.key === 'valid') { %>
+    Licence <b><%= current.licence_number %></b> is valid to <b><%= current.valid_upto %></b> —
+    <%= state.left %> days to run. Renewal may be filed from
+    <%= new Date(new Date(current.valid_upto).getTime() - renewalWindow*86400000).toISOString().slice(0,10) %>.
+  <% } else if (state.key === 'renewable') { %>
+    Licence <b><%= current.licence_number %></b> expires on <b><%= current.valid_upto %></b>, in
+    <%= state.left %> days. The renewal application may be filed now on FoSCoS and should not be
+    left to the last week — a lapse stops the kitchen, it does not merely attract a penalty.
+  <% } else if (state.key === 'expired') { %>
+    Licence <b><%= current.licence_number %></b> expired on <b><%= current.valid_upto %></b>,
+    <%= Math.abs(state.left) %> days ago. FSSAI allows renewal for <%= graceWindow %> days past
+    expiry against penalty, so there are <%= graceWindow + state.left %> days left in which this
+    can still be renewed rather than applied for afresh.
+  <% } else if (state.key === 'lapsed') { %>
+    Licence <b><%= current.licence_number %></b> expired on <b><%= current.valid_upto %></b>, beyond
+    the <%= graceWindow %>-day late-renewal window. This cannot be renewed; a fresh licence must be
+    applied for, and the kitchen is operating unlicensed until it is granted.
+  <% } else { %>
+    Licence <b><%= current.licence_number %></b> is <b><%= state.label.toLowerCase() %></b>. The
+    validity dates are not the operative fact here — the kitchen must not serve until the position
+    is restored.
+  <% } %>
+</div>
+
+<div class="grid" style="grid-template-columns:1.15fr 1fr">
+
+  <!-- ------------------------------------------------ the licence on record -->
+  <div class="card">
+    <div class="card-h"><h3>Licence on record</h3>
+      <span class="sub"><%= rr.name %> (<%= rr.div_code %>)</span></div>
+    <div class="card-b">
+    <% if (!current) { %>
+      <p class="muted">Nothing lodged yet. Use the form alongside.</p>
+    <% } else { %>
+      <table class="tbl">
+        <tbody>
+          <tr><td class="muted">Licence number</td><td class="tnum"><b><%= current.licence_number %></b></td></tr>
+          <tr><td class="muted">Licensee</td><td><%= current.licensee_name %></td></tr>
+          <tr><td class="muted">Authorised premises</td><td><%= current.premises_address || '—' %></td></tr>
+          <tr><td class="muted">Kind of business</td><td><%= current.kind_of_business %></td></tr>
+          <tr><td class="muted">Category</td><td><%= current.licence_category %></td></tr>
+          <tr><td class="muted">Validity</td><td class="tnum"><%= current.valid_from %> to <%= current.valid_upto %></td></tr>
+          <tr><td class="muted">Issued on</td><td class="tnum"><%= current.issued_on || '—' %>
+              <% if (current.issuing_authority) { %><span class="muted"> · <%= current.issuing_authority %></span><% } %></td></tr>
+          <tr><td class="muted">Standing</td><td><span class="pill <%= TONE[state.tone] %>"><%= STATUS[current.status] || current.status %></span></td></tr>
+          <tr><td class="muted">Technical person<br><span style="font-size:11px">Condition 4</span></td>
+              <td><% if (current.tech_person_name) { %><%= current.tech_person_name %>
+                    <% if (current.tech_person_qual) { %><span class="muted"> · <%= current.tech_person_qual %></span><% } %>
+                  <% } else { %><span class="pill y">not nominated</span><% } %></td></tr>
+          <tr><td class="muted">Form IX person</td><td><%= current.form_ix_name || '—' %></td></tr>
+          <tr><td class="muted">Form C copy</td>
+              <td><% if (current.certificate_file_id) { %>
+                    <a class="btn small ghost" href="<%= url('/food-safety/' + rr.id + '/licence/' + current.id + '/file') %>">Open the certificate</a>
+                  <% } else { %><span class="pill r">not uploaded</span>
+                    <span class="muted"> — Condition 1 requires a true copy displayed at the premises</span><% } %></td></tr>
+        </tbody>
+      </table>
+      <% if (current.tech_person_qual && !/chem|bio|food|nutri|micro|dairy|oil|veter|hotel|cater/i.test(current.tech_person_qual)) { %>
+        <div class="note warn" style="margin-top:12px">
+          Condition 4 requires the person supervising production to hold a degree or diploma in
+          science with chemistry, biochemistry, food and nutrition or microbiology, or in food,
+          dairy or oil technology, veterinary science, or hotel management and catering technology.
+          <b><%= current.tech_person_qual %></b> does not appear to be one of these. Worth checking
+          before the Designated Officer does.
+        </div>
+      <% } %>
+    <% } %>
+    </div>
+  </div>
+
+  <!-- ------------------------------------------------- lodge or renew -->
+  <div class="card">
+    <div class="card-h"><h3><%= current ? 'Renew or replace the licence' : 'Record the licence' %></h3>
+      <span class="sub">from the Form C</span></div>
+    <div class="card-b">
+    <% if (!mayEdit) { %>
+      <p class="muted">You may view this register but not add to it.</p>
+    <% } else { %>
+      <form method="post" enctype="multipart/form-data" action="<%= url('/food-safety/' + rr.id + '/licence') %>">
+        <div class="grid" style="grid-template-columns:1fr 1fr">
+          <div><label class="fl">Licence number (14 digits)</label>
+            <input class="fi" name="licence_number" inputmode="numeric" pattern="[0-9 ]{14,20}"
+                   placeholder="10025901000005" required
+                   value="<%= current ? current.licence_number : '' %>"></div>
+          <div><label class="fl">Standing</label>
+            <select class="fi" name="status">
+              <% Object.entries(STATUS).forEach(function(e){ %>
+                <option value="<%= e[0] %>"><%= e[1] %></option><% }); %>
+            </select></div>
+        </div>
+        <div style="margin-top:10px"><label class="fl">Licensee — the firm named on the licence</label>
+          <input class="fi" name="licensee_name" required
+                 value="<%= current ? current.licensee_name : (rr.contractor || '') %>"></div>
+        <div style="margin-top:10px"><label class="fl">Contractor this licence belongs to</label>
+          <select class="fi" name="contractor_id">
+            <option value="">— not linked —</option>
+            <% contractors.forEach(function(c){ %>
+              <option value="<%= c.id %>" <%= (current ? current.contractor_id : rr.contractor_id) === c.id ? 'selected' : '' %>><%= c.name %></option>
+            <% }); %>
+          </select></div>
+        <div style="margin-top:10px"><label class="fl">Address of authorised premises</label>
+          <input class="fi" name="premises_address"
+                 value="<%= current ? (current.premises_address || '') : (rr.name + ' Running Room, Central Railway') %>"></div>
+        <div class="grid" style="grid-template-columns:1fr 1fr;margin-top:10px">
+          <div><label class="fl">Kind of business</label>
+            <input class="fi" name="kind_of_business" value="<%= current ? current.kind_of_business : 'Food Services - Restaurants' %>"></div>
+          <div><label class="fl">Category</label>
+            <input class="fi" name="licence_category" value="<%= current ? current.licence_category : 'Central License - Indian Railways' %>"></div>
+        </div>
+        <div class="grid" style="grid-template-columns:1fr 1fr 1fr;margin-top:10px">
+          <div><label class="fl">Issued on</label><input class="fi" type="date" name="issued_on"></div>
+          <div><label class="fl">Valid from</label><input class="fi" type="date" name="valid_from" required></div>
+          <div><label class="fl">Valid upto</label><input class="fi" type="date" name="valid_upto" required></div>
+        </div>
+        <div style="margin-top:10px"><label class="fl">Issuing authority</label>
+          <input class="fi" name="issuing_authority" value="<%= current ? (current.issuing_authority || '') : 'DO, Railways' %>"
+                 placeholder="DO, Railways"></div>
+
+        <div class="hr" style="margin:14px 0"></div>
+        <div class="grid" style="grid-template-columns:1.3fr 1fr .8fr">
+          <div><label class="fl">Technical person (Condition 4)</label>
+            <input class="fi" name="tech_person_name" placeholder="name"></div>
+          <div><label class="fl">Qualification</label>
+            <input class="fi" name="tech_person_qual" placeholder="e.g. Dip. Hotel Mgmt"></div>
+          <div><label class="fl">Mobile</label>
+            <input class="fi" name="tech_person_mobile" inputmode="numeric"></div>
+        </div>
+        <div class="grid" style="grid-template-columns:1.3fr 1fr;margin-top:10px">
+          <div><label class="fl">Form IX person responsible</label>
+            <input class="fi" name="form_ix_name"></div>
+          <div><label class="fl">Mobile</label>
+            <input class="fi" name="form_ix_mobile" inputmode="numeric"></div>
+        </div>
+
+        <div style="margin-top:10px"><label class="fl">Scan of the Form C</label>
+          <input class="fi" type="file" name="certificate" accept="image/*,application/pdf">
+          <div class="muted" style="font-size:11px;margin-top:4px"><%= accepted %></div></div>
+        <div style="margin-top:10px"><label class="fl">Remarks</label>
+          <input class="fi" name="remarks" placeholder="optional"></div>
+
+        <div class="row" style="margin-top:14px">
+          <button class="btn" type="submit"><%= current ? 'Record this licence' : 'Lodge the licence' %></button>
+          <% if (current) { %><span class="muted" style="font-size:11.5px">
+            The present licence is kept in the history, not overwritten.</span><% } %>
+        </div>
+      </form>
+    <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- ----------------------------------------------- recurring obligations -->
+<div class="grid" style="grid-template-columns:1.15fr 1fr;margin-top:14px">
+  <div class="card">
+    <div class="card-h"><h3>Recurring duties under the Conditions of Licence</h3>
+      <span class="sub">what the officer asks for next</span></div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>Duty</th><th>Period</th><th>Due</th><th>Position</th><th></th></tr></thead>
+      <tbody>
+      <% obligations.forEach(function(o){ %>
+        <tr>
+          <td><%= labels[o.obligation] %><div class="muted" style="font-size:11px"><%= o.note %></div></td>
+          <td><%= o.period_label %></td>
+          <td class="tnum"><%= o.due_on %></td>
+          <td><% if (o.done) { %><span class="pill g">lodged <%= o.row.completed_on %></span>
+              <% } else if (o.overdue) { %><span class="pill r">overdue</span>
+              <% } else { %><span class="pill y">due in <%= o.dueIn %> days</span><% } %></td>
+          <td><% if (o.done && o.row.document_file_id) { %>
+                <a class="btn small ghost" href="<%= url('/food-safety/' + rr.id + '/returns/' + o.row.id + '/file') %>">Document</a>
+              <% } else if (o.done) { %><span class="pill y">no document</span><% } %></td>
+        </tr>
+      <% }); %>
+      </tbody>
+    </table></div>
+    <% if (recorded.length) { %>
+      <div class="card-b">
+        <div class="fl" style="margin-bottom:6px">Everything lodged so far</div>
+        <div class="tblwrap"><table class="tbl">
+          <thead><tr><th>Duty</th><th>Period</th><th>Completed</th><th>Agency / reference</th><th></th></tr></thead>
+          <tbody>
+          <% recorded.forEach(function(r){ %>
+            <tr><td><%= labels[r.obligation] || r.obligation %></td>
+                <td><%= r.period_label %></td>
+                <td class="tnum"><%= r.completed_on || '—' %></td>
+                <td><%= r.agency_name || '' %><% if (r.reference_no) { %>
+                      <span class="muted"> · <%= r.reference_no %></span><% } %></td>
+                <td><% if (r.document_file_id) { %>
+                      <a href="<%= url('/food-safety/' + rr.id + '/returns/' + r.id + '/file') %>">open</a><% } %></td></tr>
+          <% }); %>
+          </tbody>
+        </table></div>
+      </div>
+    <% } %>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h3>Lodge a return or test report</h3></div>
+    <div class="card-b">
+    <% if (!mayEdit) { %>
+      <p class="muted">You may view this register but not add to it.</p>
+    <% } else { %>
+      <form method="post" enctype="multipart/form-data" action="<%= url('/food-safety/' + rr.id + '/returns') %>">
+        <div><label class="fl">Which duty</label>
+          <select class="fi" name="obligation" id="oblSel" required>
+            <% Object.entries(labels).forEach(function(e){ %>
+              <option value="<%= e[0] %>"><%= e[1] %></option><% }); %>
+          </select></div>
+        <div class="grid" style="grid-template-columns:1fr 1fr;margin-top:10px">
+          <div><label class="fl">Period covered</label>
+            <input class="fi" name="period_label" list="periods" required placeholder="2025-26 or Apr-Sep 2025">
+            <datalist id="periods">
+              <% obligations.forEach(function(o){ %><option value="<%= o.period_label %>"><% }); %>
+            </datalist></div>
+          <div><label class="fl">Due on</label><input class="fi" type="date" name="due_on"></div>
+        </div>
+        <div class="grid" style="grid-template-columns:1fr 1fr;margin-top:10px">
+          <div><label class="fl">Completed on</label>
+            <input class="fi" type="date" name="completed_on" value="<%= today %>"></div>
+          <div><label class="fl">Reference no.</label><input class="fi" name="reference_no"></div>
+        </div>
+        <div style="margin-top:10px"><label class="fl">Laboratory or agency</label>
+          <input class="fi" name="agency_name" placeholder="NABL-accredited or FSSAI-recognised lab"></div>
+        <div style="margin-top:10px"><label class="fl">Result in short</label>
+          <input class="fi" name="result_summary" placeholder="e.g. all parameters within limits"></div>
+        <div style="margin-top:10px"><label class="fl">Report or acknowledgement</label>
+          <input class="fi" type="file" name="document" accept="image/*,application/pdf">
+          <div class="muted" style="font-size:11px;margin-top:4px"><%= accepted %></div></div>
+        <div style="margin-top:14px"><button class="btn" type="submit">Record it</button></div>
+      </form>
+    <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- --------------------------------------------------------- inspections -->
+<div class="grid" style="grid-template-columns:1fr 1fr;margin-top:14px">
+  <div class="card">
+    <div class="card-h"><h3>Food safety inspections</h3><span class="sub">Schedule 4 checklist</span></div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>Date</th><th>By</th><th class="num">Checked</th><th class="num">Failed</th>
+        <th>Result</th><th></th></tr></thead>
+      <tbody>
+      <% inspections.forEach(function(i){ %>
+        <tr><td class="tnum"><%= i.inspection_date %></td>
+            <td><%= i.inspector || i.inspector_name || '—' %></td>
+            <td class="num"><%= i.items_checked %></td>
+            <td class="num"><%= i.items_failed %><% if (i.critical_failed) { %>
+                  <span class="pill r" style="margin-left:4px"><%= i.critical_failed %> critical</span><% } %></td>
+            <td><% if (RESULT[i.result]) { %><span class="pill <%= RESULT[i.result][0] %>"><%= RESULT[i.result][1] %></span><% } %></td>
+            <td><a href="<%= url('/food-safety/inspection/' + i.id) %>">open</a></td></tr>
+      <% }); %>
+      <% if (!inspections.length) { %>
+        <tr><td colspan="6" class="muted" style="padding:16px">
+          No food safety inspection has been carried out at this kitchen.</td></tr>
+      <% } %>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h3>Licence history</h3><span class="sub">renewals and replacements</span></div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>Licence no.</th><th>Licensee</th><th>Validity</th><th>Standing</th><th></th></tr></thead>
+      <tbody>
+      <% licences.forEach(function(l){ %>
+        <tr<%= l.is_current ? '' : ' class="muted"' %>>
+          <td class="tnum"><%= l.licence_number %><% if (l.is_current) { %>
+                <span class="pill b" style="margin-left:5px">current</span><% } %></td>
+          <td><%= l.licensee_name %></td>
+          <td class="tnum"><%= l.valid_from %> → <%= l.valid_upto %></td>
+          <td><%= STATUS[l.status] || l.status %></td>
+          <td><% if (l.certificate_file_id) { %>
+                <a href="<%= url('/food-safety/' + rr.id + '/licence/' + l.id + '/file') %>">copy</a><% } %></td>
+        </tr>
+      <% }); %>
+      <% if (!licences.length) { %>
+        <tr><td colspan="5" class="muted" style="padding:16px">Nothing on record.</td></tr>
+      <% } %>
+      </tbody>
+    </table></div>
+  </div>
+</div>

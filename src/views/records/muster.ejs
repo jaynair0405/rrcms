@@ -1,0 +1,256 @@
+<%- await include('_nav') %>
+
+<div class="kpis" style="margin-bottom:16px">
+  <div class="kpi"><i class="strip" style="background:var(--s1)"></i>
+    <div class="lab">Sanctioned strength</div><div class="val"><%= totals.sanctioned %></div>
+    <div class="foot">Schedule-A for the running room — a day's men, not a shift's</div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s3)"></i>
+    <%# COUNTED ACROSS EVERY SHIFT OF THE DAY, and it has to say so. Schedule A
+        sanctions men for the running room, not for a shift, so the shortfall is
+        only meaningful against the whole day. Without this line the general
+        page reads "3 present" over a grid with nothing marked on it, because
+        the three were on last night. %>
+    <div class="lab">Marked present</div><div class="val"><%= totals.present %></div>
+    <div class="foot">every shift of <%= date %> —
+      <%= marked ? 'this shift taken' : 'this shift not yet marked' %></div></div>
+  <div class="kpi"><i class="strip" style="background:<%= totals.short ? 'var(--s8)' : 'var(--s3)' %>"></i>
+    <div class="lab">Shortfall</div><div class="val"><%= totals.short %></div>
+    <div class="foot"><% if (totals.short) { %><span class="st warn"><span class="dot"></span>recorded, not priced</span>
+      <% } else { %><span class="st good"><span class="dot"></span>full strength</span><% } %></div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s7)"></i>
+    <div class="lab">Counter-signature</div>
+    <div class="val" style="font-size:17px;padding-top:6px"><%= countersigned ? 'Signed' : 'Pending' %></div>
+    <div class="foot"><%= countersigned ? 'by the Railway representative' : 'awaiting the Railway representative' %></div></div>
+</div>
+
+<%# What just happened, and what is on record. A bearer who presses Save and
+    sees the page come back unchanged cannot tell whether the muster was
+    written, so he presses it again — which is harmless (the save is an upsert)
+    but tells him nothing either time. %>
+<% if (saved !== null) { %>
+  <div class="note ok" style="margin-bottom:14px">
+    <b>The muster has been saved.</b>
+    <%= saved === 0 ? 'Nothing was marked — every man on this roster is either unmarked or not permitted to work.'
+      : fmtInt(saved) + (saved === 1 ? ' person' : ' people') + ' marked for ' + date + '.' %>
+    <% if (blocked) { %>
+      <br><span class="st crit" style="margin-top:5px"><span class="dot"></span>
+        <%= fmtInt(blocked) %> could not be marked present</span>
+      — the Railway has not permitted them to work, so they are posted absent. Until somebody screens them,
+      or admits them provisionally, that is what the register will say every day.
+    <% } %>
+  </div>
+<% } %>
+
+<% if (justSigned !== null) { %>
+  <div class="note ok" style="margin-bottom:14px">
+    <b>Counter-signed.</b>
+    <%= justSigned === 0 ? 'Nothing was left to sign — this muster had already been counter-signed.'
+      : fmtInt(justSigned) + ' row' + (justSigned === 1 ? '' : 's') + ' signed. The muster can no longer be edited.' %>
+  </div>
+<% } %>
+
+<% if (saved === null && justSigned === null && lastMarkedAt) { %>
+  <div class="note" style="margin-bottom:14px;font-size:12.5px">
+    This muster is <b>on record</b> — <%= fmtInt(markedCount) %> marked, last saved
+    <%= String(lastMarkedAt).slice(11,16) %> on <%= String(lastMarkedAt).slice(0,10) %>.
+    Saving again simply corrects it; it does not add a second muster.
+  </div>
+<% } %>
+
+<div class="note warn" style="margin-bottom:14px">
+  <b>Phase 2 — biometric.</b> Attendance is marked here by the contractor's supervisor and counter-signed by the
+  Railway representative. When cloud biometric attendance is introduced, it replaces the marking step only; the
+  counter-signature and the shortfall arithmetic on this page do not change.
+</div>
+
+<div class="grid" style="grid-template-columns:1.5fr 1fr">
+  <div class="card">
+    <div class="card-h"><h3>Muster — <%= rr.name %></h3>
+      <span class="sub"><%= date %> · <%= (shifts.find(function(x){ return x[0] === shiftNow; }) || ['','General'])[1] %> shift</span>
+      <div class="spacer"></div>
+      <%# THE DAY AND THE SHIFT, on the page and changeable there.
+          The table has carried a shift since it was built and this screen wrote
+          'general' into it every time, with no way to say otherwise and no way
+          to reach another day. So the evening and the night -- the two the
+          day-shift supervisor is not there for, and the two he marks the next
+          morning -- could not be recorded at all. %>
+      <form method="get" action="<%= url('/records/muster') %>" class="row" style="gap:6px;align-items:center">
+        <input type="hidden" name="rr" value="<%= rr.id %>">
+        <input class="fi" type="date" name="date" value="<%= date %>" max="<%= maxDate %>"
+               style="width:150px" onchange="this.form.submit()">
+        <select class="fi" name="shift" style="width:120px" onchange="this.form.submit()">
+          <% shifts.forEach(function(sh){ %>
+            <option value="<%= sh[0] %>" <%= sh[0] === shiftNow ? 'selected' : '' %>><%= sh[1] %></option>
+          <% }); %>
+        </select>
+        <button class="btn sm" type="submit">Show</button>
+      </form>
+      <% if (countersigned) { %><span class="st good"><span class="dot"></span>Counter-signed</span><% } %>
+    </div>
+    <%
+      // Marking a muster is the most repeated act in the whole system: thirty
+      // names, every day, by the person least at ease with a computer. A
+      // dropdown for each meant about ninety interactions a day. These are
+      // tap buttons, everyone can be set present at once, and only the
+      // exceptions need touching.
+      const CHOICES = [['present','Present'], ['absent','Absent'], ['leave','Leave'],
+                       ['weekly_off','Weekly off'], ['reliever','Reliever']];
+      const editable = !countersigned && can('muster.mark');
+      // Anyone not present yesterday is who the supervisor is looking for today.
+      const WATCH = s => s.yesterday_status && s.yesterday_status !== 'present'
+                         && s.yesterday_status !== 'reliever';
+      const watchCount = staff.filter(WATCH).length;
+    %>
+    <form method="post" action="<%= url('/records/muster') %>" id="musterform">
+      <input type="hidden" name="rr" value="<%= rr.id %>"><input type="hidden" name="date" value="<%= date %>">
+      <input type="hidden" name="shift" value="<%= shiftNow %>">
+
+      <% if (editable) { %>
+        <div class="card-b" style="border-bottom:1px solid var(--border);padding-bottom:12px">
+          <div class="row" style="gap:10px;align-items:center">
+            <button class="btn" type="button" id="allpresent">Mark everyone present</button>
+            <div style="flex:0 0 240px">
+              <input class="fi" type="search" id="mustersearch" placeholder="Find a name or code"
+                     autocomplete="off" aria-label="Find a person on this muster">
+            </div>
+            <label style="font-size:12px;display:flex;align-items:center;gap:6px">
+              <input type="checkbox" id="onlywatch" <%= watchCount ? '' : 'disabled' %>>
+              Show only the <%= watchCount %> not present yesterday
+            </label>
+            <div class="spacer"></div>
+            <div id="mustercount" class="muted" style="font-size:12.5px"></div>
+          </div>
+          <% if (watchCount) { %>
+            <div class="note warn" style="margin-top:10px">
+              <b><%= watchCount %></b> of these were not present yesterday. Their rows are marked, so it
+              is plain who has to be looked for this morning — and who has to be replaced if they have
+              not come.
+            </div>
+          <% } %>
+        </div>
+      <% } %>
+
+      <div class="tblwrap"><table class="tbl" id="mustertable">
+        <thead><tr><th>Staff</th><th>Designation</th><th>Yesterday</th><th>Screening</th>
+          <th style="width:380px">Attendance</th></tr></thead>
+        <tbody>
+        <%# A man may be marked present if the Railway has screened him, OR if it
+            admitted him provisionally because he was already working when this
+            system arrived. The second is not a screening and is flagged as such
+            on his row, every day, until somebody checks him. %>
+        <% staff.forEach(function(s){
+             const permitted = s.screening_status === 'approved' || s.screening_status === 'provisional';
+             const blocked = !permitted;
+             const provisional = s.screening_status === 'provisional'; %>
+          <tr data-name="<%= (s.full_name + ' ' + s.staff_code).toLowerCase() %>"
+              data-watch="<%= WATCH(s) ? '1' : '0' %>"
+              <%= WATCH(s) ? 'style="background:rgba(250,178,25,.09)"' : '' %>>
+            <td><a href="<%= url('/staff/' + s.id) %>"><%= s.full_name %></a>
+              <div class="muted" style="font-size:10.5px"><%= s.staff_code %></div></td>
+            <td><%= s.designation %></td>
+            <td><% if (!s.yesterday_status) { %><span class="muted">—</span>
+                <% } else if (WATCH(s)) { %>
+                  <span class="st warn"><span class="dot"></span><%= s.yesterday_status.replace('_',' ') %></span>
+                <% } else { %><span class="muted"><%= s.yesterday_status.replace('_',' ') %></span><% } %></td>
+            <td><% if (blocked) { %><span class="st crit"><span class="dot"></span><%= s.screening_status %></span>
+                <% } else if (provisional) { %><span class="st warn"><span class="dot"></span>provisional</span>
+                  <div class="muted" style="font-size:10px">not screened</div>
+                <% } else { %><span class="st good"><span class="dot"></span>approved</span><% } %></td>
+            <td>
+              <% if (blocked) { %>
+                <span class="muted" style="font-size:11.8px">Cannot be marked present until the Railway approves screening</span>
+                <input type="hidden" name="s_<%= s.id %>" value="absent">
+              <% } else if (!editable) { %>
+                <% const cur = CHOICES.find(c => c[0] === s.status); %>
+                <span class="<%= s.status === 'present' || s.status === 'reliever' ? 'st good' : s.status ? 'st warn' : 'muted' %>">
+                  <% if (s.status) { %><span class="dot"></span><% } %><%= cur ? cur[1] : 'not marked' %></span>
+                <% if (s.status === 'reliever') { %>
+                  <div class="muted" style="font-size:10.5px">
+                    <%= s.relieved_name ? 'covering ' + s.relieved_name : 'post not recorded' %></div>
+                <% } %>
+              <% } else { %>
+                <div class="marks" role="radiogroup" aria-label="Attendance for <%= s.full_name %>">
+                  <% CHOICES.forEach(function(c){ %>
+                    <label class="mark">
+                      <input type="radio" name="s_<%= s.id %>" value="<%= c[0] %>"
+                             <%= s.status === c[0] ? 'checked' : '' %>><span><%= c[1] %></span>
+                    </label>
+                  <% }); %>
+                </div>
+                <%
+                  /* Whose post he covered. A reliever who names nobody leaves the
+                     shortfall reading exactly as it would if the absence had gone
+                     uncovered, which is the one thing that figure is for. The list
+                     holds only this running room's own staff -- the Railway's
+                     decision is that a substitute from outside the roster is not
+                     marked here at all, but screened and taken on first. */
+                %>
+                <div class="relieverbox" data-for="<%= s.id %>"
+                     style="margin-top:6px<%= s.status === 'reliever' ? '' : ';display:none' %>">
+                  <label class="fl" style="font-size:10.5px">Whose post did he cover?</label>
+                  <select class="fi" name="r_<%= s.id %>" style="padding:4px 7px;font-size:12px">
+                    <option value="">— choose the man he relieved —</option>
+                    <%# Whose post a reliever covers. A man who was never permitted
+                        to work is not a post anybody can be said to have covered,
+                        so pending men stay out of this list — but a provisionally
+                        admitted man IS working, and can be. %>
+                    <% staff.filter(o => o.id !== s.id
+                         && (o.screening_status === 'approved' || o.screening_status === 'provisional'))
+                       .forEach(function(o){ %>
+                      <option value="<%= o.id %>" data-name="<%= o.full_name %>"
+                              <%= s.relieved_staff_id === o.id ? 'selected' : '' %>>
+                        <%= o.full_name %> — <%= o.designation %></option>
+                    <% }); %>
+                  </select>
+                  <div class="muted" style="font-size:10.5px;margin-top:3px">
+                    He must be marked absent or on leave today.</div>
+                </div>
+              <% } %>
+            </td>
+          </tr>
+        <% }); %>
+        <% if (!staff.length) { %><tr><td colspan="4" class="muted">No staff on the register for this running room.</td></tr><% } %>
+        </tbody>
+      </table></div>
+      <div class="card-b" style="border-top:1px solid var(--border);display:flex;gap:10px;align-items:center">
+        <% if (can('muster.mark') && !countersigned) { %>
+          <button class="btn" type="submit">Save muster</button>
+        <% } else if (countersigned) { %>
+          <span class="muted" style="font-size:12px">The muster is counter-signed and can no longer be edited.</span>
+        <% } else { %>
+          <span class="muted" style="font-size:12px">Marking the muster is the contractor supervisor's task.</span>
+        <% } %>
+      </div>
+    </form>
+    <% if (can('muster.countersign') && marked && !countersigned) { %>
+    <div class="card-b" style="border-top:1px solid var(--border)">
+      <form method="post" action="<%= url('/records/muster/countersign') %>">
+        <input type="hidden" name="rr" value="<%= rr.id %>"><input type="hidden" name="date" value="<%= date %>">
+        <input type="hidden" name="shift" value="<%= shiftNow %>">
+        <button class="btn" type="submit">Counter-sign as Railway representative</button>
+        <span class="muted" style="font-size:11.5px;margin-left:10px">Locks this shift's muster.
+          The night is marked the following morning, so each shift is signed for on its own.</span>
+      </form>
+    </div>
+    <% } %>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h3>Deployment against Schedule-A</h3>
+      <span class="sub">every shift of <%= date %> · shortfall recorded, no amount computed</span></div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>Designation</th><th class="num">Sanctioned</th><th class="num">Present</th><th>Position</th></tr></thead>
+      <tbody>
+      <% deployment.forEach(function(d){ %>
+        <tr><td><%= d.name %></td><td class="num"><%= d.sanctioned %></td><td class="num"><%= d.present %></td>
+          <td><% if (d.short) { %><span class="st crit"><span class="dot"></span>Short by <%= d.short %></span>
+              <% } else { %><span class="st good"><span class="dot"></span>Full</span><% } %></td></tr>
+      <% }); %>
+      </tbody>
+    </table></div>
+    <div class="card-b" style="border-top:1px solid var(--border)">
+      <div class="muted" style="font-size:11.5px">Short deployment is clause A9 of the tender. The shortfall is recorded
+      here; no penalty amount is calculated anywhere in this build.</div>
+    </div>
+  </div>
+</div>

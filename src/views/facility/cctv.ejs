@@ -1,0 +1,240 @@
+<%- await include('_nav') %>
+
+<%# WHICH BUILDING. A camera in LP Mail's corridor does not watch TM-BB's.
+    Pooling the four would report Igatpuri fully covered on four cameras in one
+    building while three had none, so the contract's required cover is struck
+    per building. %>
+<% if (blocks && blocks.length) { %>
+  <div class="card blockbar">
+    <div class="bb-row">
+      <span class="bb-lab">Building</span>
+        <a class="btn <%= wantBlock === null ? '' : 'ghost' %> small"
+           href="<%= url('/facility/cctv') %>?rr=<%= rr.id %>">All of <%= rr.name %></a>
+        <% blocks.forEach(function(b){ %>
+          <a class="btn <%= wantBlock === b.id ? '' : 'ghost' %> small"
+             href="<%= url('/facility/cctv') %>?rr=<%= rr.id %>&block=<%= b.id %>"><%= b.name %>
+             <% if (b.uncovered) { %><span class="pill r" style="margin-left:5px"><%= b.uncovered %> uncovered</span>
+             <% } else if (b.cameras) { %><span class="cnt" style="margin-left:5px"><%= b.cameras %></span><% } %></a>
+        <% }); %>
+    </div>
+  </div>
+  <div class="blocknote">
+    <% if (unplacedCams) { %>
+        <div class="muted" style="font-size:11.5px;margin-top:9px">
+          <b><%= unplacedCams %> camera<%= unplacedCams === 1 ? '' : 's' %></b> with no building against
+          <%= unplacedCams === 1 ? 'it' : 'them' %> — <%= unplacedCams === 1 ? 'it counts' : 'they count' %>
+          towards nobody's cover. Open the camera and say which building it is in.
+        </div>
+      <% } %>
+  </div>
+<% } %>
+
+
+<% if (uncovered.length) { %>
+  <div class="note err" style="margin-bottom:16px">
+    <b>No camera is registered for
+    <%= uncovered.map(z => z.label.toLowerCase()).join(', ') %>.</b>
+    The contract requires cover at each of these. Either the camera exists and has not been entered here,
+    or it does not exist — and the two are worth telling apart before an inspection does it for you.
+  </div>
+<% } %>
+
+<div class="kpis" style="margin-bottom:16px">
+  <div class="kpi"><i class="strip" style="background:var(--s1)"></i>
+    <div class="lab">Cameras on the register</div><div class="val"><%= fmtInt(live.length) %></div>
+    <div class="foot"><%= rr.name %></div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s3)"></i>
+    <div class="lab">Required places covered</div>
+    <div class="val"><%= zones.filter(z => z.required && !z.uncovered).length %> <small>of <%= zones.filter(z => z.required).length %></small></div>
+    <div class="foot"><span class="st <%= uncovered.length ? 'crit' : 'good' %>"><span class="dot"></span>
+      <%= uncovered.length ? uncovered.length + ' not covered' : 'all covered' %></span></div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s8)"></i>
+    <div class="lab">Found not working</div><div class="val"><%= fmtInt(notWorking.length) %></div>
+    <div class="foot"><span class="st <%= notWorking.length ? 'warn' : 'good' %>"><span class="dot"></span>
+      at the last check</span></div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s4)"></i>
+    <div class="lab">Working but not recording</div><div class="val"><%= fmtInt(notRecording.length) %></div>
+    <div class="foot">the failure that matters after the event</div></div>
+</div>
+
+<div class="card" style="margin-bottom:16px">
+  <div class="card-h"><h3>Cover by place</h3>
+    <span class="sub">one working camera covers a place — the finding is a place with none</span></div>
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr><th>Place</th><th>Required</th><th class="num">Cameras</th><th class="num">Working</th><th>Position</th></tr></thead>
+    <tbody>
+    <% zones.forEach(function(z){ if (!z.required && !z.count) return; %>
+      <tr>
+        <td><b><%= z.label %></b></td>
+        <td><% if (z.required) { %><span class="pill r">by the contract</span>
+            <% } else { %><span class="muted">extra</span><% } %></td>
+        <td class="num"><%= z.count %></td>
+        <td class="num"><%= z.working %></td>
+        <td><% if (z.uncovered) { %><span class="st crit"><span class="dot"></span>Nothing registered</span>
+            <% } else if (z.count && !z.working) { %><span class="st warn"><span class="dot"></span>Registered, none seen working</span>
+            <% } else { %><span class="st good"><span class="dot"></span>Covered</span><% } %></td>
+      </tr>
+    <% }); %>
+    <% if (!zones.some(z => z.required || z.count)) { %>
+      <tr><td colspan="5" class="muted">Nothing registered yet.</td></tr>
+    <% } %>
+    </tbody>
+  </table></div>
+  <% if (!rr.has_meal_facility) { %>
+    <div class="card-b"><div class="muted" style="font-size:11.5px">
+      <%= rr.name %> has no meal facility on the register, so no kitchen camera is required of it.
+    </div></div>
+  <% } %>
+</div>
+
+<% if (live.length) { %>
+<div class="card" style="margin-bottom:16px">
+  <div class="card-h"><h3>The day's check — <%= date %></h3>
+    <span class="sub">a camera you did not look at is left alone, not written as working</span></div>
+  <% if (can('cctv.record')) { %>
+  <form method="post" action="<%= url('/facility/cctv/check') %>" id="cctvcheck">
+    <input type="hidden" name="rr" value="<%= rr.id %>">
+    <div class="card-b" style="border-bottom:1px solid var(--border);padding-bottom:12px">
+      <div class="row" style="gap:10px;align-items:flex-end;flex-wrap:wrap">
+        <div style="flex:0 0 190px"><label class="fl">Checked on</label>
+          <input class="fi" type="date" name="checked_on" value="<%= date %>" required></div>
+        <button class="btn ghost small" type="button" id="cctvallseen">Mark all as looked at</button>
+        <button class="btn ghost small" type="button" id="cctvallwork">All working and recording</button>
+        <div class="spacer"></div>
+        <div id="cctvcount" class="muted" style="font-size:12.5px"></div>
+      </div>
+    </div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>Camera</th><th>Place</th><th style="text-align:center">Looked at</th>
+        <th style="text-align:center">Working</th><th style="text-align:center">Recording</th>
+        <th class="num">Footage seen</th><th>Remarks</th></tr></thead>
+      <tbody>
+      <% live.forEach(function(c){ %>
+        <tr>
+          <td><b><%= c.label %></b>
+            <% if (c.location_note) { %><div class="muted" style="font-size:10.5px"><%= c.location_note %></div><% } %></td>
+          <td><%= (allZones.find(z => z[0] === c.zone) || [,c.zone])[1] %></td>
+          <td style="text-align:center">
+            <input type="checkbox" name="seen_<%= c.id %>" value="1" data-seen="<%= c.id %>"
+                   style="width:20px;height:20px;cursor:pointer"></td>
+          <td style="text-align:center">
+            <select class="fi" name="w_<%= c.id %>" data-work="<%= c.id %>" style="padding:4px 6px;font-size:12px">
+              <option value="1">Yes</option><option value="0">No</option></select></td>
+          <td style="text-align:center">
+            <select class="fi" name="r_<%= c.id %>" data-rec="<%= c.id %>" style="padding:4px 6px;font-size:12px">
+              <option value="1">Yes</option><option value="0">No</option></select></td>
+          <td class="num"><input class="fi" type="number" min="0" name="d_<%= c.id %>"
+                style="width:78px;padding:4px 6px" placeholder="days"></td>
+          <td><input class="fi" name="rem_<%= c.id %>" style="padding:4px 7px;font-size:12px"></td>
+        </tr>
+      <% }); %>
+      </tbody>
+    </table></div>
+    <div class="card-b" style="border-top:1px solid var(--border)">
+      <button class="btn" type="submit">Save the check</button>
+      <div class="muted" style="font-size:11.5px;margin-top:8px">
+        <b>Footage seen</b> is how many days back the recording could actually be played, as you found it.
+        Leave it blank if you did not look — blank means <i>not looked at</i>, which is a different statement
+        from nil.
+      </div>
+    </div>
+  </form>
+  <% } else { %>
+    <div class="card-b"><div class="muted" style="font-size:12.5px">Your role has view access only.</div></div>
+  <% } %>
+</div>
+<% } %>
+
+<div class="grid" style="grid-template-columns:1.4fr 1fr">
+  <div class="card">
+    <div class="card-h"><h3>The register</h3>
+      <span class="sub">what is installed, and what was last found</span></div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>Camera</th><th>Place</th><th>Last checked</th><th>Then found</th><th></th></tr></thead>
+      <tbody>
+      <% cameras.forEach(function(c){ %>
+        <tr<%= c.is_active ? '' : ' style="opacity:.55"' %>>
+          <td><b><%= c.label %></b>
+            <% if (c.location_note) { %><div class="muted" style="font-size:10.5px"><%= c.location_note %></div><% } %>
+            <% if (!c.is_active) { %><div class="muted" style="font-size:10.5px">off the register
+              <%= c.retired_on ? String(c.retired_on).slice(0,10) : '' %> — <%= c.retired_reason || '' %></div><% } %></td>
+          <td><%= (allZones.find(z => z[0] === c.zone) || [,c.zone])[1] %></td>
+          <td class="tnum"><% if (!c.checked_on) { %><span class="st warn"><span class="dot"></span>never</span>
+              <% } else { %><%= String(c.checked_on).slice(0,10) %>
+                <% if (c.is_active && c.stale_days > 7) { %>
+                  <div class="muted" style="font-size:10.5px"><%= c.stale_days %> days ago</div><% } %>
+              <% } %></td>
+          <td><% if (!c.checked_on) { %><span class="muted">—</span>
+              <% } else if (!c.last_working) { %><span class="st crit"><span class="dot"></span>Not working</span>
+              <% } else if (c.last_recording === 0) { %><span class="st warn"><span class="dot"></span>Working, not recording</span>
+              <% } else { %><span class="st good"><span class="dot"></span>Working and recording</span>
+                <% if (c.footage_days_seen !== null && c.footage_days_seen !== undefined) { %>
+                  <div class="muted" style="font-size:10.5px"><%= c.footage_days_seen %> days of footage seen</div><% } %>
+              <% } %>
+              <% if (c.last_remarks) { %><div class="muted" style="font-size:10.5px"><%= c.last_remarks %></div><% } %></td>
+          <td><% if (c.is_active && can('rr.edit')) { %>
+              <form method="post" action="<%= url('/facility/cctv/' + c.id + '/retire') %>" class="row" style="gap:5px">
+                <input class="fi" name="retired_reason" placeholder="Why" required
+                       style="width:130px;padding:4px 7px;font-size:12px">
+                <button class="btn ghost small" type="submit">Take off</button>
+              </form>
+            <% } %></td>
+        </tr>
+      <% }); %>
+      <% if (!cameras.length) { %><tr><td colspan="5" class="muted">No camera has been registered here.</td></tr><% } %>
+      </tbody>
+    </table></div>
+    <div class="card-b">
+      <div class="muted" style="font-size:11.5px">
+        There is no live picture here and no camera address, deliberately. An address that reaches a camera
+        carries the credentials that reach it, and a tile showing a picture would invite the belief that this
+        system is watching — when all it can honestly say is what somebody last verified. Watching is done at
+        the running room; this is the record that it was.
+      </div>
+    </div>
+  </div>
+
+  <% if (can('cctv.record')) { %>
+  <div class="card">
+    <div class="card-h"><h3>Register a camera</h3></div>
+    <div class="card-b">
+      <form method="post" action="<%= url('/facility/cctv') %>">
+        <input type="hidden" name="rr" value="<%= rr.id %>">
+        <% if (blocks && blocks.length) { %>
+          <div style="margin-bottom:10px"><label class="fl">Which building</label>
+            <select class="fi" name="block" required>
+              <option value="">— choose —</option>
+              <% blocks.forEach(function(b){ %>
+                <option value="<%= b.id %>" <%= wantBlock === b.id ? 'selected' : '' %>><%= b.name %></option>
+              <% }); %>
+            </select>
+            <div class="muted" style="font-size:11px;margin-top:4px">
+              A camera is bolted to a wall in one building, and cover is judged per building.
+              One with no building counts towards nobody's.
+            </div></div>
+        <% } %>
+        <div style="margin-bottom:10px"><label class="fl">Where</label>
+          <select class="fi" name="zone" required>
+            <option value="">— choose —</option>
+            <% allZones.forEach(function(z){ %>
+              <option value="<%= z[0] %>"><%= z[1] %><%= z[2] ? ' — required by the contract' : '' %></option>
+            <% }); %>
+          </select></div>
+        <div style="margin-bottom:10px"><label class="fl">What the room calls it</label>
+          <input class="fi" name="label" placeholder="Kitchen — over the range" required maxlength="80"></div>
+        <div style="margin-bottom:10px"><label class="fl">Where exactly <span class="muted">— optional</span></label>
+          <input class="fi" name="location_note" placeholder="Wall above the serving hatch" maxlength="200"></div>
+        <div style="margin-bottom:12px"><label class="fl">Installed on <span class="muted">— if known</span></label>
+          <input class="fi" type="date" name="installed_on"></div>
+        <button class="btn" type="submit">Add it to the register</button>
+      </form>
+      <div class="hr"></div>
+      <div class="muted" style="font-size:11.5px">
+        A camera comes <b>off</b> the register only with a reason, and only by the Railway — the divisional
+        officer or the administrator. Taking one off reduces the cover the contract requires, so it is not a
+        thing the site does quietly.
+      </div>
+    </div>
+  </div>
+  <% } %>
+</div>

@@ -1,0 +1,52 @@
+# RR-CMS as a systemd service.
+#
+#   install:  cp deploy/rrcms.service /etc/systemd/system/rrcms.service
+#             systemctl daemon-reload && systemctl enable --now rrcms
+#   watch:    journalctl -u rrcms -f
+#
+# The application does NOT terminate TLS and must not be exposed directly.
+# Put nginx in front of it — deploy/nginx-rrcms.conf is a working example.
+
+[Unit]
+Description=RR-CMS — Running Room Contract Management System
+Documentation=file:/opt/rrcms/INSTALL.md
+After=network-online.target mariadb.service mysql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=rrcms
+Group=rrcms
+WorkingDirectory=/opt/rrcms
+EnvironmentFile=/opt/rrcms/.env
+ExecStart=/usr/bin/node src/server.js
+
+# In production the application REFUSES TO START when the database is behind the
+# code — that is deliberate, and it is why Restart is not "always". A unit that
+# restarts a process which is correctly refusing to run turns a clear message in
+# the journal into a restart loop nobody reads.
+Restart=on-failure
+RestartSec=5s
+StartLimitBurst=3
+StartLimitIntervalSec=60
+
+# Uploads are the only thing it writes outside the database. Everything else on
+# the filesystem can stay read-only to this service.
+ReadWritePaths=/var/lib/rrcms/uploads
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+LockPersonality=yes
+
+# The journal is the log. Nothing is written to a file the application manages.
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=rrcms
+
+[Install]
+WantedBy=multi-user.target

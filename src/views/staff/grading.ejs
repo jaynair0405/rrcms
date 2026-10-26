@@ -1,0 +1,118 @@
+<div style="margin-bottom:14px"><a href="<%= url('/staff') %>">← Contract staff</a></div>
+
+<form class="row" method="get" style="margin-bottom:14px;align-items:flex-end;gap:10px">
+  <div style="flex:0 0 250px"><label class="fl">Running room</label>
+    <select class="fi" name="rr" onchange="this.form.submit()">
+      <% rooms.forEach(function(r){ %>
+        <option value="<%= r.id %>" <%= r.id===rr.id?'selected':'' %>><%= r.name %> (<%= r.div_code %>)</option>
+      <% }); %>
+    </select></div>
+  <div style="flex:0 0 170px"><label class="fl">Month</label>
+    <input class="fi" type="month" name="month" value="<%= month %>" onchange="this.form.submit()"></div>
+  <noscript><button class="btn" type="submit">Go</button></noscript>
+</form>
+
+<% if (saved) { %>
+  <div class="note ok" style="margin-bottom:14px"><b><%= saved %></b> graded.</div>
+<% } %>
+
+<div class="kpis" style="margin-bottom:16px">
+  <div class="kpi"><i class="strip" style="background:var(--s1)"></i>
+    <div class="lab">On the roster</div><div class="val"><%= fmtInt(people.length) %></div>
+    <div class="foot"><%= rr.name %> · <%= month %></div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s3)"></i>
+    <div class="lab">Graded this month</div><div class="val"><%= fmtInt(graded) %></div>
+    <div class="foot"><span class="st <%= graded === people.length ? 'good' : 'warn' %>"><span class="dot"></span>
+      <%= graded === people.length ? 'everyone' : (people.length - graded) + ' not yet looked at' %></span></div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s8)"></i>
+    <div class="lab">Recommended for replacement</div><div class="val"><%= fmtInt(toReplace.length) %></div>
+    <div class="foot">General Instruction 28 — no replacement penalty applies</div></div>
+</div>
+
+<% if (toReplace.length) { %>
+  <div class="note warn" style="margin-bottom:16px">
+    <b><%= toReplace.map(p => p.full_name).join(', ') %></b>
+    <%= toReplace.length === 1 ? 'is' : 'are' %> recommended for replacement on poor grading.
+    General Instruction 28 is explicit that <b>the replacement penalty is not imposed</b> where the Railway
+    itself asked for the man to go — so this list is what protects the contractor from clause M2 as much as
+    it protects the Railway from a poor worker.
+  </div>
+<% } %>
+
+<div class="card">
+  <div class="card-h"><h3>Grading — <%= rr.name %>, <%= month %></h3>
+    <span class="sub">occupant rating and attendance are computed · the joint evaluation is yours</span></div>
+
+  <% if (!people.length) { %>
+    <div class="card-b"><div class="muted">Nobody on the roster.</div></div>
+  <% } else { %>
+  <form method="post" action="<%= url('/staff/grading') %>" id="gradeform">
+    <input type="hidden" name="rr" value="<%= rr.id %>">
+    <input type="hidden" name="month" value="<%= month %>">
+
+    <div class="tblwrap"><table class="tbl" id="gradetable">
+      <thead><tr><th>Person</th><th>Post</th>
+        <th class="num">Occupants said</th><th class="num">Attendance</th>
+        <th class="num" style="width:110px">Joint evaluation</th>
+        <th style="width:300px">Recommendation</th><th>Remarks</th></tr></thead>
+      <tbody>
+      <% people.forEach(function(p){ %>
+        <tr>
+          <td><a href="<%= url('/staff/' + p.id) %>"><%= p.full_name %></a>
+            <div class="muted" style="font-size:10.5px"><%= p.staff_code %></div>
+            <% if (p.evaluated_on) { %>
+              <div class="muted" style="font-size:10.5px">graded <%= String(p.evaluated_on).slice(0,10) %><%= p.evaluated_by_name ? ' · ' + p.evaluated_by_name : '' %></div>
+            <% } %></td>
+          <td style="font-size:12px"><%= p.designation %></td>
+          <td class="num">
+            <% if (p.live_occupant_count) { %>
+              <b><%= p.live_occupant_avg %></b> <small>/ 5</small>
+              <div class="muted" style="font-size:10.5px">from <%= p.live_occupant_count %> occupant<%= p.live_occupant_count === 1 ? '' : 's' %></div>
+            <% } else { %>
+              <span class="muted">no occupant named him</span>
+            <% } %>
+            <input type="hidden" name="oa_<%= p.id %>" value="<%= p.live_occupant_avg === null ? '' : p.live_occupant_avg %>">
+            <input type="hidden" name="oc_<%= p.id %>" value="<%= p.live_occupant_count %>">
+          </td>
+          <td class="num">
+            <% if (p.live_attendance_pct === null) { %><span class="muted">no muster</span>
+            <% } else { %>
+              <span class="<%= p.live_attendance_pct < 80 ? 'st warn' : '' %>">
+                <% if (p.live_attendance_pct < 80) { %><span class="dot"></span><% } %><%= p.live_attendance_pct %>%</span>
+            <% } %>
+            <input type="hidden" name="ap_<%= p.id %>" value="<%= p.live_attendance_pct === null ? '' : p.live_attendance_pct %>">
+          </td>
+          <td class="num"><input class="fi" type="number" step="0.5" min="0" max="5"
+                name="j_<%= p.id %>" value="<%= p.joint_eval_score === null || p.joint_eval_score === undefined ? '' : p.joint_eval_score %>"
+                style="width:80px;padding:4px 6px" placeholder="0–5"></td>
+          <td>
+            <div class="marks" role="radiogroup" aria-label="Recommendation for <%= p.full_name %>">
+              <% [['retain','Retain'],['monitor','Watch'],['replace','Replace']].forEach(function(o){ %>
+                <label class="mark">
+                  <input type="radio" name="g_<%= p.id %>" value="<%= o[0] %>"
+                         <%= p.recommendation === o[0] ? 'checked' : '' %>><span><%= o[1] %></span>
+                </label>
+              <% }); %>
+            </div>
+          </td>
+          <td><input class="fi" name="m_<%= p.id %>" style="padding:4px 7px;font-size:12px"
+                value="<%= p.remarks || '' %>" placeholder="required if you are replacing him"></td>
+        </tr>
+      <% }); %>
+      </tbody>
+    </table></div>
+
+    <div class="card-b" style="border-top:1px solid var(--border)">
+      <button class="btn" type="submit">Save the grading</button>
+      <div class="muted" style="font-size:11.5px;margin-top:8px">
+        A man nobody graded is <b>left ungraded</b>. Writing "retain" for everybody who was not looked at
+        would make the retain list worthless, and it is the list the Railway is meant to act on.
+        <br>
+        The occupant rating and the attendance are worked out from the feedback and the muster and are stored
+        with the grading as they stood — so a grading made in August still reads correctly when the figures
+        move in September.
+      </div>
+    </div>
+  </form>
+  <% } %>
+</div>

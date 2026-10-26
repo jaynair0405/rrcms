@@ -1,0 +1,183 @@
+<%- await include('_nav') %>
+
+<% if (!rr.has_meal_facility) { %>
+  <div class="note warn" style="margin-bottom:16px">
+    <b><%= rr.name %> has no meal facility</b> on the register, so no meal should be served here at all.
+    Anything recorded below is worth a question rather than a tick.
+  </div>
+<% } %>
+
+<div class="kpis" style="margin-bottom:16px">
+  <% meals.forEach(function(m, i){ const r = rateFor[m[0]]; %>
+    <div class="kpi"><i class="strip" style="background:var(--s<%= i + 1 %>)"></i>
+      <div class="lab"><%= m[1] %> today</div>
+      <div class="val"><%= fmtInt(counts[m[0]] || 0) %></div>
+      <%# A contract states the RAILWAY'S SHARE and no full charge -- the full
+          charge there is "the accepted cost", which is not a number on the
+          paper. Printing "/ Rs" with nothing after it read as a missing figure. %>
+      <div class="foot"><%= fmtInt(month[m[0]] || 0) %> so far this month<% if (r) { %> ·
+        <span class="muted">ceiling ₹<%= r.subsidised_rate %><%
+          if (r.full_rate !== null && r.full_rate !== undefined) { %> / ₹<%= r.full_rate %><% } %></span><% } %></div>
+    </div>
+  <% }); %>
+  <div class="kpi"><i class="strip" style="background:var(--s7)"></i>
+    <div class="lab">Crew in the room</div>
+    <div class="val"><%= fmtInt(people.length) %></div>
+    <div class="foot">from the call book for <%= date %></div></div>
+</div>
+
+<div class="card" style="margin-bottom:16px">
+  <div class="card-h"><h3>Meals served — <%= date %></h3>
+    <span class="sub">one tick per man per service · a man cannot take breakfast twice</span></div>
+  <div class="card-b" style="padding-bottom:0">
+    <div class="muted" style="font-size:11.5px">
+      Not more than <b>three subsidised meals</b> are permitted in a 24-hour stay
+      (Railway Board 2006/M(L)/467/2) — breakfast, lunch and dinner, one of each, which is what the register
+      allows. A <b>parcel</b> is the packed meal carried en route: the same letter puts it
+      <b>in addition to that ceiling</b>, so it is ticked in its own column and never as a lunch.
+    </div>
+  </div>
+
+  <% if (!people.length) { %>
+    <div class="card-b">
+      <div class="muted" style="font-size:12.5px">
+        Nobody has been called at <%= rr.name %> on this date, so there is nobody to tick.
+        Record the calls on the <a href="<%= url('/records/call-book') %>?rr=<%= rr.id %>&date=<%= date %>">call book</a>
+        first — the list here builds itself from it — or add a man by name below.
+      </div>
+    </div>
+  <% } else { %>
+    <form method="post" action="<%= url('/records/meals') %>" id="mealsform">
+      <input type="hidden" name="rr" value="<%= rr.id %>"><input type="hidden" name="date" value="<%= date %>">
+      <input type="hidden" name="listed" value="<%= people.map(p => p.id).join(',') %>">
+
+      <% if (can('meal.record')) { %>
+        <div class="card-b" style="border-bottom:1px solid var(--border);padding-bottom:12px">
+          <div class="row" style="gap:10px;align-items:center;flex-wrap:wrap">
+            <% meals.forEach(function(m){ %>
+              <button class="btn ghost small" type="button" data-mealall="<%= m[0] %>">All <%= m[1].toLowerCase() %></button>
+            <% }); %>
+            <div style="flex:0 0 220px">
+              <input class="fi" type="search" id="mealsearch" placeholder="Find a name"
+                     autocomplete="off" aria-label="Find a crew member">
+            </div>
+            <div class="spacer"></div>
+            <div id="mealcount" class="muted" style="font-size:12.5px"></div>
+          </div>
+        </div>
+      <% } %>
+
+      <div class="tblwrap"><table class="tbl" id="mealstable">
+        <thead><tr><th>Crew</th><th>Called at</th>
+          <% meals.forEach(function(m){ %><th style="text-align:center;width:110px"><%= m[1] %></th><% }); %>
+        </tr></thead>
+        <tbody>
+        <% people.forEach(function(p){ const t = takenBy[p.id] || {}; %>
+          <tr data-name="<%= (p.full_name + ' ' + (p.crew_id_no || '')).toLowerCase() %>">
+            <td><%= p.full_name %>
+              <% if (p.crew_id_no) { %><span class="muted tnum" style="font-size:11px"> <%= p.crew_id_no %></span><% } %>
+              <% if (p.source !== 'div_master') { %>
+                <div class="muted" style="font-size:10.5px">name entered here, not verified</div>
+              <% } else if (p.designation) { %>
+                <div class="muted" style="font-size:10.5px"><%= p.designation %></div>
+              <% } %></td>
+            <td class="tnum"><%= p.called_at ? String(p.called_at).slice(11,16) : '—' %></td>
+            <% meals.forEach(function(m){ %>
+              <td style="text-align:center">
+                <% if (can('meal.record')) { %>
+                  <input type="checkbox" name="m_<%= m[0] %>_<%= p.id %>" value="1"
+                         style="width:20px;height:20px;cursor:pointer"
+                         data-meal="<%= m[0] %>" <%= t[m[0]] ? 'checked' : '' %>>
+                <% } else { %>
+                  <%= t[m[0]] ? '✓' : '—' %>
+                <% } %>
+              </td>
+            <% }); %>
+          </tr>
+        <% }); %>
+        </tbody>
+      </table></div>
+
+      <% if (can('meal.record')) { %>
+        <div class="card-b" style="border-top:1px solid var(--border)">
+          <button class="btn" type="submit">Save the meals</button>
+          <div class="muted" style="font-size:11.5px;margin-top:8px">
+            Clearing a tick removes the meal. That is deliberate — a meal recorded by mistake has to be
+            correctable, and leaving it behind would make the day's count unarguable in the wrong direction.
+          </div>
+        </div>
+      <% } %>
+    </form>
+  <% } %>
+</div>
+
+<div class="grid" style="grid-template-columns:1fr 1fr">
+  <% if (can('meal.record')) { %>
+  <div class="card">
+    <div class="card-h"><h3>Add a man who was not called</h3></div>
+    <div class="card-b">
+      <% if (typeof added !== 'undefined' && added) { %>
+        <div class="note" style="margin-bottom:10px">
+          <b><%= added %></b> is on the list above. Nothing has been ticked for him —
+          his meals are ticked deliberately, like everyone else's.
+        </div>
+      <% } %>
+      <form method="post" action="<%= url('/records/meals') %>" id="mealadd">
+        <input type="hidden" name="rr" value="<%= rr.id %>"><input type="hidden" name="date" value="<%= date %>">
+        <div style="margin-bottom:10px" id="crewpick"
+             data-search="<%= hasMaster ? url('/records/crew-search') : '' %>" data-rr="<%= rr.id %>">
+          <label class="fl">Crew name</label>
+          <input class="fi" name="crew_name" autocomplete="off"
+                 placeholder="<%= hasMaster ? 'Type three letters of the name, or the CMS number' : 'Type the name' %>">
+          <input type="hidden" name="crew_hrms" value="">
+          <div class="muted" style="font-size:11px;margin-top:4px" id="crewnote">
+            A crew resting without being called, or a train manager. He appears on the list above; his
+            meals are then ticked deliberately, like everyone else's.
+          </div>
+        </div>
+        <div style="margin-bottom:12px"><label class="fl">CMS number <span class="muted">— if known</span></label>
+          <input class="fi" name="crew_no" placeholder="KYN5800" autocomplete="off"></div>
+        <button class="btn" type="submit">Add him to the list</button>
+      </form>
+    </div>
+  </div>
+  <% } %>
+
+  <div class="card">
+    <div class="card-h"><h3>What this is, and what it is not</h3></div>
+    <div class="card-b">
+      <div class="muted" style="font-size:11.8px;line-height:1.65">
+        This is the record of <b>who ate</b>. It is not meal accounting — RRMS owns the money — and
+        <b>no rupee figure is computed anywhere in this system</b>, here or in the monthly pack, until the
+        payment and penalty schedule is settled.
+        <% const any = rateFor[meals[0][0]]; if (any) { %>
+          <div class="hr"></div>
+          The ceilings printed above are held for reference and multiplied by nothing:
+          <table class="tbl" style="margin-top:8px">
+            <thead><tr><th>Service</th><th class="num">Railway share</th><th class="num">Full charge</th>
+              <th>What the source says</th></tr></thead>
+            <tbody>
+            <% meals.forEach(function(m){ const r = rateFor[m[0]]; if (!r) return; %>
+              <tr><td><%= m[1] %></td>
+                <td class="num">₹<%= r.subsidised_rate %></td>
+                <td class="num"><% if (r.full_rate !== null && r.full_rate !== undefined) { %>₹<%= r.full_rate %>
+                  <% } else { %><span class="muted">not stated</span><% } %></td>
+                <td class="muted" style="font-size:11px"><%= r.cap_note || '—' %></td></tr>
+            <% }); %>
+            </tbody>
+          </table>
+          <div style="margin-top:8px;font-size:11px"><b>Source:</b> <%= any.source_ref %>,
+            effective <%= String(any.effective_from).slice(0,10) %>.
+            <% if (any.contract_id) { %>
+              These are <b>this running room's own contract</b>, which is what the Railway is paying
+              here. A running room whose contract has not been read in shows the divisional figures
+              instead.
+            <% } else { %>
+              This running room's own contract has not been read in, so the divisional figures are
+              shown. Where a site's contract states its own ceiling, that ceiling is used instead.
+            <% } %></div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>

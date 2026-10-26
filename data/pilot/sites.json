@@ -1,0 +1,169 @@
+{
+  "_note": [
+    "The four pilot running rooms.",
+    "",
+    "IGP and LNL are entered in the tender register as several blocks apiece --",
+    "Igatpuri as five (LP Ghat, LP Mail, LP Goods, BSL Guard, BB Guard) and",
+    "Lonavla as two (Ghat, BVT). Operationally each is one running room under",
+    "one contract with one roster, so the pilot merges them: the surviving row",
+    "carries the combined beds and rooms, and the absorbed rows are marked",
+    "closed with a remark naming the survivor. Nothing is deleted -- the tender",
+    "register stays readable.",
+    "",
+    "JNPT is a new running room and is NOT in the tender register. Its figures",
+    "below are PROVISIONAL and marked as such on the record itself. Replace",
+    "them with the sanctioned particulars when the site is commissioned.",
+    "",
+    "MERGES ARE KEYED ON CODE, NOT NAME, and are re-applied on every run.",
+    "A merge renames the survivor, so looking it up by its register name",
+    "fails the second time; looking it up by the merged name found a room",
+    "that was merged and skipped the work. Between those two, the merge",
+    "silently stopped re-applying -- and db/seeds/03 resets total_beds from",
+    "the register on every `migrate.js seed`, so IGP quietly went back from",
+    "131 beds to 44 and LNL from 72 to 42, with nothing reporting it.",
+    "Codes never change. The merge now recomputes from them every time and",
+    "says whether anything moved.",
+    "",
+    "survivor_register is the SURVIVOR'S OWN ROW as db/seeds/03 states it.",
+    "The merge writes the combined figures into the survivor, so after the",
+    "first run the survivor no longer holds its own register value and",
+    "re-summing would add the parts to a total that already contains them:",
+    "IGP went 44 -> 131 -> 218 on a third run. The absorbed rooms are never",
+    "mutated, so only the survivor's figures need restating here. If db/seeds/03",
+    "is ever corrected, the loader compares and refuses rather than drifting."
+  ],
+  "merges": [
+    {
+      "survivor": "IGP - LP Mail",
+      "survivor_code": "RR013",
+      "rename_to": "IGP",
+      "station_code": "IGP",
+      "absorbs": [
+        "IGP - LP Ghat",
+        "IGP - LP Goods",
+        "IGP - BSL Gaurd",
+        "IGP - BB Gaurd"
+      ],
+      "absorb_codes": [
+        "RR012",
+        "RR014",
+        "RR015",
+        "RR016"
+      ],
+      "survivor_register": {
+        "physical_rooms": 6,
+        "total_beds": 44,
+        "female_rooms": 1,
+        "ref_crews_per_day": 78,
+        "ref_peak_occupancy": 44
+      },
+      "reason": "Igatpuri is one running room under one contract; the register lists it by crew type.",
+      "blocks_note": [
+        "THE BUILDINGS AS THEY ACTUALLY ARE, from the officer, 4 September 2026.",
+        "",
+        "The blocks were first derived from the TRO register entries the merge is",
+        "made of, which listed Igatpuri as five entries by crew type. The officer",
+        "then said plainly: 'change is there. this time my fault. the dashboard",
+        "data was stale.' So the register is history and this is the fact.",
+        "",
+        "TM = Train Manager, the post that used to be called Guard. The register's",
+        "'BSL Gaurd' and 'BB Gaurd' are superseded in spelling and in name alike.",
+        "",
+        "THE BEDS ARE UNCHANGED AT 131 -- only the composition moved, and the",
+        "rooms with it, 25 -> 23. That is why nothing derived from the bed count",
+        "had to move: the contract's 107 posts, the band, and the two-days'",
+        "washed-stock figure of 2 x 131 all stand exactly as they were.",
+        "",
+        "The seed refuses to write these if they do not total the running room's",
+        "own beds, so a stale list cannot pass silently a second time.",
+        "",
+        "female_rooms AND cooks_here ARE STATED HERE, NOT IMPORTED. The inventory",
+        "sheet shows the ladies' room as a row of its own, and it would have been",
+        "easy to let the importer write female_rooms from it -- which is how the",
+        "figure got silently reset to 0 the first time db/seed-pilot.js re-ran",
+        "after the import. One fact, one writer: these two are facts about the",
+        "building and belong with the building. The importer now CHECKS the sheet",
+        "against them and complains if they disagree, rather than writing either."
+      ],
+      "blocks": [
+        {
+          "code": "IGP-LPMAIL",
+          "name": "LP Mail",
+          "physical_rooms": 6,
+          "total_beds": 44,
+          "female_rooms": 1,
+          "note": "The ladies' accommodation, listed as a separate row on the inventory sheet purely to show it."
+        },
+        {
+          "code": "IGP-LPGHAT",
+          "name": "LP Ghat",
+          "physical_rooms": 2,
+          "total_beds": 23
+        },
+        {
+          "code": "IGP-TMBB",
+          "name": "TM-BB",
+          "physical_rooms": 7,
+          "total_beds": 24
+        },
+        {
+          "code": "IGP-BSLBB",
+          "name": "BSL (TM-Mail) & BB Goods LP&TM",
+          "physical_rooms": 8,
+          "total_beds": 40,
+          "cooks_here": true,
+          "note": "The main kitchen. Cooking for all of Igatpuri is done here and the other buildings serve or reheat, so the FSSAI licence names these premises and meals stay one register for the whole running room."
+        }
+      ]
+    },
+    {
+      "survivor": "LNL -BVT",
+      "survivor_code": "RR018",
+      "rename_to": "LNL",
+      "station_code": "LNL",
+      "absorbs": [
+        "LNL -Ghat"
+      ],
+      "absorb_codes": [
+        "RR017"
+      ],
+      "survivor_register": {
+        "physical_rooms": 9,
+        "total_beds": 42,
+        "female_rooms": 1,
+        "ref_crews_per_day": 37,
+        "ref_peak_occupancy": 42
+      },
+      "reason": "Lonavla is one running room under one contract; the register lists it by crew type."
+    }
+  ],
+  "new_sites": [
+    {
+      "code": "RR045",
+      "name": "JNPT",
+      "station_code": "JNPT",
+      "division": "BB",
+      "control_dept": "ELECT",
+      "category": "B",
+      "physical_rooms": 10,
+      "total_beds": 40,
+      "female_rooms": 1,
+      "ref_crews_per_day": 40,
+      "ref_peak_occupancy": 40,
+      "has_meal_facility": 1,
+      "has_housekeeping": 1,
+      "ac_status": "working",
+      "status": "operational",
+      "provisional": true,
+      "remarks": "PROVISIONAL PARTICULARS. New running room, not in the tender register of 44. Beds, rooms and category are placeholders pending the sanctioned figures; the contract is not yet finalised and the contractor shown is a placeholder."
+    }
+  ],
+  "division": "BB",
+  "_division_note": "Every pilot site is in Mumbai division. The register also holds an IGP in Bhusaval with 67 beds; matching on name alone would silently pick one of the two, so the loader matches on name AND division and refuses to guess.",
+  "pilot": [
+    "IGP",
+    "LNL",
+    "ROHA",
+    "JNPT"
+  ]
+}

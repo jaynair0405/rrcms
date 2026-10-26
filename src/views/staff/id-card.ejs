@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Identity card · <%= st.full_name %></title>
+<style>
+  body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:#f4f5f2;margin:0;padding:28px}
+  .sheet{background:#fff;max-width:640px;margin:0 auto;border:1px solid #c3c2b7;padding:22px 26px}
+  h1{font-size:15px;text-align:center;margin:0 0 2px;letter-spacing:.4px}
+  .sub{font-size:11.5px;text-align:center;color:#52514e;margin-bottom:16px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  td{padding:6px 4px;vertical-align:top}
+  td.l{width:190px;color:#52514e}
+  td.v{border-bottom:1px dotted #898781;font-weight:600}
+  .photo{width:105px;height:130px;border:1px solid #898781;display:grid;place-items:center;
+         color:#898781;font-size:10.5px;text-align:center;float:right;margin-left:16px}
+  .signs{display:flex;justify-content:space-between;margin-top:44px;font-size:11.5px;color:#52514e}
+  .signs div{width:31%;border-top:1px solid #898781;padding-top:5px;text-align:center}
+  .actions{max-width:640px;margin:0 auto 14px;display:flex;gap:8px}
+  button,a.b{font:inherit;font-size:12.5px;padding:7px 13px;border-radius:7px;border:1px solid #2a78d6;
+        background:#2a78d6;color:#fff;cursor:pointer;text-decoration:none}
+  a.b{background:transparent;color:#2a78d6}
+  @media print{body{background:#fff;padding:0}.actions{display:none}.sheet{border:0}}
+</style>
+</head>
+<body>
+<div class="actions">
+  <button onclick="window.print()">Print</button>
+  <a class="b" href="<%= url('/staff/' + st.id) %>">Back</a>
+</div>
+<div class="sheet">
+  <% if (photo) { %>
+    <img class="photo" src="<%= url('/staff/' + st.id + '/documents/' + photo.id + '/file') %>"
+         alt="Photograph" style="object-fit:cover">
+  <% } else { %>
+    <div class="photo">PHOTO</div>
+  <% } %>
+  <h1>IDENTITY CARD</h1>
+  <div class="sub"><%= st.contractor %> · <%= st.rr_name %> Running Room · Central Railway</div>
+  <table>
+    <tr><td class="l">Identity Card Sr. No.</td><td class="v"><%= st.id_card_no || st.staff_code %></td></tr>
+    <tr><td class="l">Date of issue</td><td class="v"><%= st.id_card_issued_on || '' %></td></tr>
+    <tr><td class="l">Contract Agreement No.</td><td class="v"><%= st.agreement_no || '' %></td></tr>
+    <tr><td class="l">Name of the Contractor</td><td class="v"><%= st.contractor %></td></tr>
+    <tr><td class="l">Address of the Contractor</td><td class="v"><%= st.contractor_address || '' %></td></tr>
+    <tr><td class="l">Name of the workman</td><td class="v"><%= st.full_name %></td></tr>
+    <tr><td class="l">Designation</td><td class="v"><%= st.designation %></td></tr>
+    <tr><td class="l">Date of Birth / Age</td><td class="v"><%= st.date_of_birth || '' %></td></tr>
+    <tr><td class="l">Personal identification mark</td><td class="v">&nbsp;</td></tr>
+    <tr><td class="l">Permanent address</td><td class="v"><%= st.address || '' %></td></tr>
+  </table>
+  <div class="signs">
+    <div>Sign of workman</div><div>Sign of Contractor</div><div>Sign of Rly. Representative</div>
+  </div>
+</div>
+</body>
+</html>

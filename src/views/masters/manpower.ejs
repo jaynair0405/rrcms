@@ -1,0 +1,21 @@
+<div style="margin-bottom:14px"><a href="<%= url('/masters') %>">← Master data</a></div>
+<div class="note" style="margin-bottom:14px">
+  The tender's Schedule-A matrix, exactly as tendered. Its smallest band is <b>50 beds</b>, but many running rooms are
+  smaller, so the band-50 column is applied pro-rata below that with a per-role floor. Each running room's own page
+  shows the norm and the sanctioned figure side by side.
+</div>
+<div class="card"><div class="tblwrap"><table class="tbl">
+  <thead><tr><th>Designation</th><% bands.forEach(function(b){ %><th class="num">~<%= b %> beds</th><% }); %></tr></thead>
+  <tbody>
+  <% matrix.forEach(function(entry){ %>
+    <tr><td><%= entry[0] %></td>
+      <% bands.forEach(function(b){ %><td class="num"><%= entry[1][b] === undefined ? '—' : entry[1][b] %></td><% }); %>
+    </tr>
+  <% }); %>
+  <tr style="background:var(--plane)"><td><b>Total</b></td>
+    <% bands.forEach(function(b){ %>
+      <td class="num"><b><%= matrix.reduce((a,e)=>a+(e[1][b]||0),0) %></b></td>
+    <% }); %>
+  </tr>
+  </tbody>
+</table></div></div>

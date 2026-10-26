@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in · <%= cfg.appName %></title>
+<link rel="stylesheet" href="<%= url('/assets/app.css') %>">
+</head>
+<body>
+<div class="loginwrap">
+  <form class="loginbox" method="post" action="<%= url('/login') %>">
+    <h1><%= cfg.appName %></h1>
+    <div class="sub"><%= cfg.appSubtitle %> · Running Room Contract Management</div>
+    <% if (error) { %><div class="note err" style="margin-bottom:16px"><%= error %></div><% } %>
+    <div class="f">
+      <label class="fl" for="username">Username</label>
+      <input class="fi" id="username" name="username" autocomplete="username" autofocus required>
+    </div>
+    <div class="f">
+      <label class="fl" for="password">Password</label>
+      <input class="fi" id="password" name="password" type="password" autocomplete="current-password" required>
+    </div>
+    <input type="hidden" name="next" value="<%= next %>">
+    <button class="btn" type="submit" style="width:100%;margin-top:6px">Sign in</button>
+  </form>
+</div>
+</body>
+</html>

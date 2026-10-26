@@ -1,0 +1,152 @@
+<%- await include('_nav') %>
+
+<%
+  // One row per month, newest last, so every chart on the page reads left to right.
+  const months = [];
+  coverage.forEach(function(c){ if (months.indexOf(c.period_month) < 0) months.push(c.period_month); });
+  rating.forEach(function(r){ if (months.indexOf(r.period_month) < 0) months.push(r.period_month); });
+  inspections.forEach(function(i){ if (months.indexOf(i.period_month) < 0) months.push(i.period_month); });
+  months.sort();
+
+  const HEADS = ['cleanliness','food','linen'];
+  const gradeAt = function(m, head){
+    const x = rating.find(function(r){ return r.period_month === m && r.head === head; });
+    return x ? Number(x.avg_rating) : null;
+  };
+  const overallAt = function(m){
+    const v = HEADS.map(function(h){ return gradeAt(m, h); }).filter(function(x){ return x !== null; });
+    return v.length ? +(v.reduce(function(a,b){ return a+b; },0) / v.length).toFixed(2) : null;
+  };
+  const covAt = function(m){
+    const x = coverage.find(function(c){ return c.period_month === m; });
+    return x ? Number(x.avg_pct) : null;
+  };
+  const inspAt = function(m){
+    return inspections.find(function(i){ return i.period_month === m; })
+      || { total: 0, compliant: 0, minor: 0, major: 0 };
+  };
+  const lbl = function(m){ return monthLabel(m); };
+
+  const ratingPoints = months.map(function(m){ return { x: lbl(m).replace(' 20', " '"), y: overallAt(m) }; });
+  const covPoints    = months.map(function(m){ return { x: lbl(m).replace(' 20', " '"), y: covAt(m) }; });
+
+  const INSP_SERIES = [{ name: 'Compliant', slot: 3 }, { name: 'Minor deficiencies', slot: 4 },
+                       { name: 'Major deficiencies', slot: 2 }];
+  const inspGroups = months.map(function(m){
+    const i = inspAt(m);
+    return { label: lbl(m).replace(' 20', " '"), parts: [+i.compliant||0, +i.minor||0, +i.major||0] };
+  });
+
+  const headRows = byHead.map(function(h){
+    return { label: h.group_name, value: +h.n, note: h.open ? '· ' + h.open + ' open' : '' };
+  });
+  const divRows = byDivision.map(function(d){
+    return { label: d.name, value: Number(d.avg_pct),
+             tone: Number(d.avg_pct) >= 50 ? null : 'critical',
+             note: '· ' + d.meeting + '/' + d.sites + ' sites' };
+  });
+%>
+
+<div class="grid" style="grid-template-columns:1fr 1fr;margin-bottom:14px">
+  <div class="card">
+    <div class="card-h"><h3>Occupant rating</h3><span class="sub">average of all grading heads, month by month</span></div>
+    <div class="chartbox">
+      <%- chart.line(ratingPoints, { width: 560, height: 200, title: 'Average occupant rating by month',
+            clampMin: 1, clampMax: 5, valueFmt: function(v){ return Number(v).toFixed(2); },
+            reference: { value: 4.01, label: '4.01 band' } }) %>
+    </div>
+    <details class="tableview"><summary>Show the figures</summary>
+      <div class="tblwrap"><table class="tbl">
+        <thead><tr><th>Month</th><th class="num">Cleanliness</th><th class="num">Food</th>
+          <th class="num">Linen</th><th class="num">Overall</th></tr></thead>
+        <tbody>
+        <% months.slice().reverse().forEach(function(m){ %>
+          <tr><td><%= lbl(m) %></td>
+            <% HEADS.forEach(function(h){ const v = gradeAt(m, h); %>
+              <td class="num"><%= v === null ? '—' : v.toFixed(2) %></td>
+            <% }); %>
+            <td class="num"><b><%= overallAt(m) === null ? '—' : overallAt(m).toFixed(2) %></b></td></tr>
+        <% }); %>
+        </tbody>
+      </table></div>
+    </details>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h3>Feedback coverage</h3><span class="sub">share of occupants who rated their stay</span></div>
+    <div class="chartbox">
+      <%- chart.line(covPoints, { width: 560, height: 200, title: 'Feedback coverage by month',
+            clampMin: 0, clampMax: 100, valueFmt: function(v){ return Number(v).toFixed(1) + '%'; },
+            reference: { value: 50, label: '50% floor' } }) %>
+    </div>
+    <details class="tableview"><summary>Show the figures</summary>
+      <div class="tblwrap"><table class="tbl">
+        <thead><tr><th>Month</th><th class="num">Coverage</th><th class="num">Sites meeting the floor</th></tr></thead>
+        <tbody>
+        <% months.slice().reverse().forEach(function(m){
+             const c = coverage.find(function(x){ return x.period_month === m; }) || {}; %>
+          <tr><td><%= lbl(m) %></td>
+            <td class="num"><%= c.avg_pct === undefined ? '—' : Number(c.avg_pct).toFixed(1) + '%' %></td>
+            <td class="num"><%= c.meeting === undefined ? '—' : c.meeting + ' / ' + c.sites %></td></tr>
+        <% }); %>
+        </tbody>
+      </table></div>
+    </details>
+  </div>
+</div>
+
+<div class="grid" style="grid-template-columns:1.2fr 1fr;margin-bottom:14px">
+  <div class="card">
+    <div class="card-h"><h3>Inspections</h3><span class="sub">outcome of every joint and surprise inspection</span></div>
+    <div class="chartbox">
+      <%- chart.stackedColumn(inspGroups, INSP_SERIES, { width: 620, height: 210,
+            title: 'Inspection outcomes by month' }) %>
+    </div>
+    <%- chart.legend(INSP_SERIES) %>
+    <details class="tableview"><summary>Show the figures</summary>
+      <div class="tblwrap"><table class="tbl">
+        <thead><tr><th>Month</th><th class="num">Inspections</th><th class="num">Compliant</th>
+          <th class="num">Minor</th><th class="num">Major</th><th class="num">Compliant %</th></tr></thead>
+        <tbody>
+        <% months.slice().reverse().forEach(function(m){ const i = inspAt(m); %>
+          <tr><td><%= lbl(m) %></td><td class="num"><%= fmtInt(i.total) %></td>
+            <td class="num"><%= fmtInt(i.compliant) %></td><td class="num"><%= fmtInt(i.minor) %></td>
+            <td class="num"><%= fmtInt(i.major) %></td>
+            <td class="num"><%= i.total ? Math.round(i.compliant/i.total*100) + '%' : '—' %></td></tr>
+        <% }); %>
+        </tbody>
+      </table></div>
+    </details>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h3>Deficiencies by head</h3><span class="sub">last six months</span></div>
+    <div class="chartbox">
+      <%- chart.hbar(headRows, { width: 500, title: 'Deficiencies by head of the schedule' }) %>
+    </div>
+    <div class="tblfoot">Counts only. The rate against each clause is recorded in master data and is
+      not applied to anything in this build.</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-h"><h3>Coverage by division</h3><span class="sub"><%= lastMonthLabel %> · against the 50% floor</span></div>
+  <div class="chartbox">
+    <%- chart.hbar(divRows, { width: 900, max: 100, title: 'Feedback coverage by division',
+          valueFmt: function(v){ return Number(v).toFixed(1) + '%'; },
+          threshold: { value: 50, label: '50% floor' } }) %>
+  </div>
+  <details class="tableview"><summary>Show the figures</summary>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>Division</th><th class="num">Average coverage</th><th class="num">Sites meeting the floor</th></tr></thead>
+      <tbody>
+      <% byDivision.forEach(function(d){ %>
+        <tr><td><%= d.name %> <span class="muted">(<%= d.code %>)</span></td>
+          <td class="num"><%= Number(d.avg_pct).toFixed(1) %>%</td>
+          <td class="num"><%= d.meeting %> / <%= d.sites %></td></tr>
+      <% }); %>
+      <% if (!byDivision.length) { %><tr><td colspan="3" class="muted">Nothing computed for this month yet.</td></tr><% } %>
+      </tbody>
+    </table></div>
+  </details>
+</div>

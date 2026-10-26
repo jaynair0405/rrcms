@@ -1,0 +1,106 @@
+<div style="margin-bottom:14px"><a href="<%= url('/staff') %>">← Contract staff</a></div>
+
+<form class="row" method="get" style="margin-bottom:14px;align-items:flex-end">
+  <div style="flex:0 0 280px"><label class="fl">Running room</label>
+    <select class="fi" name="rr" onchange="this.form.submit()">
+      <% rooms.forEach(function(r){ %>
+        <option value="<%= r.id %>" <%= r.id===rr.id?'selected':'' %>><%= r.name %> (<%= r.div_code %>)<%= r.has_meal_facility ? '' : ' · no meals' %></option>
+      <% }); %>
+    </select></div>
+  <noscript><button class="btn" type="submit">Go</button></noscript>
+</form>
+
+<div class="note" style="margin-bottom:14px">
+  A new person is added as <b>awaiting screening</b> and <b>cannot be marked present</b> until the Railway
+  approves them. Add their documents next — police verification, medical fitness, photo ID, bank, EPF and
+  ESIC particulars — then the divisional officer screens them.
+</div>
+
+<div class="grid" style="grid-template-columns:1.4fr 1fr">
+  <div class="card">
+    <div class="card-h"><h3>New contract staff</h3><span class="sub"><%= rr.name %></span></div>
+    <div class="card-b">
+      <form method="post" action="<%= url('/staff') %>">
+        <input type="hidden" name="running_room_id" value="<%= rr.id %>">
+
+        <div class="row" style="gap:10px;margin-bottom:12px">
+          <div style="flex:2"><label class="fl">Full name</label>
+            <input class="fi" name="full_name" required maxlength="150" placeholder="as on the police verification"></div>
+          <div style="flex:2"><label class="fl">Father's name</label>
+            <input class="fi" name="father_name" maxlength="150"></div>
+        </div>
+
+        <div class="row" style="gap:10px;margin-bottom:12px">
+          <div style="flex:2"><label class="fl">Designation</label>
+            <select class="fi" name="designation_id" required>
+              <% posts.filter(function(p){ return p.sanctioned_count > 0; }).forEach(function(p){ %>
+                <option value="<%= p.id %>"><%= p.name %> — <%= p.on_roll %> of <%= p.sanctioned_count %> filled</option>
+              <% }); %>
+            </select>
+            <div class="muted" style="font-size:11.3px;margin-top:3px">
+              Only posts sanctioned at this running room are listed.</div></div>
+          <div style="flex:1"><label class="fl">Date of joining</label>
+            <input class="fi" type="date" name="date_of_joining" value="<%= today %>" required></div>
+        </div>
+
+        <div class="row" style="gap:10px;margin-bottom:12px">
+          <div style="flex:1"><label class="fl">Date of birth</label>
+            <input class="fi" type="date" name="date_of_birth"></div>
+          <div style="flex:1"><label class="fl">Gender</label>
+            <select class="fi" name="gender">
+              <option value="">—</option><option value="M">Male</option>
+              <option value="F">Female</option><option value="O">Other</option>
+            </select></div>
+          <div style="flex:1"><label class="fl">Phone</label>
+            <input class="fi" name="phone" maxlength="20" inputmode="tel"></div>
+        </div>
+
+        <div style="margin-bottom:12px"><label class="fl">Address</label>
+          <input class="fi" name="address" maxlength="400"></div>
+
+        <div class="hr"></div>
+        <div class="muted" style="font-size:11.5px;margin-bottom:10px">
+          Statutory particulars. These can be filled in later, but the person is not deployable until the
+          proofs are on file and screening is approved.
+        </div>
+        <div class="row" style="gap:10px;margin-bottom:12px">
+          <div style="flex:2"><label class="fl">Bank account no.</label>
+            <input class="fi" name="bank_account_no" maxlength="30"></div>
+          <div style="flex:1"><label class="fl">IFSC</label>
+            <input class="fi" name="bank_ifsc" maxlength="15"></div>
+        </div>
+        <div class="row" style="gap:10px;margin-bottom:16px">
+          <div style="flex:1"><label class="fl">EPF number</label>
+            <input class="fi" name="epf_no" maxlength="30"></div>
+          <div style="flex:1"><label class="fl">ESIC number</label>
+            <input class="fi" name="esic_no" maxlength="30"></div>
+        </div>
+
+        <button class="btn" type="submit">Add to the register</button>
+        <a class="btn ghost" style="margin-left:8px" href="<%= url('/staff') %>">Cancel</a>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h3>Sanctioned strength</h3><span class="sub"><%= rr.name %> · Schedule A as applied here</span></div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>Post</th><th class="num">Sanctioned</th><th class="num">On roll</th><th>Position</th></tr></thead>
+      <tbody>
+      <% posts.filter(function(p){ return p.sanctioned_count > 0; }).forEach(function(p){
+           const gap = p.sanctioned_count - p.on_roll; %>
+        <tr><td><%= p.name %></td>
+          <td class="num"><%= p.sanctioned_count %></td>
+          <td class="num"><%= p.on_roll %></td>
+          <td><% if (gap > 0) { %><span class="st crit"><span class="dot"></span><%= gap %> short</span>
+              <% } else if (gap < 0) { %><span class="st neut"><span class="dot"></span><%= -gap %> over</span>
+              <% } else { %><span class="st good"><span class="dot"></span>Full</span><% } %></td></tr>
+      <% }); %>
+      </tbody>
+    </table></div>
+    <div class="tblfoot">
+      Adding beyond the sanctioned number is allowed and shows as "over" — the Railway pays against
+      Schedule&nbsp;A, not against the register.
+    </div>
+  </div>
+</div>

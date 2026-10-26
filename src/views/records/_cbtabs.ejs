@@ -1,0 +1,10 @@
+<div class="tabs" style="margin-bottom:16px">
+  <a class="tab <%= tab==='sheet'?'active':'' %>" style="text-decoration:none"
+     href="<%= url('/records/call-book?rr=' + rr.id + '&date=' + date) %>">Call sheet</a>
+  <a class="tab <%= tab==='changes'?'active':'' %>" style="text-decoration:none"
+     href="<%= url('/records/call-book/changes?rr=' + rr.id + '&date=' + date) %>">Changes &amp; withdrawals</a>
+  <% if (can('callsheet.manage')) { %>
+    <a class="tab <%= tab==='trains'?'active':'' %>" style="text-decoration:none"
+       href="<%= url('/records/call-sheet-trains?rr=' + rr.id) %>">Trains on the sheet</a>
+  <% } %>
+</div>

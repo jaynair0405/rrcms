@@ -1,0 +1,17 @@
+<div style="margin-bottom:14px"><a href="<%= url('/masters') %>">← Master data</a></div>
+<div class="card"><div class="tblwrap"><table class="tbl">
+  <thead><tr><th>Designation</th><th>Skill</th><th>Kitchen role</th><th>Qualification required</th>
+    <th class="num">Floor when scaled</th><th class="num">On roll</th></tr></thead>
+  <tbody>
+  <% rows.forEach(function(r){ %>
+    <tr>
+      <td><b><%= r.name %></b><div class="muted" style="font-size:10.5px"><%= r.code %></div></td>
+      <td><span class="pill"><%= r.skill_category.replace('_','-') %></span></td>
+      <td><% if (r.is_kitchen_role) { %><span class="st neut"><span class="dot"></span>Yes — nil where no meal facility</span><% } else { %><span class="muted">—</span><% } %></td>
+      <td><% if (r.requires_qualification) { %><span class="st warn"><span class="dot"></span>Required</span><% } else { %><span class="muted">—</span><% } %></td>
+      <td class="num"><%= r.min_per_site %><% if (r.min_per_site >= 3) { %> <span class="muted" style="font-size:10.5px">round-the-clock</span><% } %></td>
+      <td class="num"><%= fmtInt(r.on_roll) %></td>
+    </tr>
+  <% }); %>
+  </tbody>
+</table></div></div>

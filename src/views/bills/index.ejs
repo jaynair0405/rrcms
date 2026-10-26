@@ -1,0 +1,94 @@
+<div class="kpis" style="margin-bottom:16px">
+  <div class="kpi"><i class="strip" style="background:var(--s1)"></i>
+    <div class="lab">Bills on record</div><div class="val"><%= fmtInt(rows.length) %></div>
+    <div class="foot">most recent 200</div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s3)"></i>
+    <div class="lab">Not yet paid</div><div class="val"><%= fmtInt(outstanding) %></div>
+    <div class="foot">draft through passed</div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s8)"></i>
+    <div class="lab">Past the due date, unsubmitted</div><div class="val"><%= fmtInt(late) %></div>
+    <div class="foot"><span class="st <%= late ? 'crit' : 'good' %>"><span class="dot"></span>clauses D5 and D6</span>
+      <%# NOT CLICKABLE, and the reason is worth keeping. This page lists bills
+          across EVERY running room the reader can see -- a divisional officer
+          has nineteen, and they need not be held under the same contract. A
+          clause reads differently per contract, so "what does D5 say here" has
+          no single answer on a page that is not about one running room. Offering
+          a click would imply there is one. The per-room screens carry it. %></div></div>
+</div>
+
+<div class="grid" style="grid-template-columns:1.7fr 1fr">
+  <div class="card">
+    <div class="card-h"><h3>Bills</h3><span class="sub">no deduction is computed — see the note</span></div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>Period</th><th>Contractor</th><th>Running room</th><th class="num">Gross</th>
+        <th>Documents</th><th>Position</th></tr></thead>
+      <tbody>
+      <% rows.forEach(function(b){ %>
+        <tr>
+          <td class="tnum"><a href="<%= url('/bills/' + b.id) %>"><%= String(b.period_month).slice(0,7) %></a>
+            <% if (b.bill_no) { %><div class="muted" style="font-size:10.5px"><%= b.bill_no %></div><% } %></td>
+          <td style="font-size:12px"><%= b.contractor_name %>
+            <div class="muted" style="font-size:10.5px"><%= b.agreement_no || '' %></div></td>
+          <td style="font-size:12px"><%= b.rr_name || 'all sites on the agreement' %></td>
+          <td class="num">₹<%= fmtInt(b.gross_total) %></td>
+          <td><% if (b.docs_short > 0) { %>
+                <span class="st warn"><span class="dot"></span><%= b.docs_short %> awaited</span>
+              <% } else { %><span class="st good"><span class="dot"></span>all in</span><% } %></td>
+          <td><span class="st <%= b.status_tone %>"><span class="dot"></span><%= b.status_label %></span>
+            <% if (b.late_days) { %>
+              <div class="st crit" style="margin-top:3px"><span class="dot"></span><%= b.late_days %> days past due, not submitted</div>
+            <% } %></td>
+        </tr>
+      <% }); %>
+      <% if (!rows.length) { %><tr><td colspan="6" class="muted">No bill has been raised.</td></tr><% } %>
+      </tbody>
+    </table></div>
+    <div class="card-b">
+      <div class="note">
+        <b>No deduction is computed anywhere in this system</b>, on this screen or any other, because the
+        penalty schedule is still under review. Every deficiency for the period is recorded against a dated
+        clause rate and is listed on each bill for the officer to see. When the schedule is settled the
+        arithmetic reads those rows; nothing has to be entered again.
+      </div>
+    </div>
+  </div>
+
+  <% if (can('bill.prepare')) { %>
+  <div class="card">
+    <div class="card-h"><h3>Raise a bill</h3></div>
+    <div class="card-b">
+      <% if (!contracts.length) { %>
+        <div class="muted" style="font-size:12.5px">
+          No agreement is on record for the running rooms within your access, so there is nothing to bill
+          against. The four pilot agreements still read <code>AGREEMENT-AWAITED</code>.
+        </div>
+      <% } else { %>
+      <form method="post" action="<%= url('/bills') %>">
+        <div style="margin-bottom:10px"><label class="fl">Agreement</label>
+          <select class="fi" name="contract_id" required>
+            <% contracts.forEach(function(c){ %>
+              <option value="<%= c.id %>"><%= c.contractor_name %> — <%= c.agreement_no || 'no number' %></option>
+            <% }); %>
+          </select></div>
+        <div style="margin-bottom:10px"><label class="fl">Running room</label>
+          <select class="fi" name="rr">
+            <option value="">All sites on the agreement</option>
+            <% rooms.forEach(function(r){ %><option value="<%= r.id %>"><%= r.name %> (<%= r.div_code %>)</option><% }); %>
+          </select></div>
+        <div style="margin-bottom:12px"><label class="fl">Month</label>
+          <input class="fi" type="month" name="period_month" required
+                 value="<%= thisMonth() %>"></div>
+        <button class="btn" type="submit">Raise it</button>
+      </form>
+      <div class="hr"></div>
+      <div class="muted" style="font-size:11.5px">
+        The eleven bill-passing documents are created with the bill, all awaited. A checklist that has to be
+        built by hand is a checklist somebody shortens.
+        <br><br>
+        The due date is set to the end of the following month, which is clause D6's own reckoning.
+      </div>
+      <% } %>
+    </div>
+  </div>
+  <% } %>
+</div>

@@ -1,0 +1,183 @@
+<%- await include('_nav') %>
+
+<%
+/* The raw-foodstuff quality register — Schedule A, L.7.
+
+   "The quality of raw food stuff such as wheat flour, grains, pulses, eatable
+   oils etc shall be verified by obtaining the signature of available running
+   staff/Supervisors in the register after ascertaining quality /seal of the
+   eatables."
+
+   The whole force of that clause is in its last two things: the seals were
+   examined, and the men who were going to eat it signed. A tick on a kitchen
+   checklist gives neither. */
+const editable = can('inspection.create');
+const dt = v => v ? String(v).slice(0, 10) : '';
+%>
+
+<% if (saved !== null) { %>
+  <div class="note" style="margin-bottom:14px">
+    <b>Quality check recorded.</b> <%= saved %> item<%= saved === 1 ? '' : 's' %> examined.
+  </div>
+<% } %>
+
+<div class="kpis" style="margin-bottom:14px">
+  <div class="kpi"><i class="strip" style="background:var(--s1)"></i>
+    <div class="lab">Checks on record</div><div class="val"><%= checks.length %></div>
+    <div class="foot">most recent 30</div></div>
+  <div class="kpi"><i class="strip" style="background:var(--critical)"></i>
+    <div class="lab">Items found poor</div><div class="val"><%= poorItems %></div>
+    <div class="foot"><% if (poorItems) { %><span class="st crit"><span class="dot"></span>clauses <span data-clause="B2" data-rr="<%= rr.id %>" title="What this clause says here">B2</span> and <span data-clause="B4" data-rr="<%= rr.id %>" title="What this clause says here">B4</span></span>
+      <% } else { %>nothing rejected on record<% } %></div></div>
+  <div class="kpi"><i class="strip" style="background:var(--warning)"></i>
+    <div class="lab">Checks nobody signed</div><div class="val"><%= unsigned %></div>
+    <div class="foot"><% if (unsigned) { %><span class="st warn"><span class="dot"></span>the clause turns on the signature</span>
+      <% } else { %>every check signed<% } %></div></div>
+</div>
+
+<% if (editable) { %>
+<div class="card" style="margin-bottom:14px">
+  <div class="card-h"><h3>Record a quality check</h3>
+    <span class="sub">what was opened, what the seal showed, and who signed</span></div>
+  <div class="card-b">
+    <form method="post" action="<%= url('/facility/foodstuff') %>">
+      <input type="hidden" name="rr" value="<%= rr.id %>">
+      <div class="row" style="gap:10px;margin-bottom:12px">
+        <div style="width:170px">
+          <label class="fl">Date of check</label>
+          <input class="fi" type="date" name="checked_on" value="<%= date %>" max="<%= date %>">
+        </div>
+        <div style="flex:1">
+          <label class="fl">Conducted by</label>
+          <input class="fi" type="text" name="conducted_by" maxlength="150"
+                 placeholder="Health Inspector, inspecting officer or running supervisor">
+        </div>
+      </div>
+
+      <div class="tblwrap"><table class="tbl">
+        <thead><tr><th style="width:26%">Item</th><th style="width:18%">Brand</th>
+          <th style="width:110px">Seal intact</th><th style="width:110px">FSSAI mark</th>
+          <th style="width:150px">Quality</th><th>Remarks</th></tr></thead>
+        <tbody>
+        <% for (let i = 0; i < 6; i++) { %>
+          <tr>
+            <td>
+              <input class="fi" type="text" name="item_<%= i %>" maxlength="160"
+                     list="fsitems" placeholder="<%= i === 0 ? 'e.g. Wheat flour' : '' %>">
+            </td>
+            <td><input class="fi" type="text" name="brand_<%= i %>" maxlength="120"></td>
+            <td>
+              <select class="fi" name="seal_<%= i %>">
+                <option value="">—</option><option value="1">yes</option><option value="0">no</option>
+              </select>
+            </td>
+            <td>
+              <select class="fi" name="fssai_<%= i %>">
+                <option value="">—</option><option value="1">yes</option><option value="0">no</option>
+              </select>
+            </td>
+            <td>
+              <select class="fi" name="quality_<%= i %>">
+                <option value="good">good</option><option value="poor">poor</option>
+              </select>
+            </td>
+            <td><input class="fi" type="text" name="iremarks_<%= i %>" maxlength="300"></td>
+          </tr>
+        <% } %>
+        </tbody>
+      </table></div>
+      <datalist id="fsitems">
+        <% foodstuffItems.forEach(function(f){ %><option value="<%= f %>"></option><% }); %>
+      </datalist>
+
+      <div class="hr"></div>
+      <div style="font-size:12.5px;font-weight:600;margin-bottom:6px">
+        Running staff and supervisors who signed
+      </div>
+      <div class="muted" style="font-size:11.5px;margin-bottom:10px">
+        The clause turns on this. A name is recorded with its designation and the time — the same form the
+        call book settled on. A check saved with nobody named is kept and flagged, never refused: a check
+        that happened with no crew available to sign is still better evidence than no record at all.
+      </div>
+      <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(260px,1fr))">
+        <% for (let i = 0; i < 4; i++) { %>
+          <div class="row" style="gap:6px;flex-wrap:nowrap">
+            <input class="fi" type="text" name="sig_name_<%= i %>" maxlength="150"
+                   placeholder="<%= i === 0 ? 'Name' : 'Name' %>" style="flex:2">
+            <input class="fi" type="text" name="sig_desig_<%= i %>" maxlength="80"
+                   placeholder="Designation" style="flex:1">
+          </div>
+        <% } %>
+      </div>
+
+      <div class="row" style="gap:10px;align-items:flex-end;margin-top:12px">
+        <div style="flex:1">
+          <label class="fl">Remarks on the check</label>
+          <input class="fi" type="text" name="remarks" maxlength="300">
+        </div>
+        <button class="btn" type="submit">Record the check</button>
+      </div>
+    </form>
+  </div>
+</div>
+<% } %>
+
+<div class="card">
+  <div class="card-h"><h3>The register</h3><span class="sub"><%= rr.name %></span></div>
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr><th style="width:110px">Date</th><th>Examined</th>
+      <th style="width:28%">Signed by</th><th style="width:150px">Position</th></tr></thead>
+    <tbody>
+    <% checks.forEach(function(c){ %>
+      <tr>
+        <td class="tnum"><%= dt(c.checked_on) %>
+          <% if (c.conducted_by) { %><div class="muted" style="font-size:11px"><%= c.conducted_by %></div><% } %></td>
+        <td>
+          <% c.items.forEach(function(i){ %>
+            <div style="margin-bottom:2px">
+              <b><%= i.item %></b><% if (i.brand) { %> <span class="muted">· <%= i.brand %></span><% } %>
+              <% if (i.quality === 'poor') { %>
+                <span class="st crit"><span class="dot"></span>poor</span>
+              <% } %>
+              <span class="muted" style="font-size:11px">
+                <% if (i.seal_intact === 0) { %>· seal broken<% } %>
+                <% if (i.fssai_mark === 0) { %>· no FSSAI mark<% } %>
+                <% if (i.remarks) { %>· <%= i.remarks %><% } %>
+              </span>
+            </div>
+          <% }); %>
+          <% if (c.remarks) { %><div class="muted" style="font-size:11.5px;margin-top:3px"><%= c.remarks %></div><% } %>
+        </td>
+        <td>
+          <% if (!c.signatures.length) { %>
+            <span class="st warn"><span class="dot"></span>nobody signed</span>
+          <% } else { %>
+            <% c.signatures.forEach(function(g){ %>
+              <div style="font-size:12px"><%= g.signatory_name %><% if (g.designation) { %>
+                <span class="muted">· <%= g.designation %></span><% } %></div>
+            <% }); %>
+          <% } %>
+        </td>
+        <td>
+          <% if (c.poor) { %>
+            <span class="st crit"><span class="dot"></span><%= c.poor %> item<%= c.poor > 1 ? 's' : '' %> poor</span>
+          <% } else if (c.unsigned) { %>
+            <span class="st warn"><span class="dot"></span>unsigned</span>
+          <% } else { %>
+            <span class="st good"><span class="dot"></span>Verified and signed</span>
+          <% } %>
+        </td>
+      </tr>
+    <% }); %>
+    <% if (!checks.length) { %>
+      <tr><td colspan="4" class="muted">No quality check has been recorded at this running room.</td></tr>
+    <% } %>
+    </tbody>
+  </table></div>
+  <div class="tblfoot">
+    Schedule A, L.7 — quality verified <b>by obtaining the signature of available running staff and
+    supervisors</b> after ascertaining the quality and the seal. A poor item is evidence for clause
+    <b>B2</b> (inferior raw material) or <b>B4</b> (rotten or spoilt); RR-CMS records the finding and
+    raises nothing.
+  </div>
+</div>

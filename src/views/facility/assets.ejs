@@ -1,0 +1,592 @@
+<%- await include('_nav') %>
+
+<%# WHICH BUILDING. Most running rooms are one building and `blocks` comes
+    back empty, so nothing below appears — no screen should ask a question that
+    has one answer. Igatpuri stands in five, some distance apart, and a
+    register of all five in one list is not the register the supervisor is
+    standing in front of. %>
+<% if (blocks && blocks.length) { %>
+  <div class="card blockbar">
+    <div class="bb-row">
+      <span class="bb-lab">Building</span>
+      <a class="btn <%= wantBlock === null ? '' : 'ghost' %> small"
+         href="<%= url('/facility/assets') %>?rr=<%= rr.id %>">All buildings</a>
+      <% blocks.forEach(function(b){ %>
+        <a class="btn <%= wantBlock === b.id ? '' : 'ghost' %> small"
+           href="<%= url('/facility/assets') %>?rr=<%= rr.id %>&block=<%= b.id %>"><%= b.name %>
+           <span class="muted" style="font-weight:400">· <%= b.total_beds %> beds</span></a>
+      <% }); %>
+      <% if (noBlock) { %>
+        <a class="btn <%= wantBlock === 'none' ? '' : 'ghost' %> small"
+           href="<%= url('/facility/assets') %>?rr=<%= rr.id %>&block=none">Not in one building
+           <span class="pill <%= unplaced ? 'r' : '' %>" style="margin-left:5px"><%= noBlock %></span></a>
+      <% } %>
+    </div>
+  </div>
+
+  <%# WHAT THE BUILDING IS, as against what is in it. A bathroom cannot go
+      missing, so it is not on the asset register the recovery clause points at
+      — but the man cleaning the building still needs to know there are eight
+      toilets in it, and the cleaning schedule is priced against exactly these
+      numbers. %>
+  <% const sel = blocks.find(function(b){ return b.id === wantBlock; }); %>
+  <% if (sel) { %>
+    <div class="blocknote">
+      <b><%= sel.name %></b> — <%= sel.physical_rooms %> rooms · <%= sel.total_beds %> beds<%
+        if (sel.female_rooms) { %> · <%= sel.female_rooms %> for ladies<% } %><%
+        if (sel.kitchens) { %> · <%= sel.kitchens %> kitchen<%= sel.kitchens === 1 ? '' : 's' %><%
+          if (sel.cooks_here) { %> <span class="st good" style="font-size:10.5px"><span class="dot"></span>cooks for all of <%= rr.name %></span><%
+          } else if (blocks.some(function(b){ return b.cooks_here; })) { %> <span class="muted">(serving — cooking is done at <%= (blocks.find(function(b){ return b.cooks_here; }) || {}).name %>)</span><%
+          } else { %> <span class="st warn" style="font-size:10.5px"><span class="dot"></span>which kitchen cooks is not recorded</span><% } %><% } %><%
+        if (sel.bathrooms) { %> · <%= sel.bathrooms %> bathrooms<% } %><%
+        if (sel.toilets) { %> · <%= sel.toilets %> toilets<% } %>
+      <% if (sel.facts_as_on) { %>
+        <div style="font-size:10.5px;margin-top:2px">counted <%= String(sel.facts_as_on).slice(0,10) %><%
+          if (sel.facts_source) { %> · <%= sel.facts_source %><% } %></div>
+      <% } %>
+    </div>
+  <% } %>
+  <% if (unplaced) { %>
+    <div class="blocknote">
+      <b><%= unplaced %> Railway asset<%= unplaced === 1 ? '' : 's' %></b>
+      <%= unplaced === 1 ? 'has' : 'have' %> no building against
+      <%= unplaced === 1 ? 'it' : 'them' %>. Open each one and set its building — nothing
+      guesses on your behalf, because a water cooler filed in the wrong block sends a man
+      to the wrong place.
+    </div>
+  <% } %>
+  <% if (noBlock && !unplaced) { %>
+    <div class="blocknote">
+      <b>Not in one building</b> holds what belongs to <%= rr.name %> as a whole rather than to
+      any building in it — the contractor's Part-C supplies are named in the contract as
+      "for use of running room", so no building is the right answer for them, not a gap.
+    </div>
+  <% } %>
+<% } %>
+
+
+<%
+  const COND = { good:['good','Good'], serviceable:['neut','Serviceable'],
+                 defective:['warn','Defective'], condemned:['crit','Condemned'] };
+  const railway = rows.filter(function(a){ return a.owned_by === 'railway'; });
+  const contractorOwned = rows.filter(function(a){ return a.owned_by === 'contractor'; });
+%>
+
+<div class="kpis" style="margin-bottom:14px">
+  <div class="kpi"><div class="strip" style="background:var(--s1)"></div>
+    <div class="lab">Railway assets handed over</div><div class="val"><%= railway.length %></div>
+    <div class="foot">under joint note</div></div>
+  <div class="kpi"><div class="strip" style="background:var(--s3)"></div>
+    <div class="lab">Contractor's own</div><div class="val"><%= contractorOwned.length %></div>
+    <div class="foot">to be provided under the contract</div></div>
+  <div class="kpi"><div class="strip" style="background:var(--warning)"></div>
+    <div class="lab">Faults open</div><div class="val"><%= open %></div>
+    <div class="foot">awaiting rectification</div></div>
+  <div class="kpi"><div class="strip" style="background:var(--critical)"></div>
+    <div class="lab">Past the 24-hour clock</div><div class="val"><%= overdue %></div>
+    <div class="foot">open beyond 24 hrs, or closed late</div></div>
+</div>
+
+<% if (checkOverdue) { %>
+  <div class="note <%= lastCheck ? 'warn' : 'err' %>" style="margin-bottom:14px">
+    <% if (!lastCheck) { %>
+      <b>The Railway's assets here have never been jointly checked.</b>
+      General Instruction 2 requires the items handed over to be jointly inspected <b>every three months</b>,
+      and provides for the full cost of damaged or short material to be recovered at Railway purchasing cost.
+      Without a check there is nothing to recover against — nobody can say what was here in April and gone in July.
+    <% } else { %>
+      <b>The last joint check was <%= daysSince %> days ago</b>
+      (<%= String(lastCheck.checked_on).slice(0,10) %>). The tender asks for one every three months.
+    <% } %>
+  </div>
+<% } %>
+
+<% if (short) { %>
+  <div class="note <%= +short ? 'err' : 'ok' %>" style="margin-bottom:14px">
+    Joint check saved.
+    <% if (+short) { %><b><%= short %></b> item<%= +short === 1 ? ' was' : 's were' %> short or missing —
+      recoverable at Railway purchasing cost under General Instruction 2.
+    <% } else { %>Everything looked at was present and accounted for.<% } %>
+  </div>
+<% } %>
+
+<% if (railwayAssets.length && can('deficiency.record')) { %>
+<div class="card" style="margin-bottom:14px">
+  <div class="card-h"><h3>Three-monthly joint check</h3>
+    <span class="sub">General Instruction 2 · an item not looked at is left alone</span></div>
+  <form method="post" action="<%= url('/facility/assets/check') %>" id="assetcheck">
+    <input type="hidden" name="rr" value="<%= rr.id %>">
+    <div class="card-b" style="border-bottom:1px solid var(--border);padding-bottom:12px">
+      <div class="row" style="gap:10px;align-items:flex-end;flex-wrap:wrap">
+        <div style="flex:0 0 180px"><label class="fl">Checked on</label>
+          <input class="fi" type="date" name="checked_on" value="<%= date %>" required></div>
+        <div style="flex:1;min-width:220px"><label class="fl">Contractor's representative present</label>
+          <input class="fi" name="contractor_rep" required maxlength="150"
+                 placeholder="Name — a check that is not joint proves nothing"></div>
+        <button class="btn ghost small" type="button" id="assetallseen">All present and in order</button>
+      </div>
+    </div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>Asset</th><th class="num">On register</th><th style="text-align:center">Looked at</th>
+        <th class="num">Found</th><th>Condition</th><th>Remarks</th></tr></thead>
+      <tbody>
+      <% railwayAssets.forEach(function(a){ %>
+        <tr>
+          <td><b><%= a.name %></b><% if (a.asset_code) { %><div class="muted" style="font-size:10.5px"><%= a.asset_code %></div><% } %></td>
+          <td class="num"><%= a.quantity %></td>
+          <td style="text-align:center"><input type="checkbox" name="seen_<%= a.id %>" value="1"
+                data-aseen="<%= a.id %>" style="width:20px;height:20px;cursor:pointer"></td>
+          <td class="num"><input class="fi" type="number" min="0" name="f_<%= a.id %>"
+                value="<%= a.quantity %>" data-afound="<%= a.id %>" style="width:74px;padding:4px 6px"></td>
+          <td><select class="fi" name="s_<%= a.id %>" data-acond="<%= a.id %>" style="padding:4px 6px;font-size:12px">
+              <option value="good">Good</option><option value="serviceable">Serviceable</option>
+              <option value="defective">Defective</option><option value="condemned">Condemned</option>
+              <option value="missing">Missing</option></select></td>
+          <td><input class="fi" name="r_<%= a.id %>" style="padding:4px 7px;font-size:12px"></td>
+        </tr>
+      <% }); %>
+      </tbody>
+    </table></div>
+    <div class="card-b" style="border-top:1px solid var(--border)">
+      <div style="margin-bottom:10px"><label class="fl">Remarks on the check as a whole</label>
+        <input class="fi" name="remarks" maxlength="500"></div>
+      <button class="btn" type="submit">Save the joint check</button>
+    </div>
+  </form>
+</div>
+<% } %>
+
+<%# THE LOG GETS THE WHOLE WIDTH, and the form sits under it.
+    These two were side by side, which left the log 604 pixels for six columns
+    and a rectify form -- so the browser crushed the DEFECT column to about
+    eighty pixels and broke "Geyser not heating in bath no. 3" into three words
+    a line. Widening the column instead only moved the problem: the table then
+    overflowed its card by 147px and the Rectified button went off the edge,
+    which is worse, because that button is the whole point of the row.
+    Measured rather than eyeballed. The defect and its photograph are what this
+    table is for; reporting a new one is a short form that reads perfectly well
+    below. %>
+<div>
+  <div class="card">
+    <div class="card-h"><h3>Breakdown log</h3><span class="sub">24 hours to rectify</span></div>
+    <div class="tblwrap"><table class="tbl">
+      <%# COLUMN WIDTHS, because the defect is the column that matters and it was
+          the one being crushed. With six columns and a rectify form in the last
+          one, the browser gave "Geyser not heating in bath no. 3" about eighty
+          pixels and broke it into three words a line. The narrow columns hold
+          dates and a number and can be told what they need; what is left goes
+          to the defect. %>
+      <thead><tr><th style="width:104px">Reported</th><th style="width:130px">Asset</th>
+        <th style="min-width:210px">Defect</th><th style="width:104px">Rectified</th>
+        <th style="width:86px">Elapsed</th><th style="width:200px"></th></tr></thead>
+      <tbody>
+      <% faults.forEach(function(f){ %>
+        <tr>
+          <td class="tnum"><%= String(f.reported_at).slice(0,16) %></td>
+          <td><%= f.asset_name %> <span class="pill"><%= f.owned_by === 'railway' ? 'Railway' : 'Contractor' %></span></td>
+          <td><%= f.description %><% if (f.remarks) { %><div class="muted" style="font-size:11.3px"><%= f.remarks %></div><% } %>
+            <% if (f.photo_file_id) { %>
+              <a href="<%= url('/photo/' + f.photo_file_id) %>" target="_blank"
+                 title="the defect as it was reported" style="display:block;margin-top:5px">
+                <img src="<%= url('/photo/' + f.photo_file_id) %>" alt="the defect as reported"
+                     style="height:44px;width:auto;max-width:110px;object-fit:cover;
+                            border:1px solid var(--border);border-radius:4px;vertical-align:middle"></a>
+            <% } %></td>
+          <td class="tnum"><% if (f.rectified_at) { %><%= String(f.rectified_at).slice(0,16) %>
+              <% } else { %><span class="st crit"><span class="dot"></span>open</span><% } %></td>
+          <td><% if (f.hours_to_rectify === null || f.hours_to_rectify === undefined) { %>
+                <span class="muted">—</span>
+              <% } else if (f.hours_to_rectify > 24) { %>
+                <span class="st crit"><span class="dot"></span><%= f.hours_to_rectify %> hrs</span>
+              <% } else { %><span class="st good"><span class="dot"></span><%= f.hours_to_rectify %> hrs</span><% } %></td>
+          <td><% if (f.status === 'open' && can('stay.manage')) { %>
+                <form method="post" action="<%= url('/facility/assets/fault/' + f.id + '/rectify') %>" class="row" style="gap:5px">
+                  <input class="fi" type="text" name="remarks" placeholder="how it was set right" style="width:150px">
+                  <button class="btn small" type="submit">Rectified</button>
+                </form>
+              <% } else { %><span class="muted" style="font-size:11.5px"><%= f.status %></span><% } %></td>
+        </tr>
+      <% }); %>
+      <% if (!faults.length) { %><tr><td colspan="6" class="muted">No defect reported.</td></tr><% } %>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card" style="margin-top:14px;max-width:560px">
+    <div class="card-h"><h3>Report a defect</h3></div>
+    <div class="card-b">
+      <% if (can('stay.manage')) { %>
+      <%# enctype, without which the browser posts filenames and not files, and
+          the photograph vanishes with no error anywhere. %>
+      <form method="post" action="<%= url('/facility/assets/fault') %>" enctype="multipart/form-data">
+        <input type="hidden" name="rr" value="<%= rr.id %>">
+        <%# WHOSE IT IS DOES NOT BELONG IN THE NAME.
+            Every option read "Geyser (Railway)". The man reporting a broken
+            geyser is looking for the geyser, and the register already knows
+            whose it is -- carrying it in the label made every line longer and
+            made two identical names look like two different things. Whose it is
+            is now an OPTIONAL narrowing above the list, left on "Any" unless
+            somebody wants it. %>
+        <div class="row" style="gap:8px;margin-bottom:10px;align-items:flex-end">
+          <div style="flex:0 0 170px"><label class="fl" for="ownfilter">Whose
+              <span class="muted" style="font-weight:400">— optional</span></label>
+            <select class="fi" id="ownfilter">
+              <option value="">Any</option>
+              <option value="railway">The Railway's</option>
+              <option value="contractor">The contractor's</option>
+            </select></div>
+          <div style="flex:1"><label class="fl" for="faultasset">Asset</label>
+            <select class="fi" id="faultasset" name="asset_id" required>
+              <% rows.forEach(function(a){ %>
+                <option value="<%= a.id %>" data-own="<%= a.owned_by %>"><%= a.name %><%
+                  if (a.asset_code) { %> · <%= a.asset_code %><% } %></option>
+              <% }); %>
+            </select></div>
+        </div>
+        <div style="margin-bottom:12px"><label class="fl">What is wrong</label>
+          <input class="fi" type="text" name="description" placeholder="geyser not heating in bath no. 3" required></div>
+        <%# A PHOTOGRAPH OF THE DEFECT, offered and never demanded.
+            "geyser not heating in bath no. 3" is enough to raise a fault and
+            nothing like enough to settle an argument about one. A picture says
+            which geyser, how bad, and that it was in that state on that date.
+            But a supervisor who cannot photograph it at that moment must still
+            be able to report it: an unrecorded fault is worse than an
+            unillustrated one. %>
+        <div style="margin-bottom:12px"><label class="fl">Photograph
+            <span class="muted" style="font-weight:400">— optional</span></label>
+          <input class="fi" type="file" name="photo" accept="image/*">
+          <div class="muted" style="font-size:11.5px;margin-top:4px">Taken now or from the phone —
+            either is fine. <%= accepted %></div></div>
+        <button class="btn" type="submit">Report</button>
+      </form>
+      <script>
+        (function () {
+          var own = document.getElementById('ownfilter');
+          var sel = document.getElementById('faultasset');
+          if (!own || !sel) return;
+          var all = [].slice.call(sel.options).map(function (o) {
+            return { value: o.value, text: o.text, own: o.dataset.own };
+          });
+          own.addEventListener('change', function () {
+            var keep = own.value, chosen = sel.value;
+            sel.innerHTML = '';
+            all.forEach(function (o) {
+              if (keep && o.own !== keep) return;
+              var el = document.createElement('option');
+              el.value = o.value; el.textContent = o.text; el.dataset.own = o.own;
+              sel.appendChild(el);
+            });
+            // A narrowing that leaves nothing should say so. An empty dropdown
+            // looks like the page is broken; every asset here is the
+            // contractor's, and that is a fact worth reading.
+            if (!sel.options.length) {
+              var none = document.createElement('option');
+              none.textContent = keep === 'railway'
+                ? 'None of the Railway\u2019s assets are on this register'
+                : 'None of the contractor\u2019s assets are on this register';
+              none.value = ''; none.disabled = true; none.selected = true;
+              sel.appendChild(none);
+              return;
+            }
+            // Keep what was already chosen if the narrowing still allows it.
+            if ([].slice.call(sel.options).some(function (o) { return o.value === chosen; })) {
+              sel.value = chosen;
+            }
+          });
+        })();
+      </script>
+      <% } else { %>
+        <div class="muted" style="font-size:12.5px">Your role has view access only.</div>
+      <% } %>
+      <div class="hr"></div>
+      <div class="muted" style="font-size:11.5px">
+        The clock starts when the defect is reported, not when it is noticed at an inspection. Anything
+        still open after 24 hours is what an inspection will pick up.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:14px">
+  <div class="card-h"><h3>Asset register</h3><span class="sub"><%= rr.name %></span></div>
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr><th>Asset</th><th>Category</th><th>Owned by</th><th class="num">Qty</th>
+      <th>Condition</th><th>Handed over</th><th class="num">Open faults</th></tr></thead>
+    <tbody>
+    <% rows.forEach(function(a){ %>
+      <tr>
+        <td><%= a.name %><% if (a.asset_code) { %> <span class="muted"><%= a.asset_code %></span><% } %>
+          <% if (blocks && blocks.length) { %>
+            <div class="muted" style="font-size:10.5px"><% if (a.block_name && a.block_live) { %><%= a.block_name %>
+              <% } else if (a.block_name) { %><span class="st warn" style="font-size:10.5px"><span class="dot"></span><%= a.block_name %> — no longer on the register</span>
+              <% } else { %><span class="st warn" style="font-size:10.5px"><span class="dot"></span>no building</span><% } %></div>
+          <% } %>
+          <%# A row could be added and written off, and nothing in between, so a
+              blank category or a wrong quantity stayed wrong for the life of the
+              contract. Writing it off to re-add it puts a false disposal in the
+              record of a thing that was never disposed of. %>
+          <% if (can('asset.manage')) { %>
+            <a href="#" class="editlink" data-edit="<%= a.id %>"
+               style="font-size:11px;margin-left:6px">edit</a>
+          <% } %></td>
+        <td class="muted"><%= a.category || '—' %></td>
+        <td><%= a.owned_by === 'railway' ? 'Railway' : 'Contractor' %></td>
+        <td class="num"><%= a.quantity %></td>
+        <td><% const c = COND[a.condition_status] || ['neut', a.condition_status]; %>
+            <span class="st <%= c[0] %>"><span class="dot"></span><%= c[1] %></span></td>
+        <td class="tnum"><%= a.handed_over_on || '—' %></td>
+        <td class="num"><% if (a.open_faults) { %><span class="st crit"><span class="dot"></span><%= a.open_faults %></span>
+            <% } else { %>0<% } %></td>
+      </tr>
+      <% if (can('asset.manage')) { %>
+      <tr class="editrow" id="edit<%= a.id %>" hidden>
+        <td colspan="7" style="background:var(--plane)">
+          <form method="post" action="<%= url('/facility/assets/' + a.id + '/edit') %>">
+            <div class="row" style="gap:8px;flex-wrap:wrap;align-items:flex-end">
+              <div style="flex:2 1 210px"><label class="fl">What it is</label>
+                <select class="fi" name="item_id">
+                  <% catGroups.forEach(function(g){ %>
+                    <optgroup label="<%= g.category %>">
+                      <% g.items.forEach(function(i){ %>
+                        <option value="<%= i.id %>" <%= a.item_id === i.id ? 'selected' : '' %>><%= i.name %></option>
+                      <% }); %>
+                    </optgroup>
+                  <% }); %>
+                </select></div>
+              <% if (blocks && blocks.length) { %>
+                <div style="flex:0 0 165px"><label class="fl">Which building</label>
+                  <select class="fi" name="block_id">
+                    <option value="">— not recorded —</option>
+                    <% blocks.forEach(function(b){ %>
+                      <option value="<%= b.id %>" <%= a.block_id === b.id ? 'selected' : '' %>><%= b.name %></option>
+                    <% }); %>
+                  </select></div>
+              <% } %>
+              <div style="flex:1 1 130px"><label class="fl">Category</label>
+                <input class="fi" name="category" value="<%= a.category || '' %>"></div>
+              <div style="flex:0 0 150px"><label class="fl">Whose</label>
+                <select class="fi" name="owned_by">
+                  <option value="railway" <%= a.owned_by === 'railway' ? 'selected' : '' %>>Railway's</option>
+                  <option value="contractor" <%= a.owned_by === 'contractor' ? 'selected' : '' %>>Contractor's</option>
+                </select></div>
+              <div style="flex:0 0 90px"><label class="fl">How many</label>
+                <input class="fi" type="number" min="1" name="quantity" value="<%= a.quantity %>"></div>
+              <div style="flex:0 0 140px"><label class="fl">Condition</label>
+                <select class="fi" name="condition_status">
+                  <% ['good','serviceable','defective','condemned'].forEach(function(k){ %>
+                    <option value="<%= k %>" <%= a.condition_status === k ? 'selected' : '' %>><%= COND[k][1] %></option>
+                  <% }); %>
+                </select></div>
+              <div style="flex:0 0 140px"><label class="fl">Number or code</label>
+                <input class="fi" name="asset_code" value="<%= a.asset_code || '' %>"></div>
+              <div style="flex:0 0 150px"><label class="fl">Handed over on</label>
+                <input class="fi" type="date" name="handed_over_on"
+                       value="<%= a.handed_over_on ? String(a.handed_over_on).slice(0,10) : '' %>"></div>
+              <div style="flex:2 1 200px"><label class="fl">Remarks</label>
+                <input class="fi" name="remarks" value="<%= a.remarks || '' %>"></div>
+              <div><button class="btn small" type="submit">Save</button></div>
+            </div>
+          </form>
+        </td>
+      </tr>
+      <% } %>
+    <% }); %>
+    <% if (!rows.length) { %><tr><td colspan="7" class="muted">No asset recorded for this running room.</td></tr><% } %>
+    </tbody>
+  </table></div>
+</div>
+
+<div class="grid" style="grid-template-columns:1.4fr 1fr;margin-top:16px">
+  <div class="card">
+    <div class="card-h"><h3>Joint check history</h3></div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>Checked on</th><th>Contractor's man</th><th>By</th><th class="num">Items</th><th>Result</th></tr></thead>
+      <tbody>
+      <% checks.forEach(function(c){ %>
+        <tr>
+          <td class="tnum"><%= String(c.checked_on).slice(0,10) %></td>
+          <td style="font-size:12px"><%= c.contractor_rep %></td>
+          <td style="font-size:12px"><%= c.checked_by_name || '—' %></td>
+          <td class="num"><%= c.items %></td>
+          <td><% if (c.short) { %><span class="st crit"><span class="dot"></span><%= c.short %> short or missing</span>
+              <% } else { %><span class="st good"><span class="dot"></span>all accounted for</span><% } %>
+              <% if (c.remarks) { %><div class="muted" style="font-size:10.5px"><%= c.remarks %></div><% } %></td>
+        </tr>
+      <% }); %>
+      <% if (!checks.length) { %><tr><td colspan="5" class="muted">No joint check has been recorded.</td></tr><% } %>
+      </tbody>
+    </table></div>
+  </div>
+
+  <% if (can('asset.manage')) { %>
+  <script>
+    (function () {
+      document.querySelectorAll('.editlink').forEach(function (a) {
+        a.addEventListener('click', function (e) {
+          e.preventDefault();
+          var row = document.getElementById('edit' + a.dataset.edit);
+          row.hidden = !row.hidden;
+          if (!row.hidden) { var f = row.querySelector('select, input'); if (f) f.focus(); }
+        });
+      });
+    })();
+  </script>
+  <div class="card">
+    <div class="card-h"><h3>Put an asset on the register</h3></div>
+    <div class="card-b">
+      <form method="post" action="<%= url('/facility/assets') %>" enctype="multipart/form-data">
+        <input type="hidden" name="rr" value="<%= rr.id %>">
+        <div style="margin-bottom:10px"><label class="fl">Whose</label>
+          <select class="fi" name="owned_by" required>
+            <option value="railway">The Railway's — handed over under joint note</option>
+            <option value="contractor">The contractor's own</option>
+          </select></div>
+        <%# PICK FROM THE LIST, OR ADD TO THE LIST.
+            A free-text name let one In-charge write "Cot" and the next "Cott",
+            and a register holding the same thing twice cannot be counted. A
+            fixed list would be worse -- a running room acquires things nobody
+            listed, and a man who cannot name his geyser puts it under the
+            nearest wrong name. So the list grows: what is typed here once is on
+            the list for whoever receives the next one. %>
+        <div style="margin-bottom:10px"><label class="fl" for="itemsel">What it is</label>
+          <select class="fi" id="itemsel" name="item_id">
+            <option value="">— choose —</option>
+            <% catGroups.forEach(function(g){ %>
+              <optgroup label="<%= g.category %>">
+                <% g.items.forEach(function(i){ %>
+                  <option value="<%= i.id %>"><%= i.name %></option>
+                <% }); %>
+              </optgroup>
+            <% }); %>
+            <option value="new">Something else — not on this list</option>
+          </select>
+          <div id="newitem" hidden style="margin-top:8px">
+            <input class="fi" id="newname" name="new_name" maxlength="120" placeholder="What is it called?"
+                   autocomplete="off">
+            <%# "Cott" for "Cot" cannot be collapsed automatically -- "Cot" and
+                "Cots" are the same thing and "Fan" and "Pan" are not. So it is
+                shown here as he types, and again by the route if he ignores it. %>
+            <div id="nearby" hidden style="margin-top:6px">
+              <span class="st warn"><span class="dot"></span>
+                Very close to <b id="nearname"></b>, already on the list.</span>
+              <button class="btn ghost small" type="button" id="usenear" style="margin-left:8px">Use that one</button>
+              <label style="display:block;margin-top:6px;font-size:12px">
+                <input type="checkbox" name="confirm_new" value="1" id="confirmnew">
+                No — this is a different thing
+              </label>
+            </div>
+            <div class="muted" style="font-size:11.3px;margin-top:4px">
+              This joins the list, so the next running room to receive one picks it instead of
+              spelling it again. If it is already on the list under another spelling, the existing
+              one is used.
+            </div>
+          </div>
+        </div>
+        <div class="row" style="gap:8px;margin-bottom:10px">
+          <% if (blocks && blocks.length) { %>
+            <div style="flex:0 0 170px"><label class="fl">Which building</label>
+              <select class="fi" name="block_id">
+                <option value="">— not recorded —</option>
+                <% blocks.forEach(function(b){ %>
+                  <option value="<%= b.id %>" <%= wantBlock === b.id ? 'selected' : '' %>><%= b.name %></option>
+                <% }); %>
+              </select></div>
+          <% } %>
+          <div style="flex:1"><label class="fl">Category</label><input class="fi" name="category" placeholder="Electrical"></div>
+          <div style="flex:0 0 90px"><label class="fl">How many</label>
+            <input class="fi" type="number" min="1" name="quantity" value="1"></div>
+        </div>
+        <div class="row" style="gap:8px;margin-bottom:10px">
+          <div style="flex:1"><label class="fl">Number or code</label><input class="fi" name="asset_code"></div>
+          <div style="flex:1"><label class="fl">Condition</label>
+            <select class="fi" name="condition_status">
+              <option value="good">Good</option><option value="serviceable">Serviceable</option>
+              <option value="defective">Defective</option><option value="condemned">Condemned</option>
+            </select></div>
+        </div>
+        <div style="margin-bottom:10px"><label class="fl">Handed over on</label>
+          <input class="fi" type="date" name="handed_over_on"></div>
+        <div style="margin-bottom:10px"><label class="fl">The joint note <span class="muted">— optional</span></label>
+          <input class="fi" type="file" name="joint_note" accept="image/*,application/pdf"
+                 data-camera="document" data-camera-label="Photograph it"></div>
+        <div style="margin-bottom:12px"><label class="fl">Remarks</label><input class="fi" name="remarks"></div>
+        <button class="btn" type="submit">Add it</button>
+      </form>
+      <script>
+        (function () {
+          var sel = document.getElementById('itemsel');
+          var box = document.getElementById('newitem');
+          var txt = box.querySelector('input');
+          function sync() {
+            var isNew = sel.value === 'new';
+            box.hidden = !isNew;
+            txt.required = isNew;
+            // "new" is not an id. The route reads new_name when item_id is empty.
+            if (isNew) { sel.setAttribute('data-new', '1'); } else { sel.removeAttribute('data-new'); }
+          }
+          sel.addEventListener('change', sync); sync();
+          sel.form.addEventListener('submit', function () {
+            if (sel.value === 'new') sel.value = '';
+          });
+
+          // The same near-match check the route makes, run as he types, so he
+          // sees it before he loses the form rather than after.
+          var CAT = <%- JSON.stringify(catGroups.reduce(function(a,g){ return a.concat(g.items); }, [])
+                        .map(function(i){ return { id: i.id, name: i.name }; })) %>;
+          var reduce = function (t) { return String(t || '').toLowerCase().replace(/[^a-z0-9]/g, ''); };
+          function dist(a, b) {
+            if (a === b) return 0;
+            if (!a.length || !b.length) return Math.max(a.length, b.length);
+            var prev = [], cur, i, j;
+            for (j = 0; j <= b.length; j++) prev[j] = j;
+            for (i = 1; i <= a.length; i++) {
+              cur = [i];
+              for (j = 1; j <= b.length; j++) {
+                cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1,
+                                  prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+              }
+              prev = cur;
+            }
+            return prev[b.length];
+          }
+          // NOT `box` -- that name is already taken above by the text-box
+          // wrapper. Declaring it twice with `var` overwrote the first, so
+          // sync() showed and hid the warning instead of the text box, and the
+          // "Something else" option appeared to do nothing at all. No error was
+          // thrown, which is why it looked like the option was broken.
+          var nearBox = document.getElementById('nearby');
+          var nm = document.getElementById('nearname');
+          var confirmNew = document.getElementById('confirmnew');
+          var found = null;
+          txt.addEventListener('input', function () {
+            var k = reduce(txt.value);
+            found = null;
+            if (k.length > 1) {
+              var limit = k.length <= 5 ? 1 : 2, best = null;
+              CAT.forEach(function (c) {
+                var d = dist(k, reduce(c.name));
+                if (d <= limit && (!best || d < best.d)) best = { c: c, d: d };
+              });
+              found = best;
+            }
+            nearBox.hidden = !found;
+            if (found) nm.textContent = found.c.name;
+            else confirmNew.checked = false;
+          });
+          document.getElementById('usenear').addEventListener('click', function () {
+            if (!found) return;
+            sel.value = String(found.c.id);
+            txt.value = ''; confirmNew.checked = false; nearBox.hidden = true; sync();
+          });
+        })();
+      </script>
+      <div class="hr"></div>
+      <div class="muted" style="font-size:11.5px">
+        General Instruction 1 wants the joint accountal record held in three places — the depot In-charge,
+        the Sr.DEE office and the contractor. This is the Railway's copy; attaching the signed note here is
+        what makes it worth anything later.
+      </div>
+    </div>
+  </div>
+  <% } %>
+</div>

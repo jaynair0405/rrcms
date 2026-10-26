@@ -1,0 +1,3528 @@
+{
+ "_note": [
+  "The trains crews are actually called for at the three pilot running rooms.",
+  "",
+  "Built from the division's own working-timetable summary and train master:",
+  "Train_Timings_Summary.xlsx (times at IGATPURI, LONAVLA and ROHA) and",
+  "div_trains_stations.csv (names and run days). Nothing here is invented.",
+  "",
+  "UP is the working a rested crew is CALLED FOR at these rooms -- he came down,",
+  "was relieved, slept, and works back towards Mumbai. The DN rows are how he",
+  "arrived, and they are shipped inactive: they become live the day Bhusawal's",
+  "crews rest here and are called for DN trains onward. Switch them on under",
+  "Trains on the sheet, or re-import with --direction BOTH.",
+  "",
+  "sign_on_time is the train's time at this station less 60 minutes. There is no",
+  "figure in the tender for the lead; it is a convenience for pre-filling the",
+  "sheet and the bearer overwrites it with what the lobby actually says."
+ ],
+ "lead_minutes": 60,
+ "rooms": {
+  "IGP": [
+   {
+    "train_no": "22104",
+    "train_name": "LTT-AYC EXP",
+    "direction": "UP",
+    "sign_on_time": "00:25",
+    "arrives_at": "01:25",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "4"
+   },
+   {
+    "train_no": "15181",
+    "train_name": "LTT-MAU EXPRESS",
+    "direction": "UP",
+    "sign_on_time": "00:25",
+    "arrives_at": "01:25",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "1"
+   },
+   {
+    "train_no": "12102",
+    "train_name": "LTT-SHM GYANESHWARI EXP",
+    "direction": "UP",
+    "sign_on_time": "00:25",
+    "arrives_at": "01:25",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "2"
+   },
+   {
+    "train_no": "18030",
+    "train_name": "LTT-SHM EXP",
+    "direction": "UP",
+    "sign_on_time": "00:40",
+    "arrives_at": "01:40",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12810",
+    "train_name": "CSMT-HWH HOWRAH MAIL",
+    "direction": "UP",
+    "sign_on_time": "00:50",
+    "arrives_at": "01:50",
+    "from_station": "BHUSAVAL",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12132",
+    "train_name": "DR-SNSI EXP",
+    "direction": "UP",
+    "sign_on_time": "01:00",
+    "arrives_at": "02:00",
+    "from_station": "MANMAD JN.",
+    "to_station": "DADAR",
+    "run_days": "1"
+   },
+   {
+    "train_no": "20104",
+    "train_name": "LTT-GKP EXP",
+    "direction": "UP",
+    "sign_on_time": "01:15",
+    "arrives_at": "02:15",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "11002",
+    "train_name": "NANDIGRAM EXP",
+    "direction": "UP",
+    "sign_on_time": "01:45",
+    "arrives_at": "02:45",
+    "from_station": "MANMAD JN.",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12152",
+    "train_name": "LTT-SHM SAMRASHTA EXP",
+    "direction": "UP",
+    "sign_on_time": "02:00",
+    "arrives_at": "03:00",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "1"
+   },
+   {
+    "train_no": "12174",
+    "train_name": "LTT-MBDP UDYOG NAGRI EXP",
+    "direction": "UP",
+    "sign_on_time": "02:00",
+    "arrives_at": "03:00",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "3"
+   },
+   {
+    "train_no": "22110",
+    "train_name": "LTT-BPQ EXP",
+    "direction": "UP",
+    "sign_on_time": "02:00",
+    "arrives_at": "03:00",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "4"
+   },
+   {
+    "train_no": "12545",
+    "train_name": "LTT-RXL KARMBHUMI EXP",
+    "direction": "UP",
+    "sign_on_time": "02:00",
+    "arrives_at": "03:00",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "6"
+   },
+   {
+    "train_no": "15267",
+    "train_name": "LTT-RXL ANTYODAY EXP",
+    "direction": "UP",
+    "sign_on_time": "02:10",
+    "arrives_at": "03:10",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "1"
+   },
+   {
+    "train_no": "12361",
+    "train_name": "CSMT-ASN EXP",
+    "direction": "UP",
+    "sign_on_time": "02:10",
+    "arrives_at": "03:10",
+    "from_station": "BHUSAVAL",
+    "to_station": "CSMT",
+    "run_days": "2"
+   },
+   {
+    "train_no": "22553",
+    "train_name": "LTT-RXL ANTYODAY EXP",
+    "direction": "UP",
+    "sign_on_time": "02:10",
+    "arrives_at": "03:10",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "3"
+   },
+   {
+    "train_no": "22583",
+    "train_name": "LTT-CPR ANTYODAY EXP",
+    "direction": "UP",
+    "sign_on_time": "02:10",
+    "arrives_at": "03:10",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "4"
+   },
+   {
+    "train_no": "22358",
+    "train_name": "LTT-Gaya SF express",
+    "direction": "UP",
+    "sign_on_time": "02:10",
+    "arrives_at": "03:10",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "5"
+   },
+   {
+    "train_no": "12112",
+    "train_name": "CSMT-AMI SF EXP",
+    "direction": "UP",
+    "sign_on_time": "02:30",
+    "arrives_at": "03:30",
+    "from_station": "BHUSAVAL",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12106",
+    "train_name": "CSMT-G VIDARBHA EXPRESS",
+    "direction": "UP",
+    "sign_on_time": "02:45",
+    "arrives_at": "03:45",
+    "from_station": "BHUSAVAL",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12618",
+    "train_name": "NZM-ERS-NZM MANGLA LKSDP EXP",
+    "direction": "UP",
+    "sign_on_time": "03:05",
+    "arrives_at": "04:05",
+    "from_station": "BHUSAVAL",
+    "to_station": "KALYAN",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "17058",
+    "train_name": "CSMT-LPI DEVAGIRI EXP",
+    "direction": "UP",
+    "sign_on_time": "03:20",
+    "arrives_at": "04:20",
+    "from_station": "MANMAD JN.",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12138",
+    "train_name": "CSMT-FZR PUNJAB MAIL",
+    "direction": "UP",
+    "sign_on_time": "03:30",
+    "arrives_at": "04:30",
+    "from_station": "BHUSAVAL",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12144",
+    "train_name": "LTT-SLN EXP",
+    "direction": "UP",
+    "sign_on_time": "03:40",
+    "arrives_at": "04:40",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "3"
+   },
+   {
+    "train_no": "12146",
+    "train_name": "LTT-PURI EXP",
+    "direction": "UP",
+    "sign_on_time": "03:40",
+    "arrives_at": "04:40",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "4"
+   },
+   {
+    "train_no": "18609",
+    "train_name": "LTT-RNC EXP",
+    "direction": "UP",
+    "sign_on_time": "03:40",
+    "arrives_at": "04:40",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "5"
+   },
+   {
+    "train_no": "12154",
+    "train_name": "LTT-RKMP EXP",
+    "direction": "UP",
+    "sign_on_time": "03:40",
+    "arrives_at": "04:40",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "6"
+   },
+   {
+    "train_no": "12290",
+    "train_name": "CSMT-NGP DURONTO EXP",
+    "direction": "UP",
+    "sign_on_time": "04:20",
+    "arrives_at": "05:20",
+    "from_station": "BHUSAVAL",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12262",
+    "train_name": "CSMT-HWH CSMT DURONTO EXP",
+    "direction": "UP",
+    "sign_on_time": "04:40",
+    "arrives_at": "05:40",
+    "from_station": "BHUSAVAL",
+    "to_station": "CSMT",
+    "run_days": "2"
+   },
+   {
+    "train_no": "17611",
+    "train_name": "Nanded Rajya rani express",
+    "direction": "UP",
+    "sign_on_time": "06:25",
+    "arrives_at": "07:25",
+    "from_station": "MANMAD JN.",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "13201",
+    "train_name": "LTT-RGD EXP",
+    "direction": "UP",
+    "sign_on_time": "06:35",
+    "arrives_at": "07:35",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12110",
+    "train_name": "CSMT-MMR PANCHAVATI EXP",
+    "direction": "UP",
+    "sign_on_time": "07:05",
+    "arrives_at": "08:05",
+    "from_station": "MANMAD JN.",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "22178",
+    "train_name": "CSMT-BNRS MAHANAGARI EXP",
+    "direction": "UP",
+    "sign_on_time": "07:40",
+    "arrives_at": "08:40",
+    "from_station": "BHUSAVAL",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12140",
+    "train_name": "CSMT-NGP SEVAGRAM EXP",
+    "direction": "UP",
+    "sign_on_time": "08:00",
+    "arrives_at": "09:00",
+    "from_station": "BHUSAVAL",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "22222",
+    "train_name": "CSMT-NZM RAJDHANI EXP",
+    "direction": "UP",
+    "sign_on_time": "08:05",
+    "arrives_at": "09:05",
+    "from_station": "BHUSAVAL",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12187",
+    "train_name": "CSMT-JBP GARIB RATH",
+    "direction": "UP",
+    "sign_on_time": "08:30",
+    "arrives_at": "09:30",
+    "from_station": "BHUSAVAL",
+    "to_station": "CSMT",
+    "run_days": "2"
+   },
+   {
+    "train_no": "12597",
+    "train_name": "CSMT-GKP ANTODAYA EXP",
+    "direction": "UP",
+    "sign_on_time": "08:30",
+    "arrives_at": "09:30",
+    "from_station": "BHUSAVAL",
+    "to_station": "CSMT",
+    "run_days": "3"
+   },
+   {
+    "train_no": "12321",
+    "train_name": "CSMT-HWH KOLKATA MAIL",
+    "direction": "UP",
+    "sign_on_time": "08:50",
+    "arrives_at": "09:50",
+    "from_station": "BHUSAVAL",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12168",
+    "train_name": "LTT-BNPRS EXP",
+    "direction": "UP",
+    "sign_on_time": "09:10",
+    "arrives_at": "10:10",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "22847",
+    "train_name": "CSMT-HWH SF EXP",
+    "direction": "UP",
+    "sign_on_time": "09:30",
+    "arrives_at": "10:30",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "1"
+   },
+   {
+    "train_no": "12880",
+    "train_name": "LTT-BBS EXP",
+    "direction": "UP",
+    "sign_on_time": "09:30",
+    "arrives_at": "10:30",
+    "from_station": "MANMAD JN.",
+    "to_station": "LTT",
+    "run_days": "2"
+   },
+   {
+    "train_no": "22866",
+    "train_name": "LTT-BBS SF EXP",
+    "direction": "UP",
+    "sign_on_time": "09:30",
+    "arrives_at": "10:30",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "3"
+   },
+   {
+    "train_no": "12812",
+    "train_name": "LTT-Hatia SF Express",
+    "direction": "UP",
+    "sign_on_time": "09:30",
+    "arrives_at": "10:30",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "6"
+   },
+   {
+    "train_no": "11012",
+    "train_name": "CSMT-DHI EXP",
+    "direction": "UP",
+    "sign_on_time": "09:50",
+    "arrives_at": "10:50",
+    "from_station": "MANMAD JN.",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "22148",
+    "train_name": "DR-SNSI-DR SF EXP",
+    "direction": "UP",
+    "sign_on_time": "10:05",
+    "arrives_at": "11:05",
+    "from_station": "MANMAD JN.",
+    "to_station": "DADAR",
+    "run_days": "6"
+   },
+   {
+    "train_no": "12142",
+    "train_name": "LTT-PPTA PATLIPUTRA EXP",
+    "direction": "UP",
+    "sign_on_time": "10:40",
+    "arrives_at": "11:40",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "20705",
+    "train_name": "CSMT-J VANDE BHARAT",
+    "direction": "UP",
+    "sign_on_time": "10:50",
+    "arrives_at": "11:50",
+    "from_station": "MANMAD JN.",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "22359",
+    "train_name": "CSMT-PNBE SF EXP",
+    "direction": "UP",
+    "sign_on_time": "11:05",
+    "arrives_at": "12:05",
+    "from_station": "BHUSAVAL",
+    "to_station": "CSMT",
+    "run_days": "1"
+   },
+   {
+    "train_no": "12294",
+    "train_name": "LTT-PRY-LTT DURONTO EXP",
+    "direction": "UP",
+    "sign_on_time": "11:05",
+    "arrives_at": "12:05",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "3"
+   },
+   {
+    "train_no": "15065",
+    "train_name": "PNVL-GKP-PNVL EXP",
+    "direction": "UP",
+    "sign_on_time": "11:20",
+    "arrives_at": "12:20",
+    "from_station": "BHUSAVAL",
+    "to_station": "KALYAN",
+    "run_days": "1"
+   },
+   {
+    "train_no": "11080",
+    "train_name": "LTT-GKP EXP",
+    "direction": "UP",
+    "sign_on_time": "11:20",
+    "arrives_at": "12:20",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "7"
+   },
+   {
+    "train_no": "11056",
+    "train_name": "LTT-GKP GODAN EXP",
+    "direction": "UP",
+    "sign_on_time": "11:35",
+    "arrives_at": "12:35",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "1"
+   },
+   {
+    "train_no": "11060",
+    "train_name": "LTT-CPR EXP",
+    "direction": "UP",
+    "sign_on_time": "11:35",
+    "arrives_at": "12:35",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "2"
+   },
+   {
+    "train_no": "11016",
+    "train_name": "LTT-SHC AMRIT BHARAT",
+    "direction": "UP",
+    "sign_on_time": "11:50",
+    "arrives_at": "12:50",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "1"
+   },
+   {
+    "train_no": "22184",
+    "train_name": "LTT-AYC-LTT SAKET EXPRESS",
+    "direction": "UP",
+    "sign_on_time": "12:00",
+    "arrives_at": "13:00",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "1"
+   },
+   {
+    "train_no": "12162",
+    "train_name": "LTT-AGC LASHKAR EXP",
+    "direction": "UP",
+    "sign_on_time": "12:00",
+    "arrives_at": "13:00",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "7"
+   },
+   {
+    "train_no": "22122",
+    "train_name": "LTT LKO AC EXP",
+    "direction": "UP",
+    "sign_on_time": "12:45",
+    "arrives_at": "13:45",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "1"
+   },
+   {
+    "train_no": "14314",
+    "train_name": "LTT-BE EXP",
+    "direction": "UP",
+    "sign_on_time": "12:45",
+    "arrives_at": "13:45",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "7"
+   },
+   {
+    "train_no": "12072",
+    "train_name": "CSMT-HNL JANSHATBDTI EXP",
+    "direction": "UP",
+    "sign_on_time": "13:00",
+    "arrives_at": "14:00",
+    "from_station": "MANMAD JN.",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "15018",
+    "train_name": "LTT-GKR KASHI EXP",
+    "direction": "UP",
+    "sign_on_time": "13:45",
+    "arrives_at": "14:45",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "22311",
+    "train_name": "Godda-LTT SF express",
+    "direction": "UP",
+    "sign_on_time": "14:00",
+    "arrives_at": "15:00",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "1"
+   },
+   {
+    "train_no": "15946",
+    "train_name": "LTT-DBRG EXP",
+    "direction": "UP",
+    "sign_on_time": "14:00",
+    "arrives_at": "15:00",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "2"
+   },
+   {
+    "train_no": "12335",
+    "train_name": "LTT-BGP EXP",
+    "direction": "UP",
+    "sign_on_time": "14:00",
+    "arrives_at": "15:00",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "3"
+   },
+   {
+    "train_no": "15648",
+    "train_name": "LTT-GHY EXPRES EXP",
+    "direction": "UP",
+    "sign_on_time": "14:00",
+    "arrives_at": "15:00",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "4"
+   },
+   {
+    "train_no": "12742",
+    "train_name": "PNBE-VSG-PNBE EXP",
+    "direction": "UP",
+    "sign_on_time": "14:00",
+    "arrives_at": "15:00",
+    "from_station": "BHUSAVAL",
+    "to_station": "KALYAN",
+    "run_days": "7"
+   },
+   {
+    "train_no": "22130",
+    "train_name": "LTT-Ayodhya cantt SF express",
+    "direction": "UP",
+    "sign_on_time": "17:15",
+    "arrives_at": "18:15",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "2"
+   },
+   {
+    "train_no": "12166",
+    "train_name": "LTT-GKR EXP",
+    "direction": "UP",
+    "sign_on_time": "17:15",
+    "arrives_at": "18:15",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "3"
+   },
+   {
+    "train_no": "12860",
+    "train_name": "LTT-HTE EXP",
+    "direction": "UP",
+    "sign_on_time": "17:25",
+    "arrives_at": "18:25",
+    "from_station": "BHUSAVAL",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12533",
+    "train_name": "CSMT-GTNA CSMT PUSHPAK EXP",
+    "direction": "UP",
+    "sign_on_time": "17:35",
+    "arrives_at": "18:35",
+    "from_station": "BHUSAVAL",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "22512",
+    "train_name": "LTT-KYQ KARMABHOOMI EXP",
+    "direction": "UP",
+    "sign_on_time": "17:50",
+    "arrives_at": "18:50",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "1"
+   },
+   {
+    "train_no": "12172",
+    "train_name": "LTT-Haridwar Superfast express",
+    "direction": "UP",
+    "sign_on_time": "17:50",
+    "arrives_at": "18:50",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "3"
+   },
+   {
+    "train_no": "12108",
+    "train_name": "LTT-ST EXP",
+    "direction": "UP",
+    "sign_on_time": "18:05",
+    "arrives_at": "19:05",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "1"
+   },
+   {
+    "train_no": "12870",
+    "train_name": "CSMT-HWH GITANJALI EXP",
+    "direction": "UP",
+    "sign_on_time": "18:05",
+    "arrives_at": "19:05",
+    "from_station": "BHUSAVAL",
+    "to_station": "CSMT",
+    "run_days": "6"
+   },
+   {
+    "train_no": "17618",
+    "train_name": "CSMT-NED TAPOVAN EXP",
+    "direction": "UP",
+    "sign_on_time": "18:20",
+    "arrives_at": "19:20",
+    "from_station": "IGATPURI",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "11072",
+    "train_name": "LTT-BUI KAMAYANI EXP",
+    "direction": "UP",
+    "sign_on_time": "19:05",
+    "arrives_at": "20:05",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "22224",
+    "train_name": "CSMT-SNSI-CSMT VANDE BHARAT",
+    "direction": "UP",
+    "sign_on_time": "19:30",
+    "arrives_at": "20:30",
+    "from_station": "MANMAD JN.",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "11082",
+    "train_name": "LTT-GKP EXP",
+    "direction": "UP",
+    "sign_on_time": "19:50",
+    "arrives_at": "20:50",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "6"
+   },
+   {
+    "train_no": "20822",
+    "train_name": "SRC-PUNE-SRC HUMSAFAR EXP",
+    "direction": "UP",
+    "sign_on_time": "20:05",
+    "arrives_at": "21:05",
+    "from_station": "BHUSAVAL",
+    "to_station": "KALYAN",
+    "run_days": "7"
+   },
+   {
+    "train_no": "11058",
+    "train_name": "CSMT-ASR EXP",
+    "direction": "UP",
+    "sign_on_time": "20:25",
+    "arrives_at": "21:25",
+    "from_station": "BHUSAVAL",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "22537",
+    "train_name": "LTT-GKP KUSHINAGAR EXP",
+    "direction": "UP",
+    "sign_on_time": "20:45",
+    "arrives_at": "21:45",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "11062",
+    "train_name": "LTT-JYG EXP",
+    "direction": "UP",
+    "sign_on_time": "21:00",
+    "arrives_at": "22:00",
+    "from_station": "BHUSAVAL",
+    "to_station": "LTT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12322",
+    "train_name": "CSMT-HWH KOLKATA MAIL",
+    "direction": "DN",
+    "sign_on_time": "00:00",
+    "arrives_at": "01:00",
+    "from_station": "CSMT",
+    "to_station": "BHUSAVAL",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12167",
+    "train_name": "LTT-BNPRS EXP",
+    "direction": "DN",
+    "sign_on_time": "00:30",
+    "arrives_at": "01:30",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12141",
+    "train_name": "LTT-PPTA PATLIPUTRA EXP",
+    "direction": "DN",
+    "sign_on_time": "01:10",
+    "arrives_at": "02:10",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "11057",
+    "train_name": "CSMT-ASR EXP",
+    "direction": "DN",
+    "sign_on_time": "01:25",
+    "arrives_at": "02:25",
+    "from_station": "CSMT",
+    "to_station": "BHUSAVAL",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12811",
+    "train_name": "LTT-Hatia SF Express",
+    "direction": "DN",
+    "sign_on_time": "01:55",
+    "arrives_at": "02:55",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "1"
+   },
+   {
+    "train_no": "22848",
+    "train_name": "CSMT-HWH SF EXP",
+    "direction": "DN",
+    "sign_on_time": "01:55",
+    "arrives_at": "02:55",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "2"
+   },
+   {
+    "train_no": "12879",
+    "train_name": "LTT-BBS EXP",
+    "direction": "DN",
+    "sign_on_time": "01:55",
+    "arrives_at": "02:55",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "3"
+   },
+   {
+    "train_no": "22865",
+    "train_name": "LTT-BBS SF EXP",
+    "direction": "DN",
+    "sign_on_time": "01:55",
+    "arrives_at": "02:55",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "4"
+   },
+   {
+    "train_no": "22177",
+    "train_name": "CSMT-BNRS MAHANAGARI EXP",
+    "direction": "DN",
+    "sign_on_time": "02:05",
+    "arrives_at": "03:05",
+    "from_station": "CSMT",
+    "to_station": "BHUSAVAL",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "22538",
+    "train_name": "LTT-GKP KUSHINAGAR EXP",
+    "direction": "DN",
+    "sign_on_time": "02:20",
+    "arrives_at": "03:20",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "20103",
+    "train_name": "LTT-GKP EXP",
+    "direction": "DN",
+    "sign_on_time": "07:05",
+    "arrives_at": "08:05",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "17617",
+    "train_name": "CSMT-NED TAPOVAN EXP",
+    "direction": "DN",
+    "sign_on_time": "07:20",
+    "arrives_at": "08:20",
+    "from_station": "CSMT",
+    "to_station": "MANMAD JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "22223",
+    "train_name": "CSMT-SNSI-CSMT VANDE BHARAT",
+    "direction": "DN",
+    "sign_on_time": "07:32",
+    "arrives_at": "08:32",
+    "from_station": "CSMT",
+    "to_station": "MANMAD JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12859",
+    "train_name": "LTT-HTE EXP",
+    "direction": "DN",
+    "sign_on_time": "07:55",
+    "arrives_at": "08:55",
+    "from_station": "CSMT",
+    "to_station": "BHUSAVAL",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12165",
+    "train_name": "LTT-GKR EXP",
+    "direction": "DN",
+    "sign_on_time": "08:02",
+    "arrives_at": "09:02",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "1"
+   },
+   {
+    "train_no": "22183",
+    "train_name": "LTT-AYC-LTT SAKET EXPRESS",
+    "direction": "DN",
+    "sign_on_time": "08:02",
+    "arrives_at": "09:02",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "3"
+   },
+   {
+    "train_no": "22129",
+    "train_name": "LTT-Ayodhya cantt SF express",
+    "direction": "DN",
+    "sign_on_time": "08:02",
+    "arrives_at": "09:02",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "2"
+   },
+   {
+    "train_no": "15017",
+    "train_name": "LTT-GKR KASHI EXP",
+    "direction": "DN",
+    "sign_on_time": "08:15",
+    "arrives_at": "09:15",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12741",
+    "train_name": "PNBE-VSG-PNBE EXP",
+    "direction": "DN",
+    "sign_on_time": "08:30",
+    "arrives_at": "09:30",
+    "from_station": "KALYAN",
+    "to_station": "BHUSAVAL",
+    "run_days": "4"
+   },
+   {
+    "train_no": "11119",
+    "train_name": null,
+    "direction": "DN",
+    "sign_on_time": "08:55",
+    "arrives_at": "09:55",
+    "from_station": "IGATPURI",
+    "to_station": "BHUSAVAL",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "22554",
+    "train_name": "LTT-RXL ANTYODAY EXP",
+    "direction": "DN",
+    "sign_on_time": "09:20",
+    "arrives_at": "10:20",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "3"
+   },
+   {
+    "train_no": "12171",
+    "train_name": "LTT-Haridwar Superfast express",
+    "direction": "DN",
+    "sign_on_time": "09:20",
+    "arrives_at": "10:20",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "1"
+   },
+   {
+    "train_no": "12519",
+    "train_name": null,
+    "direction": "DN",
+    "sign_on_time": "09:20",
+    "arrives_at": "10:20",
+    "from_station": "IGATPURI",
+    "to_station": "BHUSAVAL",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12336",
+    "train_name": "LTT-BGP EXP",
+    "direction": "DN",
+    "sign_on_time": "09:40",
+    "arrives_at": "10:40",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "2"
+   },
+   {
+    "train_no": "22312",
+    "train_name": "Godda-LTT SF express",
+    "direction": "DN",
+    "sign_on_time": "09:40",
+    "arrives_at": "10:40",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "4"
+   },
+   {
+    "train_no": "14313",
+    "train_name": "LTT-BE EXP",
+    "direction": "DN",
+    "sign_on_time": "09:40",
+    "arrives_at": "10:40",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "1"
+   },
+   {
+    "train_no": "15945",
+    "train_name": "LTT-DBRG EXP",
+    "direction": "DN",
+    "sign_on_time": "09:40",
+    "arrives_at": "10:40",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "3"
+   },
+   {
+    "train_no": "15647",
+    "train_name": "LTT-GHY EXPRES EXP",
+    "direction": "DN",
+    "sign_on_time": "09:40",
+    "arrives_at": "10:40",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "5"
+   },
+   {
+    "train_no": "12534",
+    "train_name": "CSMT-GTNA CSMT PUSHPAK EXP",
+    "direction": "DN",
+    "sign_on_time": "10:05",
+    "arrives_at": "11:05",
+    "from_station": "CSMT",
+    "to_station": "BHUSAVAL",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "11055",
+    "train_name": "LTT-GKP GODAN EXP",
+    "direction": "DN",
+    "sign_on_time": "12:50",
+    "arrives_at": "13:50",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "1"
+   },
+   {
+    "train_no": "11059",
+    "train_name": "LTT-CPR EXP",
+    "direction": "DN",
+    "sign_on_time": "12:50",
+    "arrives_at": "13:50",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "2"
+   },
+   {
+    "train_no": "15182",
+    "train_name": "LTT-MAU EXPRESS",
+    "direction": "DN",
+    "sign_on_time": "13:00",
+    "arrives_at": "14:00",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "1"
+   },
+   {
+    "train_no": "12869",
+    "train_name": "CSMT-HWH GITANJALI EXP",
+    "direction": "DN",
+    "sign_on_time": "13:00",
+    "arrives_at": "14:00",
+    "from_station": "CSMT",
+    "to_station": "BHUSAVAL",
+    "run_days": "7"
+   },
+   {
+    "train_no": "12362",
+    "train_name": "CSMT-ASN EXP",
+    "direction": "DN",
+    "sign_on_time": "13:00",
+    "arrives_at": "14:00",
+    "from_station": "CSMT",
+    "to_station": "BHUSAVAL",
+    "run_days": "3"
+   },
+   {
+    "train_no": "22360",
+    "train_name": "CSMT-PNBE SF EXP",
+    "direction": "DN",
+    "sign_on_time": "13:00",
+    "arrives_at": "14:00",
+    "from_station": "CSMT",
+    "to_station": "BHUSAVAL",
+    "run_days": "2"
+   },
+   {
+    "train_no": "11061",
+    "train_name": "LTT-JYG EXP",
+    "direction": "DN",
+    "sign_on_time": "13:15",
+    "arrives_at": "14:15",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "11015",
+    "train_name": "LTT-SHC AMRIT BHARAT",
+    "direction": "DN",
+    "sign_on_time": "13:35",
+    "arrives_at": "14:35",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "5"
+   },
+   {
+    "train_no": "12071",
+    "train_name": "CSMT-HNL JANSHATBDTI EXP",
+    "direction": "DN",
+    "sign_on_time": "14:05",
+    "arrives_at": "15:05",
+    "from_station": "CSMT",
+    "to_station": "MANMAD JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "11011",
+    "train_name": "CSMT-DHI EXP",
+    "direction": "DN",
+    "sign_on_time": "14:20",
+    "arrives_at": "15:20",
+    "from_station": "CSMT",
+    "to_station": "MANMAD JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "20821",
+    "train_name": "SRC-PUNE-SRC HUMSAFAR EXP",
+    "direction": "DN",
+    "sign_on_time": "14:42",
+    "arrives_at": "15:42",
+    "from_station": "KALYAN",
+    "to_station": "BHUSAVAL",
+    "run_days": "1"
+   },
+   {
+    "train_no": "22511",
+    "train_name": "LTT-KYQ KARMABHOOMI EXP",
+    "direction": "DN",
+    "sign_on_time": "14:42",
+    "arrives_at": "15:42",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "2"
+   },
+   {
+    "train_no": "22357",
+    "train_name": "LTT-Gaya SF express",
+    "direction": "DN",
+    "sign_on_time": "14:42",
+    "arrives_at": "15:42",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "5"
+   },
+   {
+    "train_no": "20706",
+    "train_name": "CSMT-J VANDE BHARAT",
+    "direction": "DN",
+    "sign_on_time": "14:50",
+    "arrives_at": "15:50",
+    "from_station": "CSMT",
+    "to_station": "MANMAD JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12617",
+    "train_name": "NZM-ERS-NZM MANGLA LKSDP EXP",
+    "direction": "DN",
+    "sign_on_time": "15:05",
+    "arrives_at": "16:05",
+    "from_station": "KALYAN",
+    "to_station": "MANMAD JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12188",
+    "train_name": "CSMT-JBP GARIB RATH",
+    "direction": "DN",
+    "sign_on_time": "15:20",
+    "arrives_at": "16:20",
+    "from_station": "CSMT",
+    "to_station": "BHUSAVAL",
+    "run_days": "2"
+   },
+   {
+    "train_no": "12598",
+    "train_name": "CSMT-GKP ANTODAYA EXP",
+    "direction": "DN",
+    "sign_on_time": "15:20",
+    "arrives_at": "16:20",
+    "from_station": "CSMT",
+    "to_station": "BHUSAVAL",
+    "run_days": "3"
+   },
+   {
+    "train_no": "22121",
+    "train_name": "LTT LKO AC EXP",
+    "direction": "DN",
+    "sign_on_time": "15:20",
+    "arrives_at": "16:20",
+    "from_station": "LTT",
+    "to_station": "MANMAD JN.",
+    "run_days": "6"
+   },
+   {
+    "train_no": "22103",
+    "train_name": "LTT-AYC EXP",
+    "direction": "DN",
+    "sign_on_time": "15:20",
+    "arrives_at": "16:20",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "1"
+   },
+   {
+    "train_no": "11071",
+    "train_name": "LTT-BUI KAMAYANI EXP",
+    "direction": "DN",
+    "sign_on_time": "15:30",
+    "arrives_at": "16:30",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "13202",
+    "train_name": "LTT-RGD EXP",
+    "direction": "DN",
+    "sign_on_time": "16:30",
+    "arrives_at": "17:30",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12139",
+    "train_name": "CSMT-NGP SEVAGRAM EXP",
+    "direction": "DN",
+    "sign_on_time": "16:45",
+    "arrives_at": "17:45",
+    "from_station": "CSMT",
+    "to_station": "BHUSAVAL",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "22221",
+    "train_name": "CSMT-NZM RAJDHANI EXP",
+    "direction": "DN",
+    "sign_on_time": "17:05",
+    "arrives_at": "18:05",
+    "from_station": "CSMT",
+    "to_station": "BHUSAVAL",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "15066",
+    "train_name": "PNVL-GKP-PNVL EXP",
+    "direction": "DN",
+    "sign_on_time": "17:35",
+    "arrives_at": "18:35",
+    "from_station": "KALYAN",
+    "to_station": "BHUSAVAL",
+    "run_days": "1"
+   },
+   {
+    "train_no": "11079",
+    "train_name": "LTT-GKP EXP",
+    "direction": "DN",
+    "sign_on_time": "17:35",
+    "arrives_at": "18:35",
+    "from_station": "LTT",
+    "to_station": "MANMAD JN.",
+    "run_days": "4"
+   },
+   {
+    "train_no": "12143",
+    "train_name": "LTT-SLN EXP",
+    "direction": "DN",
+    "sign_on_time": "17:35",
+    "arrives_at": "18:35",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "7"
+   },
+   {
+    "train_no": "12107",
+    "train_name": "LTT-ST EXP",
+    "direction": "DN",
+    "sign_on_time": "18:00",
+    "arrives_at": "19:00",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "1"
+   },
+   {
+    "train_no": "12161",
+    "train_name": "LTT-AGC LASHKAR EXP",
+    "direction": "DN",
+    "sign_on_time": "18:00",
+    "arrives_at": "19:00",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "5"
+   },
+   {
+    "train_no": "12153",
+    "train_name": "LTT-RKMP EXP",
+    "direction": "DN",
+    "sign_on_time": "18:00",
+    "arrives_at": "19:00",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "4"
+   },
+   {
+    "train_no": "12173",
+    "train_name": "LTT-MBDP UDYOG NAGRI EXP",
+    "direction": "DN",
+    "sign_on_time": "18:00",
+    "arrives_at": "19:00",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "2"
+   },
+   {
+    "train_no": "11001",
+    "train_name": "NANDIGRAM EXP",
+    "direction": "DN",
+    "sign_on_time": "18:20",
+    "arrives_at": "19:20",
+    "from_station": "CSMT",
+    "to_station": "MANMAD JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12261",
+    "train_name": "CSMT-HWH CSMT DURONTO EXP",
+    "direction": "DN",
+    "sign_on_time": "18:40",
+    "arrives_at": "19:40",
+    "from_station": "CSMT",
+    "to_station": "BHUSAVAL",
+    "run_days": "2"
+   },
+   {
+    "train_no": "12293",
+    "train_name": "LTT-PRY-LTT DURONTO EXP",
+    "direction": "DN",
+    "sign_on_time": "18:40",
+    "arrives_at": "19:40",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "1"
+   },
+   {
+    "train_no": "15268",
+    "train_name": "LTT-RXL ANTYODAY EXP",
+    "direction": "DN",
+    "sign_on_time": "19:05",
+    "arrives_at": "20:05",
+    "from_station": "LTT",
+    "to_station": "MANMAD JN.",
+    "run_days": "1"
+   },
+   {
+    "train_no": "11081",
+    "train_name": "LTT-GKP EXP",
+    "direction": "DN",
+    "sign_on_time": "19:05",
+    "arrives_at": "20:05",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "3"
+   },
+   {
+    "train_no": "22584",
+    "train_name": "LTT-CPR ANTYODAY EXP",
+    "direction": "DN",
+    "sign_on_time": "19:05",
+    "arrives_at": "20:05",
+    "from_station": "LTT",
+    "to_station": "MANMAD JN.",
+    "run_days": "4"
+   },
+   {
+    "train_no": "18610",
+    "train_name": "LTT-RNC EXP",
+    "direction": "DN",
+    "sign_on_time": "19:05",
+    "arrives_at": "20:05",
+    "from_station": "LTT",
+    "to_station": "MANMAD JN.",
+    "run_days": "5"
+   },
+   {
+    "train_no": "12546",
+    "train_name": "LTT-RXL KARMBHUMI EXP",
+    "direction": "DN",
+    "sign_on_time": "19:05",
+    "arrives_at": "20:05",
+    "from_station": "LTT",
+    "to_station": "MANMAD JN.",
+    "run_days": "6"
+   },
+   {
+    "train_no": "17666",
+    "train_name": "Nanded LTT express",
+    "direction": "DN",
+    "sign_on_time": "19:05",
+    "arrives_at": "20:05",
+    "from_station": "IGATPURI",
+    "to_station": "BHUSAVAL",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "17668",
+    "train_name": "Nanded LTT express",
+    "direction": "DN",
+    "sign_on_time": "19:25",
+    "arrives_at": "20:25",
+    "from_station": "IGATPURI",
+    "to_station": "BHUSAVAL",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12109",
+    "train_name": "CSMT-MMR PANCHAVATI EXP",
+    "direction": "DN",
+    "sign_on_time": "19:55",
+    "arrives_at": "20:55",
+    "from_station": "CSMT",
+    "to_station": "MANMAD JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "17612",
+    "train_name": "Nanded Rajya rani express",
+    "direction": "DN",
+    "sign_on_time": "20:30",
+    "arrives_at": "21:30",
+    "from_station": "CSMT",
+    "to_station": "MANMAD JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12105",
+    "train_name": "CSMT-G VIDARBHA EXPRESS",
+    "direction": "DN",
+    "sign_on_time": "20:50",
+    "arrives_at": "21:50",
+    "from_station": "CSMT",
+    "to_station": "BHUSAVAL",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12137",
+    "train_name": "CSMT-FZR PUNJAB MAIL",
+    "direction": "DN",
+    "sign_on_time": "21:25",
+    "arrives_at": "22:25",
+    "from_station": "CSMT",
+    "to_station": "BHUSAVAL",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12289",
+    "train_name": "CSMT-NGP DURONTO EXP",
+    "direction": "DN",
+    "sign_on_time": "21:40",
+    "arrives_at": "22:40",
+    "from_station": "CSMT",
+    "to_station": "BHUSAVAL",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12111",
+    "train_name": "CSMT-AMI SF EXP",
+    "direction": "DN",
+    "sign_on_time": "22:00",
+    "arrives_at": "23:00",
+    "from_station": "CSMT",
+    "to_station": "BHUSAVAL",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12101",
+    "train_name": "LTT-SHM GYANESHWARI EXP",
+    "direction": "DN",
+    "sign_on_time": "22:10",
+    "arrives_at": "23:10",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "1"
+   },
+   {
+    "train_no": "12145",
+    "train_name": "LTT-PURI EXP",
+    "direction": "DN",
+    "sign_on_time": "22:10",
+    "arrives_at": "23:10",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "7"
+   },
+   {
+    "train_no": "12151",
+    "train_name": "LTT-SHM SAMRASHTA EXP",
+    "direction": "DN",
+    "sign_on_time": "22:10",
+    "arrives_at": "23:10",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "3"
+   },
+   {
+    "train_no": "12809",
+    "train_name": "CSMT-HWH HOWRAH MAIL",
+    "direction": "DN",
+    "sign_on_time": "22:55",
+    "arrives_at": "23:55",
+    "from_station": "CSMT",
+    "to_station": "BHUSAVAL",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "22109",
+    "train_name": "LTT-BPQ EXP",
+    "direction": "DN",
+    "sign_on_time": "23:15",
+    "arrives_at": "00:15",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "2"
+   },
+   {
+    "train_no": "12131",
+    "train_name": "DR-SNSI EXP",
+    "direction": "DN",
+    "sign_on_time": "23:15",
+    "arrives_at": "00:15",
+    "from_station": "DADAR",
+    "to_station": "MANMAD JN.",
+    "run_days": "1"
+   },
+   {
+    "train_no": "22147",
+    "train_name": "DR-SNSI-DR SF EXP",
+    "direction": "DN",
+    "sign_on_time": "23:15",
+    "arrives_at": "00:15",
+    "from_station": "DADAR",
+    "to_station": "MANMAD JN.",
+    "run_days": "5"
+   },
+   {
+    "train_no": "17057",
+    "train_name": "CSMT-LPI DEVAGIRI EXP",
+    "direction": "DN",
+    "sign_on_time": "23:25",
+    "arrives_at": "00:25",
+    "from_station": "CSMT",
+    "to_station": "MANMAD JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "18029",
+    "train_name": "LTT-SHM EXP",
+    "direction": "DN",
+    "sign_on_time": "23:45",
+    "arrives_at": "00:45",
+    "from_station": "LTT",
+    "to_station": "BHUSAVAL",
+    "run_days": "DAILY"
+   }
+  ],
+  "LNL": [
+   {
+    "train_no": "11020",
+    "train_name": "KONARK EXP",
+    "direction": "UP",
+    "sign_on_time": "00:08",
+    "arrives_at": "01:08",
+    "from_station": "PUNE JN.",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "18519",
+    "train_name": "LTT-VSKP EXP",
+    "direction": "UP",
+    "sign_on_time": "00:59",
+    "arrives_at": "01:59",
+    "from_station": "PUNE JN.",
+    "to_station": "LTT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12702",
+    "train_name": "CSMT-HYB HUSSAINSAGAR EXP",
+    "direction": "UP",
+    "sign_on_time": "01:10",
+    "arrives_at": "02:10",
+    "from_station": "PUNE JN.",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "11140",
+    "train_name": "CSMT-HPT EXP",
+    "direction": "UP",
+    "sign_on_time": "01:27",
+    "arrives_at": "02:27",
+    "from_station": "PUNE JN.",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "20967",
+    "train_name": "Porbundar-secundarabad SF express",
+    "direction": "UP",
+    "sign_on_time": "01:40",
+    "arrives_at": "02:40",
+    "from_station": "PUNE JN.",
+    "to_station": "VASAI ROAD",
+    "run_days": "4"
+   },
+   {
+    "train_no": "16614",
+    "train_name": "RJT-CBE-RJT EXP",
+    "direction": "UP",
+    "sign_on_time": "01:40",
+    "arrives_at": "02:40",
+    "from_station": "PUNE JN.",
+    "to_station": "VASAI ROAD",
+    "run_days": "6"
+   },
+   {
+    "train_no": "22718",
+    "train_name": "Rajkot-secundarabad SF express",
+    "direction": "UP",
+    "sign_on_time": "01:42",
+    "arrives_at": "02:42",
+    "from_station": "PUNE JN.",
+    "to_station": "VASAI ROAD",
+    "run_days": "2"
+   },
+   {
+    "train_no": "12755",
+    "train_name": "BVC-COA-BVC EXP",
+    "direction": "UP",
+    "sign_on_time": "01:42",
+    "arrives_at": "02:42",
+    "from_station": "PUNE JN.",
+    "to_station": "VASAI ROAD",
+    "run_days": "5"
+   },
+   {
+    "train_no": "22158",
+    "train_name": "CSMT-MAS-CSMT EXP",
+    "direction": "UP",
+    "sign_on_time": "02:09",
+    "arrives_at": "03:09",
+    "from_station": "PUNE JN.",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "11036",
+    "train_name": "SHARAVATI EXP",
+    "direction": "UP",
+    "sign_on_time": "02:25",
+    "arrives_at": "03:25",
+    "from_station": "PUNE JN.",
+    "to_station": "DADAR",
+    "run_days": "1"
+   },
+   {
+    "train_no": "11006",
+    "train_name": "CHALUKYA EXP",
+    "direction": "UP",
+    "sign_on_time": "02:25",
+    "arrives_at": "03:25",
+    "from_station": "PUNE JN.",
+    "to_station": "DADAR",
+    "run_days": "2"
+   },
+   {
+    "train_no": "11022",
+    "train_name": "DR-TEN EXP",
+    "direction": "UP",
+    "sign_on_time": "02:25",
+    "arrives_at": "03:25",
+    "from_station": "PUNE JN.",
+    "to_station": "DADAR",
+    "run_days": "3"
+   },
+   {
+    "train_no": "12116",
+    "train_name": "CSMT-SUR SIDDHESHWAR EXP",
+    "direction": "UP",
+    "sign_on_time": "03:00",
+    "arrives_at": "04:00",
+    "from_station": "PUNE JN.",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "11042",
+    "train_name": "DR-SNSI EXP",
+    "direction": "UP",
+    "sign_on_time": "03:10",
+    "arrives_at": "04:10",
+    "from_station": "PUNE JN.",
+    "to_station": "DADAR",
+    "run_days": "1"
+   },
+   {
+    "train_no": "11028",
+    "train_name": "DR-STR-DR EXP",
+    "direction": "UP",
+    "sign_on_time": "03:10",
+    "arrives_at": "04:10",
+    "from_station": "PUNE JN.",
+    "to_station": "DADAR",
+    "run_days": "2"
+   },
+   {
+    "train_no": "17317",
+    "train_name": "DR-UBL-DR EXP",
+    "direction": "UP",
+    "sign_on_time": "03:20",
+    "arrives_at": "04:20",
+    "from_station": "PUNE JN.",
+    "to_station": "DADAR",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "17412",
+    "train_name": "CSMT-KOP MAHALAXMI EXP",
+    "direction": "UP",
+    "sign_on_time": "03:45",
+    "arrives_at": "04:45",
+    "from_station": "PUNE JN.",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "22144",
+    "train_name": "CSMT-BIDAR EXP",
+    "direction": "UP",
+    "sign_on_time": "04:17",
+    "arrives_at": "05:17",
+    "from_station": "PUNE JN.",
+    "to_station": "CSMT",
+    "run_days": "1"
+   },
+   {
+    "train_no": "22108",
+    "train_name": "CSMT-LUR-CSMT EXP",
+    "direction": "UP",
+    "sign_on_time": "04:17",
+    "arrives_at": "05:17",
+    "from_station": "PUNE JN.",
+    "to_station": "CSMT",
+    "run_days": "2"
+   },
+   {
+    "train_no": "19567",
+    "train_name": "OKHA-TN-OKHA VIVEK EXPRESS",
+    "direction": "UP",
+    "sign_on_time": "05:15",
+    "arrives_at": "06:15",
+    "from_station": "PUNE JN.",
+    "to_station": "VASAI ROAD",
+    "run_days": "2"
+   },
+   {
+    "train_no": "11010",
+    "train_name": "SINHAGAD EXP",
+    "direction": "UP",
+    "sign_on_time": "06:23",
+    "arrives_at": "07:23",
+    "from_station": "PUNE JN.",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12124",
+    "train_name": "CSMT-PUNE DECCAN QUEEN",
+    "direction": "UP",
+    "sign_on_time": "07:13",
+    "arrives_at": "08:13",
+    "from_station": "PUNE JN.",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12126",
+    "train_name": "CSMT-PUNE PRAGATI EXP",
+    "direction": "UP",
+    "sign_on_time": "07:44",
+    "arrives_at": "08:44",
+    "from_station": "PUNE JN.",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12220",
+    "train_name": "LTT-SC DURONTO EXP",
+    "direction": "UP",
+    "sign_on_time": "07:57",
+    "arrives_at": "08:57",
+    "from_station": "PUNE JN.",
+    "to_station": "LTT",
+    "run_days": "3"
+   },
+   {
+    "train_no": "20667",
+    "train_name": "Yashvantpur-Jaipur express",
+    "direction": "UP",
+    "sign_on_time": "07:57",
+    "arrives_at": "08:57",
+    "from_station": "PUNE JN.",
+    "to_station": "VASAI ROAD",
+    "run_days": "5"
+   },
+   {
+    "train_no": "17221",
+    "train_name": "LTT-COA EXP",
+    "direction": "UP",
+    "sign_on_time": "07:59",
+    "arrives_at": "08:59",
+    "from_station": "PUNE JN.",
+    "to_station": "LTT",
+    "run_days": "4"
+   },
+   {
+    "train_no": "14805",
+    "train_name": "BME-YPR-BME EXP",
+    "direction": "UP",
+    "sign_on_time": "08:35",
+    "arrives_at": "09:35",
+    "from_station": "PUNE JN.",
+    "to_station": "VASAI ROAD",
+    "run_days": "2"
+   },
+   {
+    "train_no": "19668",
+    "train_name": "UDZ-MYS-UDZ HUMSAFAR EXP",
+    "direction": "UP",
+    "sign_on_time": "08:35",
+    "arrives_at": "09:35",
+    "from_station": "PUNE JN.",
+    "to_station": "VASAI ROAD",
+    "run_days": "5"
+   },
+   {
+    "train_no": "22498",
+    "train_name": "SGNR-TPI-SGNR HUMSAFAR EXP",
+    "direction": "UP",
+    "sign_on_time": "08:35",
+    "arrives_at": "09:35",
+    "from_station": "PUNE JN.",
+    "to_station": "VASAI ROAD",
+    "run_days": "6"
+   },
+   {
+    "train_no": "22160",
+    "train_name": "CSMT-MAS-CSMT EXP",
+    "direction": "UP",
+    "sign_on_time": "08:47",
+    "arrives_at": "09:47",
+    "from_station": "PUNE JN.",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "22731",
+    "train_name": "HYD-MUMBAI SF EXPRESS",
+    "direction": "UP",
+    "sign_on_time": "09:17",
+    "arrives_at": "10:17",
+    "from_station": "PUNE JN.",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "22226",
+    "train_name": "CSMT-SUR-CSMT VANDE BHARAT",
+    "direction": "UP",
+    "sign_on_time": "09:23",
+    "arrives_at": "10:23",
+    "from_station": "PUNE JN.",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "16587",
+    "train_name": "BKN-YPR-BKN EXP",
+    "direction": "UP",
+    "sign_on_time": "09:57",
+    "arrives_at": "10:57",
+    "from_station": "PUNE JN.",
+    "to_station": "VASAI ROAD",
+    "run_days": "1"
+   },
+   {
+    "train_no": "11014",
+    "train_name": "LTT-CBE Coimbatore express",
+    "direction": "UP",
+    "sign_on_time": "10:30",
+    "arrives_at": "11:30",
+    "from_station": "PUNE JN.",
+    "to_station": "LTT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12263",
+    "train_name": "NZM-PUNE-NZM DURNTO EXP",
+    "direction": "UP",
+    "sign_on_time": "11:11",
+    "arrives_at": "12:11",
+    "from_station": "PUNE JN.",
+    "to_station": "VASAI ROAD",
+    "run_days": "2"
+   },
+   {
+    "train_no": "22180",
+    "train_name": "LTT-BSB CSMT MAHANAGARI EXP",
+    "direction": "UP",
+    "sign_on_time": "11:11",
+    "arrives_at": "12:11",
+    "from_station": "PUNE JN.",
+    "to_station": "LTT",
+    "run_days": "3"
+   },
+   {
+    "train_no": "22919",
+    "train_name": "ADI HUMSAFAR",
+    "direction": "UP",
+    "sign_on_time": "11:11",
+    "arrives_at": "12:11",
+    "from_station": "PUNE JN.",
+    "to_station": "VASAI ROAD",
+    "run_days": "4"
+   },
+   {
+    "train_no": "20919",
+    "train_name": "Chennai-ekta nagar SF express",
+    "direction": "UP",
+    "sign_on_time": "11:11",
+    "arrives_at": "12:11",
+    "from_station": "PUNE JN.",
+    "to_station": "VASAI ROAD",
+    "run_days": "6"
+   },
+   {
+    "train_no": "12493",
+    "train_name": "NZM-MRJ-NZM DARSHAN EXPRESS",
+    "direction": "UP",
+    "sign_on_time": "11:11",
+    "arrives_at": "12:11",
+    "from_station": "PUNE JN.",
+    "to_station": "VASAI ROAD",
+    "run_days": "7"
+   },
+   {
+    "train_no": "12164",
+    "train_name": "LTT-MAS EXP",
+    "direction": "UP",
+    "sign_on_time": "12:00",
+    "arrives_at": "13:00",
+    "from_station": "PUNE JN.",
+    "to_station": "LTT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "16352",
+    "train_name": "LTT-NCJ EXP",
+    "direction": "UP",
+    "sign_on_time": "15:35",
+    "arrives_at": "16:35",
+    "from_station": "PUNE JN.",
+    "to_station": "CSMT",
+    "run_days": "1"
+   },
+   {
+    "train_no": "16340",
+    "train_name": "LTT-NCJ EXP",
+    "direction": "UP",
+    "sign_on_time": "15:35",
+    "arrives_at": "16:35",
+    "from_station": "PUNE JN.",
+    "to_station": "CSMT",
+    "run_days": "2"
+   },
+   {
+    "train_no": "16332",
+    "train_name": "LTT-TVC EXP",
+    "direction": "UP",
+    "sign_on_time": "15:35",
+    "arrives_at": "16:35",
+    "from_station": "PUNE JN.",
+    "to_station": "CSMT",
+    "run_days": "7"
+   },
+   {
+    "train_no": "11008",
+    "train_name": "DECCAN EXP",
+    "direction": "UP",
+    "sign_on_time": "15:46",
+    "arrives_at": "16:46",
+    "from_station": "PUNE JN.",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "22943",
+    "train_name": "DAUND INDORE EXPRESS",
+    "direction": "UP",
+    "sign_on_time": "15:53",
+    "arrives_at": "16:53",
+    "from_station": "PUNE JN.",
+    "to_station": "VASAI ROAD",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "11030",
+    "train_name": "KOYNA EXP",
+    "direction": "UP",
+    "sign_on_time": "16:23",
+    "arrives_at": "17:23",
+    "from_station": "PUNE JN.",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "11302",
+    "train_name": "CSMT-SBC UDYAN EXPRESS",
+    "direction": "UP",
+    "sign_on_time": "16:33",
+    "arrives_at": "17:33",
+    "from_station": "PUNE JN.",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "20953",
+    "train_name": "MAS ADI EXPRESS",
+    "direction": "UP",
+    "sign_on_time": "17:03",
+    "arrives_at": "18:03",
+    "from_station": "PUNE JN.",
+    "to_station": "VASAI ROAD",
+    "run_days": "1"
+   },
+   {
+    "train_no": "11018",
+    "train_name": "LTT-KIK EXP",
+    "direction": "UP",
+    "sign_on_time": "17:03",
+    "arrives_at": "18:03",
+    "from_station": "PUNE JN.",
+    "to_station": "LTT",
+    "run_days": "2"
+   },
+   {
+    "train_no": "22102",
+    "train_name": "LTT-MDU EXP",
+    "direction": "UP",
+    "sign_on_time": "17:03",
+    "arrives_at": "18:03",
+    "from_station": "PUNE JN.",
+    "to_station": "LTT",
+    "run_days": "6"
+   },
+   {
+    "train_no": "12128",
+    "train_name": "CSMT-PUNE INTERCITY EXP",
+    "direction": "UP",
+    "sign_on_time": "17:52",
+    "arrives_at": "18:52",
+    "from_station": "PUNE JN.",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12939",
+    "train_name": "JP-PUNE-JP EXP",
+    "direction": "UP",
+    "sign_on_time": "18:05",
+    "arrives_at": "19:05",
+    "from_station": "PUNE JN.",
+    "to_station": "VASAI ROAD",
+    "run_days": "3"
+   },
+   {
+    "train_no": "22106",
+    "train_name": "CSMT-PUNE INDRAYANI EXP",
+    "direction": "UP",
+    "sign_on_time": "18:35",
+    "arrives_at": "19:35",
+    "from_station": "PUNE JN.",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "16534",
+    "train_name": "BGKT-SBC-BGKT EXP",
+    "direction": "UP",
+    "sign_on_time": "19:08",
+    "arrives_at": "20:08",
+    "from_station": "PUNE JN.",
+    "to_station": "VASAI ROAD",
+    "run_days": "1"
+   },
+   {
+    "train_no": "16210",
+    "train_name": "All-MYS-All EXP",
+    "direction": "UP",
+    "sign_on_time": "19:08",
+    "arrives_at": "20:08",
+    "from_station": "PUNE JN.",
+    "to_station": "VASAI ROAD",
+    "run_days": "3"
+   },
+   {
+    "train_no": "16532",
+    "train_name": "All-SBC-All GARIB NAWAJ EXP",
+    "direction": "UP",
+    "sign_on_time": "19:08",
+    "arrives_at": "20:08",
+    "from_station": "PUNE JN.",
+    "to_station": "VASAI ROAD",
+    "run_days": "6"
+   },
+   {
+    "train_no": "20496",
+    "train_name": "BKN-MRJ-BKN SF EXP",
+    "direction": "UP",
+    "sign_on_time": "19:47",
+    "arrives_at": "20:47",
+    "from_station": "PUNE JN.",
+    "to_station": "VASAI ROAD",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "11092",
+    "train_name": "BHUJ-PUNE-BHUJ EXP",
+    "direction": "UP",
+    "sign_on_time": "20:13",
+    "arrives_at": "21:13",
+    "from_station": "PUNE JN.",
+    "to_station": "VASAI ROAD",
+    "run_days": "1"
+   },
+   {
+    "train_no": "20476",
+    "train_name": "BKN-MRJ-BKN SF EXP",
+    "direction": "UP",
+    "sign_on_time": "20:13",
+    "arrives_at": "21:13",
+    "from_station": "PUNE JN.",
+    "to_station": "VASAI ROAD",
+    "run_days": "2"
+   },
+   {
+    "train_no": "22186",
+    "train_name": "ADI-PUNE-ADI AHIMSA EXP",
+    "direction": "UP",
+    "sign_on_time": "20:13",
+    "arrives_at": "21:13",
+    "from_station": "PUNE JN.",
+    "to_station": "VASAI ROAD",
+    "run_days": "3"
+   },
+   {
+    "train_no": "11088",
+    "train_name": "VRL-PUNE-VRL EXP",
+    "direction": "UP",
+    "sign_on_time": "20:13",
+    "arrives_at": "21:13",
+    "from_station": "PUNE JN.",
+    "to_station": "VASAI ROAD",
+    "run_days": "4"
+   },
+   {
+    "train_no": "11050",
+    "train_name": "ADI-KOP-ADI EXP",
+    "direction": "UP",
+    "sign_on_time": "20:13",
+    "arrives_at": "21:13",
+    "from_station": "PUNE JN.",
+    "to_station": "VASAI ROAD",
+    "run_days": "6"
+   },
+   {
+    "train_no": "11090",
+    "train_name": "BGKT-PUNE-BGKT EXP",
+    "direction": "UP",
+    "sign_on_time": "20:13",
+    "arrives_at": "21:13",
+    "from_station": "PUNE JN.",
+    "to_station": "VASAI ROAD",
+    "run_days": "7"
+   },
+   {
+    "train_no": "12298",
+    "train_name": "ADI-PUNE-ADI DURONTO EXP",
+    "direction": "UP",
+    "sign_on_time": "21:03",
+    "arrives_at": "22:03",
+    "from_station": "PUNE JN.",
+    "to_station": "VASAI ROAD",
+    "run_days": "1"
+   },
+   {
+    "train_no": "12264",
+    "train_name": "NZM-PUNE-NZM DURNTO EXP",
+    "direction": "DN",
+    "sign_on_time": "00:08",
+    "arrives_at": "01:08",
+    "from_station": "KALYAN",
+    "to_station": "PUNE JN.",
+    "run_days": "2"
+   },
+   {
+    "train_no": "12219",
+    "train_name": "LTT-SC DURONTO EXP",
+    "direction": "DN",
+    "sign_on_time": "00:08",
+    "arrives_at": "01:08",
+    "from_station": "LTT",
+    "to_station": "PUNE JN.",
+    "run_days": "3"
+   },
+   {
+    "train_no": "12115",
+    "train_name": "CSMT-SUR SIDDHESHWAR EXP",
+    "direction": "DN",
+    "sign_on_time": "00:25",
+    "arrives_at": "01:25",
+    "from_station": "CSMT",
+    "to_station": "PUNE JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "22157",
+    "train_name": "CSMT-MAS-CSMT EXP",
+    "direction": "DN",
+    "sign_on_time": "00:48",
+    "arrives_at": "01:48",
+    "from_station": "CSMT",
+    "to_station": "PUNE JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "11027",
+    "train_name": "DR-STR-DR EXP",
+    "direction": "DN",
+    "sign_on_time": "01:23",
+    "arrives_at": "02:23",
+    "from_station": "DADAR",
+    "to_station": "PUNE JN.",
+    "run_days": "1"
+   },
+   {
+    "train_no": "11041",
+    "train_name": "DR-SNSI EXP",
+    "direction": "DN",
+    "sign_on_time": "01:23",
+    "arrives_at": "02:23",
+    "from_station": "DADAR",
+    "to_station": "PUNE JN.",
+    "run_days": "2"
+   },
+   {
+    "train_no": "11049",
+    "train_name": "ADI-KOP-ADI EXP",
+    "direction": "DN",
+    "sign_on_time": "05:25",
+    "arrives_at": "06:25",
+    "from_station": "KALYAN",
+    "to_station": "PUNE JN.",
+    "run_days": "1"
+   },
+   {
+    "train_no": "11087",
+    "train_name": "VRL-PUNE-VRL EXP",
+    "direction": "DN",
+    "sign_on_time": "05:25",
+    "arrives_at": "06:25",
+    "from_station": "KALYAN",
+    "to_station": "PUNE JN.",
+    "run_days": "7"
+   },
+   {
+    "train_no": "20475",
+    "train_name": "BKN-MRJ-BKN SF EXP",
+    "direction": "DN",
+    "sign_on_time": "05:25",
+    "arrives_at": "06:25",
+    "from_station": "KALYAN",
+    "to_station": "PUNE JN.",
+    "run_days": "2"
+   },
+   {
+    "train_no": "11089",
+    "train_name": "BGKT-PUNE-BGKT EXP",
+    "direction": "DN",
+    "sign_on_time": "05:25",
+    "arrives_at": "06:25",
+    "from_station": "KALYAN",
+    "to_station": "PUNE JN.",
+    "run_days": "3"
+   },
+   {
+    "train_no": "11091",
+    "train_name": "BHUJ-PUNE-BHUJ EXP",
+    "direction": "DN",
+    "sign_on_time": "05:25",
+    "arrives_at": "06:25",
+    "from_station": "KALYAN",
+    "to_station": "PUNE JN.",
+    "run_days": "4"
+   },
+   {
+    "train_no": "22185",
+    "train_name": "ADI-PUNE-ADI AHIMSA EXP",
+    "direction": "DN",
+    "sign_on_time": "05:25",
+    "arrives_at": "06:25",
+    "from_station": "KALYAN",
+    "to_station": "PUNE JN.",
+    "run_days": "5"
+   },
+   {
+    "train_no": "12297",
+    "train_name": "ADI-PUNE-ADI DURONTO EXP",
+    "direction": "DN",
+    "sign_on_time": "05:40",
+    "arrives_at": "06:40",
+    "from_station": "KALYAN",
+    "to_station": "PUNE JN.",
+    "run_days": "1"
+   },
+   {
+    "train_no": "12940",
+    "train_name": "JP-PUNE-JP EXP",
+    "direction": "DN",
+    "sign_on_time": "05:52",
+    "arrives_at": "06:52",
+    "from_station": "KALYAN",
+    "to_station": "PUNE JN.",
+    "run_days": "7"
+   },
+   {
+    "train_no": "22944",
+    "train_name": "CSMT-PNBE HUMSAFAR EXP",
+    "direction": "DN",
+    "sign_on_time": "06:50",
+    "arrives_at": "07:50",
+    "from_station": "KALYAN",
+    "to_station": "PUNE JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "22105",
+    "train_name": "CSMT-PUNE INDRAYANI EXP",
+    "direction": "DN",
+    "sign_on_time": "07:04",
+    "arrives_at": "08:04",
+    "from_station": "CSMT",
+    "to_station": "PUNE JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12127",
+    "train_name": "CSMT-PUNE INTERCITY EXP",
+    "direction": "DN",
+    "sign_on_time": "07:56",
+    "arrives_at": "08:56",
+    "from_station": "CSMT",
+    "to_station": "PUNE JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "18520",
+    "train_name": "LTT-VSKP EXP",
+    "direction": "DN",
+    "sign_on_time": "08:20",
+    "arrives_at": "09:20",
+    "from_station": "LTT",
+    "to_station": "PUNE JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "11007",
+    "train_name": "DECCAN EXP",
+    "direction": "DN",
+    "sign_on_time": "08:49",
+    "arrives_at": "09:49",
+    "from_station": "CSMT",
+    "to_station": "PUNE JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "11301",
+    "train_name": "CSMT-SBC UDYAN EXPRESS",
+    "direction": "DN",
+    "sign_on_time": "09:42",
+    "arrives_at": "10:42",
+    "from_station": "CSMT",
+    "to_station": "PUNE JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "11029",
+    "train_name": "KOYNA EXP",
+    "direction": "DN",
+    "sign_on_time": "10:21",
+    "arrives_at": "11:21",
+    "from_station": "CSMT",
+    "to_station": "PUNE JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "22159",
+    "train_name": "CSMT-MAS-CSMT EXP",
+    "direction": "DN",
+    "sign_on_time": "14:20",
+    "arrives_at": "15:20",
+    "from_station": "CSMT",
+    "to_station": "PUNE JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "20495",
+    "train_name": "BKN-MRJ-BKN SF EXP",
+    "direction": "DN",
+    "sign_on_time": "14:40",
+    "arrives_at": "15:40",
+    "from_station": "KALYAN",
+    "to_station": "PUNE JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "11017",
+    "train_name": "LTT-KIK EXP",
+    "direction": "DN",
+    "sign_on_time": "14:55",
+    "arrives_at": "15:55",
+    "from_station": "LTT",
+    "to_station": "PUNE JN.",
+    "run_days": "6"
+   },
+   {
+    "train_no": "22101",
+    "train_name": "LTT-MDU EXP",
+    "direction": "DN",
+    "sign_on_time": "14:55",
+    "arrives_at": "15:55",
+    "from_station": "LTT",
+    "to_station": "PUNE JN.",
+    "run_days": "3"
+   },
+   {
+    "train_no": "22179",
+    "train_name": "LTT-MAS SF EXPRESS",
+    "direction": "DN",
+    "sign_on_time": "14:55",
+    "arrives_at": "15:55",
+    "from_station": "LTT",
+    "to_station": "PUNE JN.",
+    "run_days": "1"
+   },
+   {
+    "train_no": "17222",
+    "train_name": "LTT-COA EXP",
+    "direction": "DN",
+    "sign_on_time": "14:55",
+    "arrives_at": "15:55",
+    "from_station": "LTT",
+    "to_station": "PUNE JN.",
+    "run_days": "4"
+   },
+   {
+    "train_no": "19667",
+    "train_name": "UDZ-MYS-UDZ HUMSAFAR EXP",
+    "direction": "DN",
+    "sign_on_time": "14:55",
+    "arrives_at": "15:55",
+    "from_station": "KALYAN",
+    "to_station": "PUNE JN.",
+    "run_days": "2"
+   },
+   {
+    "train_no": "11019",
+    "train_name": "KONARK EXP",
+    "direction": "DN",
+    "sign_on_time": "15:48",
+    "arrives_at": "16:48",
+    "from_station": "CSMT",
+    "to_station": "PUNE JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "22732",
+    "train_name": "NZM-TVC-NZM EXP",
+    "direction": "DN",
+    "sign_on_time": "16:05",
+    "arrives_at": "17:05",
+    "from_station": "CSMT",
+    "to_station": "PUNE JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "14806",
+    "train_name": "BME-YPR-BME EXP",
+    "direction": "DN",
+    "sign_on_time": "16:19",
+    "arrives_at": "17:19",
+    "from_station": "KALYAN",
+    "to_station": "PUNE JN.",
+    "run_days": "5"
+   },
+   {
+    "train_no": "16588",
+    "train_name": "BKN-YPR-BKN EXP",
+    "direction": "DN",
+    "sign_on_time": "16:19",
+    "arrives_at": "17:19",
+    "from_station": "KALYAN",
+    "to_station": "PUNE JN.",
+    "run_days": "1"
+   },
+   {
+    "train_no": "22497",
+    "train_name": "SGNR-TPI-SGNR HUMSAFAR EXP",
+    "direction": "DN",
+    "sign_on_time": "16:19",
+    "arrives_at": "17:19",
+    "from_station": "KALYAN",
+    "to_station": "PUNE JN.",
+    "run_days": "2"
+   },
+   {
+    "train_no": "12494",
+    "train_name": "NZM-MRJ-NZM DARSHAN EXPRESS",
+    "direction": "DN",
+    "sign_on_time": "16:19",
+    "arrives_at": "17:19",
+    "from_station": "KALYAN",
+    "to_station": "PUNE JN.",
+    "run_days": "6"
+   },
+   {
+    "train_no": "22225",
+    "train_name": "CSMT-SUR-CSMT VANDE BHARAT",
+    "direction": "DN",
+    "sign_on_time": "17:20",
+    "arrives_at": "18:20",
+    "from_station": "CSMT",
+    "to_station": "PUNE JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "22920",
+    "train_name": "ADI-MAS Humsafar express",
+    "direction": "DN",
+    "sign_on_time": "17:43",
+    "arrives_at": "18:43",
+    "from_station": "KALYAN",
+    "to_station": "PUNE JN.",
+    "run_days": "1"
+   },
+   {
+    "train_no": "20920",
+    "train_name": "Chennai-ekta nagar SF express",
+    "direction": "DN",
+    "sign_on_time": "17:43",
+    "arrives_at": "18:43",
+    "from_station": "KALYAN",
+    "to_station": "PUNE JN.",
+    "run_days": "3"
+   },
+   {
+    "train_no": "20954",
+    "train_name": "Chennai-ADI SF express",
+    "direction": "DN",
+    "sign_on_time": "17:43",
+    "arrives_at": "18:43",
+    "from_station": "KALYAN",
+    "to_station": "PUNE JN.",
+    "run_days": "6"
+   },
+   {
+    "train_no": "20668",
+    "train_name": "Yashvantpur-Jaipur express",
+    "direction": "DN",
+    "sign_on_time": "17:43",
+    "arrives_at": "18:43",
+    "from_station": "KALYAN",
+    "to_station": "PUNE JN.",
+    "run_days": "7"
+   },
+   {
+    "train_no": "12125",
+    "train_name": "CSMT-PUNE PRAGATI EXP",
+    "direction": "DN",
+    "sign_on_time": "17:53",
+    "arrives_at": "18:53",
+    "from_station": "CSMT",
+    "to_station": "PUNE JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12123",
+    "train_name": "CSMT-PUNE DECCAN QUEEN",
+    "direction": "DN",
+    "sign_on_time": "18:22",
+    "arrives_at": "19:22",
+    "from_station": "CSMT",
+    "to_station": "PUNE JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "16613",
+    "train_name": "RJT-CBE-RJT EXP",
+    "direction": "DN",
+    "sign_on_time": "18:50",
+    "arrives_at": "19:50",
+    "from_station": "KALYAN",
+    "to_station": "PUNE JN.",
+    "run_days": "7"
+   },
+   {
+    "train_no": "22717",
+    "train_name": "Rajkot-secundarabad SF express",
+    "direction": "DN",
+    "sign_on_time": "18:50",
+    "arrives_at": "19:50",
+    "from_station": "KALYAN",
+    "to_station": "PUNE JN.",
+    "run_days": "1"
+   },
+   {
+    "train_no": "12756",
+    "train_name": "BVC-COA-BVC EXP",
+    "direction": "DN",
+    "sign_on_time": "18:50",
+    "arrives_at": "19:50",
+    "from_station": "KALYAN",
+    "to_station": "PUNE JN.",
+    "run_days": "6"
+   },
+   {
+    "train_no": "20968",
+    "train_name": "Porbundar-secundarabad SF express",
+    "direction": "DN",
+    "sign_on_time": "18:50",
+    "arrives_at": "19:50",
+    "from_station": "KALYAN",
+    "to_station": "PUNE JN.",
+    "run_days": "2"
+   },
+   {
+    "train_no": "19568",
+    "train_name": "OKHA-TN-OKHA VIVEK EXPRESS",
+    "direction": "DN",
+    "sign_on_time": "18:50",
+    "arrives_at": "19:50",
+    "from_station": "KALYAN",
+    "to_station": "PUNE JN.",
+    "run_days": "5"
+   },
+   {
+    "train_no": "11009",
+    "train_name": "SINHAGAD EXP",
+    "direction": "DN",
+    "sign_on_time": "19:28",
+    "arrives_at": "20:28",
+    "from_station": "CSMT",
+    "to_station": "PUNE JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12163",
+    "train_name": "LTT-MAS EXP",
+    "direction": "DN",
+    "sign_on_time": "20:12",
+    "arrives_at": "21:12",
+    "from_station": "LTT",
+    "to_station": "PUNE JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "17318",
+    "train_name": "DR-UBL-DR EXP",
+    "direction": "DN",
+    "sign_on_time": "22:07",
+    "arrives_at": "23:07",
+    "from_station": "DADAR",
+    "to_station": "PUNE JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "17411",
+    "train_name": "CSMT-KOP MAHALAXMI EXP",
+    "direction": "DN",
+    "sign_on_time": "22:19",
+    "arrives_at": "23:19",
+    "from_station": "CSMT",
+    "to_station": "PUNE JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "16331",
+    "train_name": "LTT-TVC EXP",
+    "direction": "DN",
+    "sign_on_time": "22:29",
+    "arrives_at": "23:29",
+    "from_station": "CSMT",
+    "to_station": "PUNE JN.",
+    "run_days": "7"
+   },
+   {
+    "train_no": "16339",
+    "train_name": "LTT-NCJ EXP",
+    "direction": "DN",
+    "sign_on_time": "22:29",
+    "arrives_at": "23:29",
+    "from_station": "CSMT",
+    "to_station": "PUNE JN.",
+    "run_days": "2"
+   },
+   {
+    "train_no": "16351",
+    "train_name": "LTT-NCJ EXP",
+    "direction": "DN",
+    "sign_on_time": "22:29",
+    "arrives_at": "23:29",
+    "from_station": "CSMT",
+    "to_station": "LONAVLA",
+    "run_days": "1"
+   },
+   {
+    "train_no": "22107",
+    "train_name": "CSMT-LUR-CSMT EXP",
+    "direction": "DN",
+    "sign_on_time": "22:40",
+    "arrives_at": "23:40",
+    "from_station": "CSMT",
+    "to_station": "PUNE JN.",
+    "run_days": "1"
+   },
+   {
+    "train_no": "22143",
+    "train_name": "CSMT-BIDAR EXP",
+    "direction": "DN",
+    "sign_on_time": "22:40",
+    "arrives_at": "23:40",
+    "from_station": "CSMT",
+    "to_station": "PUNE JN.",
+    "run_days": "3"
+   },
+   {
+    "train_no": "11005",
+    "train_name": "CHALUKYA EXP",
+    "direction": "DN",
+    "sign_on_time": "22:57",
+    "arrives_at": "23:57",
+    "from_station": "DADAR",
+    "to_station": "PUNE JN.",
+    "run_days": "1"
+   },
+   {
+    "train_no": "11021",
+    "train_name": "DR-TEN EXP",
+    "direction": "DN",
+    "sign_on_time": "22:57",
+    "arrives_at": "23:57",
+    "from_station": "DADAR",
+    "to_station": "PUNE JN.",
+    "run_days": "2"
+   },
+   {
+    "train_no": "11035",
+    "train_name": "SHARAVATI EXP",
+    "direction": "DN",
+    "sign_on_time": "22:57",
+    "arrives_at": "23:57",
+    "from_station": "DADAR",
+    "to_station": "PUNE JN.",
+    "run_days": "4"
+   },
+   {
+    "train_no": "11139",
+    "train_name": "CSMT-HPT EXP",
+    "direction": "DN",
+    "sign_on_time": "23:11",
+    "arrives_at": "00:11",
+    "from_station": "CSMT",
+    "to_station": "PUNE JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12701",
+    "train_name": "CSMT-HYB HUSSAINSAGAR EXP",
+    "direction": "DN",
+    "sign_on_time": "23:30",
+    "arrives_at": "00:30",
+    "from_station": "CSMT",
+    "to_station": "PUNE JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "16209",
+    "train_name": "All-MYS-All EXP",
+    "direction": "DN",
+    "sign_on_time": "23:42",
+    "arrives_at": "00:42",
+    "from_station": "KALYAN",
+    "to_station": "PUNE JN.",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "16531",
+    "train_name": "All-SBC-All GARIB NAWAJ EXP",
+    "direction": "DN",
+    "sign_on_time": "23:42",
+    "arrives_at": "00:42",
+    "from_station": "KALYAN",
+    "to_station": "PUNE JN.",
+    "run_days": "1"
+   },
+   {
+    "train_no": "16533",
+    "train_name": "BGKT-SBC-BGKT EXP",
+    "direction": "DN",
+    "sign_on_time": "23:42",
+    "arrives_at": "00:42",
+    "from_station": "KALYAN",
+    "to_station": "PUNE JN.",
+    "run_days": "3"
+   },
+   {
+    "train_no": "11013",
+    "train_name": "LTT-CBE Coimbatore express",
+    "direction": "DN",
+    "sign_on_time": "23:56",
+    "arrives_at": "00:56",
+    "from_station": "LTT",
+    "to_station": "PUNE JN.",
+    "run_days": "DAILY"
+   }
+  ],
+  "ROHA": [
+   {
+    "train_no": "22114",
+    "train_name": "LTT-TVCN SF EXP",
+    "direction": "UP",
+    "sign_on_time": "00:15",
+    "arrives_at": "01:15",
+    "from_station": "KHED",
+    "to_station": "LTT",
+    "run_days": "2"
+   },
+   {
+    "train_no": "22149",
+    "train_name": "PUNE-ERS-PUNE EXP",
+    "direction": "UP",
+    "sign_on_time": "00:15",
+    "arrives_at": "01:15",
+    "from_station": "RATNAGIRI",
+    "to_station": "ROHA",
+    "run_days": "3"
+   },
+   {
+    "train_no": "22655",
+    "train_name": "Ernakulan jn-Hazrat Nizamuddin SF express",
+    "direction": "UP",
+    "sign_on_time": "00:40",
+    "arrives_at": "01:40",
+    "from_station": "RATNAGIRI",
+    "to_station": "VASAI ROAD",
+    "run_days": "4"
+   },
+   {
+    "train_no": "22653",
+    "train_name": "NZM-TVC-NZM SF EXP",
+    "direction": "UP",
+    "sign_on_time": "00:40",
+    "arrives_at": "01:40",
+    "from_station": "RATNAGIRI",
+    "to_station": "VASAI ROAD",
+    "run_days": "7"
+   },
+   {
+    "train_no": "12134",
+    "train_name": "CSMT-MAJN EXP",
+    "direction": "UP",
+    "sign_on_time": "01:00",
+    "arrives_at": "02:00",
+    "from_station": "KHED",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "20112",
+    "train_name": "CSMT-MAO KONKAN KANYA EXP",
+    "direction": "UP",
+    "sign_on_time": "01:50",
+    "arrives_at": "02:50",
+    "from_station": "KHED",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "11004",
+    "train_name": "TUTARI EXP",
+    "direction": "UP",
+    "sign_on_time": "02:33",
+    "arrives_at": "03:33",
+    "from_station": "KHED",
+    "to_station": "DADAR",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12620",
+    "train_name": "LTT-MAQ MATSYAGANDHA EXP",
+    "direction": "UP",
+    "sign_on_time": "02:55",
+    "arrives_at": "03:55",
+    "from_station": "KHED",
+    "to_station": "LTT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12741",
+    "train_name": "PNBE-VSG-PNBE EXP",
+    "direction": "UP",
+    "sign_on_time": "04:00",
+    "arrives_at": "05:00",
+    "from_station": "RATNAGIRI",
+    "to_station": "ROHA",
+    "run_days": "4"
+   },
+   {
+    "train_no": "12202",
+    "train_name": "LTT-TVCN GARIB RATH",
+    "direction": "UP",
+    "sign_on_time": "08:00",
+    "arrives_at": "09:00",
+    "from_station": "KHED",
+    "to_station": "LTT",
+    "run_days": "5"
+   },
+   {
+    "train_no": "12217",
+    "train_name": "CDG-TVCN-CDG KERLA S KRANTI EXP",
+    "direction": "UP",
+    "sign_on_time": "08:35",
+    "arrives_at": "09:35",
+    "from_station": "RATNAGIRI",
+    "to_station": "VASAI ROAD",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "22659",
+    "train_name": "TVCN-Rishikesh SF express",
+    "direction": "UP",
+    "sign_on_time": "08:35",
+    "arrives_at": "09:35",
+    "from_station": "RATNAGIRI",
+    "to_station": "VASAI ROAD",
+    "run_days": "6"
+   },
+   {
+    "train_no": "12483",
+    "train_name": "ASR-TVCN-ASR EXP",
+    "direction": "UP",
+    "sign_on_time": "08:35",
+    "arrives_at": "09:35",
+    "from_station": "RATNAGIRI",
+    "to_station": "VASAI ROAD",
+    "run_days": "4"
+   },
+   {
+    "train_no": "50104",
+    "train_name": "DIVA-RATNAGIRI-DIVA PASS",
+    "direction": "UP",
+    "sign_on_time": "10:05",
+    "arrives_at": "11:05",
+    "from_station": "RATNAGIRI",
+    "to_station": "ROHA",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12617",
+    "train_name": "NZM-ERS-NZM MANGLA LKSDP EXP",
+    "direction": "UP",
+    "sign_on_time": "10:45",
+    "arrives_at": "11:45",
+    "from_station": "RATNAGIRI",
+    "to_station": "ROHA",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "20923",
+    "train_name": "Thirunelveli-Gandhidham Humsafar express",
+    "direction": "UP",
+    "sign_on_time": "11:25",
+    "arrives_at": "12:25",
+    "from_station": "RATNAGIRI",
+    "to_station": "VASAI ROAD",
+    "run_days": "5"
+   },
+   {
+    "train_no": "19577",
+    "train_name": "JAM-TEN-JAM EXP",
+    "direction": "UP",
+    "sign_on_time": "11:25",
+    "arrives_at": "12:25",
+    "from_station": "RATNAGIRI",
+    "to_station": "VASAI ROAD",
+    "run_days": "2"
+   },
+   {
+    "train_no": "22630",
+    "train_name": "LTT-TEN-LTT EXP",
+    "direction": "UP",
+    "sign_on_time": "11:30",
+    "arrives_at": "12:30",
+    "from_station": "KHED",
+    "to_station": "DADAR",
+    "run_days": "4"
+   },
+   {
+    "train_no": "20931",
+    "train_name": "TVCN-Indore SF express",
+    "direction": "UP",
+    "sign_on_time": "11:30",
+    "arrives_at": "12:30",
+    "from_station": "RATNAGIRI",
+    "to_station": "VASAI ROAD",
+    "run_days": "6"
+   },
+   {
+    "train_no": "20909",
+    "train_name": "TVCN-Porbundar SF express",
+    "direction": "UP",
+    "sign_on_time": "11:30",
+    "arrives_at": "12:30",
+    "from_station": "RATNAGIRI",
+    "to_station": "VASAI ROAD",
+    "run_days": "1"
+   },
+   {
+    "train_no": "22476",
+    "train_name": "HSR-CBE-HSR AC EXP",
+    "direction": "UP",
+    "sign_on_time": "11:30",
+    "arrives_at": "12:30",
+    "from_station": "RATNAGIRI",
+    "to_station": "VASAI ROAD",
+    "run_days": "7"
+   },
+   {
+    "train_no": "16346",
+    "train_name": "LTT-TVC NETRAVATI EXP",
+    "direction": "UP",
+    "sign_on_time": "13:05",
+    "arrives_at": "14:05",
+    "from_station": "KHED",
+    "to_station": "LTT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12224",
+    "train_name": "LTT-ERS DURONTO EXP",
+    "direction": "UP",
+    "sign_on_time": "15:20",
+    "arrives_at": "16:20",
+    "from_station": "KHED",
+    "to_station": "LTT",
+    "run_days": "1"
+   },
+   {
+    "train_no": "22413",
+    "train_name": "NZM-MAO-NZM RAJDHANI EXP",
+    "direction": "UP",
+    "sign_on_time": "16:05",
+    "arrives_at": "17:05",
+    "from_station": "RATNAGIRI",
+    "to_station": "VASAI ROAD",
+    "run_days": "1"
+   },
+   {
+    "train_no": "22633",
+    "train_name": "TVC-Hazrat Nizamuddin SF express",
+    "direction": "UP",
+    "sign_on_time": "16:05",
+    "arrives_at": "17:05",
+    "from_station": "RATNAGIRI",
+    "to_station": "VASAI ROAD",
+    "run_days": "4"
+   },
+   {
+    "train_no": "12431",
+    "train_name": "NZM-TVC-NZM RAJDHANI EXP",
+    "direction": "UP",
+    "sign_on_time": "16:05",
+    "arrives_at": "17:05",
+    "from_station": "RATNAGIRI",
+    "to_station": "VASAI ROAD",
+    "run_days": "3"
+   },
+   {
+    "train_no": "10106",
+    "train_name": "DIVA-SAWANTWADI EXP",
+    "direction": "UP",
+    "sign_on_time": "16:35",
+    "arrives_at": "17:35",
+    "from_station": "RATNAGIRI",
+    "to_station": "ROHA",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "10104",
+    "train_name": "Mandovi Express",
+    "direction": "UP",
+    "sign_on_time": "17:00",
+    "arrives_at": "18:00",
+    "from_station": "KHED",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "22907",
+    "train_name": "Madgaon-Hapa SF express",
+    "direction": "UP",
+    "sign_on_time": "17:45",
+    "arrives_at": "18:45",
+    "from_station": "RATNAGIRI",
+    "to_station": "VASAI ROAD",
+    "run_days": "5"
+   },
+   {
+    "train_no": "12449",
+    "train_name": "CDG-MAO-CDG GOA SMPRK KRANT",
+    "direction": "UP",
+    "sign_on_time": "17:45",
+    "arrives_at": "18:45",
+    "from_station": "RATNAGIRI",
+    "to_station": "VASAI ROAD",
+    "run_days": "2"
+   },
+   {
+    "train_no": "12977",
+    "train_name": "All-ERS-All MARU SAGAR EXP",
+    "direction": "UP",
+    "sign_on_time": "17:45",
+    "arrives_at": "18:45",
+    "from_station": "RATNAGIRI",
+    "to_station": "VASAI ROAD",
+    "run_days": "1"
+   },
+   {
+    "train_no": "10116",
+    "train_name": "Bandra-Madgaon express",
+    "direction": "UP",
+    "sign_on_time": "18:05",
+    "arrives_at": "19:05",
+    "from_station": "RATNAGIRI",
+    "to_station": "VASAI ROAD",
+    "run_days": "2"
+   },
+   {
+    "train_no": "16312",
+    "train_name": "SGNR-TVCN express",
+    "direction": "UP",
+    "sign_on_time": "19:05",
+    "arrives_at": "20:05",
+    "from_station": "RATNAGIRI",
+    "to_station": "VASAI ROAD",
+    "run_days": "7"
+   },
+   {
+    "train_no": "16334",
+    "train_name": "VRL-TVC-VRL EXP",
+    "direction": "UP",
+    "sign_on_time": "19:05",
+    "arrives_at": "20:05",
+    "from_station": "RATNAGIRI",
+    "to_station": "VASAI ROAD",
+    "run_days": "2"
+   },
+   {
+    "train_no": "16336",
+    "train_name": "GIMB-NCJ-GIMB EXP",
+    "direction": "UP",
+    "sign_on_time": "19:05",
+    "arrives_at": "20:05",
+    "from_station": "RATNAGIRI",
+    "to_station": "VASAI ROAD",
+    "run_days": "3"
+   },
+   {
+    "train_no": "16338",
+    "train_name": "OKHA-ERS-OKHA EXP",
+    "direction": "UP",
+    "sign_on_time": "19:05",
+    "arrives_at": "20:05",
+    "from_station": "RATNAGIRI",
+    "to_station": "VASAI ROAD",
+    "run_days": "4"
+   },
+   {
+    "train_no": "19259",
+    "train_name": "BVC-TVCN-BVC EXP",
+    "direction": "UP",
+    "sign_on_time": "19:10",
+    "arrives_at": "20:10",
+    "from_station": "RATNAGIRI",
+    "to_station": "VASAI ROAD",
+    "run_days": "5"
+   },
+   {
+    "train_no": "22230",
+    "train_name": "CSMT-MAO-CSMT VANDE BHARAT",
+    "direction": "UP",
+    "sign_on_time": "19:20",
+    "arrives_at": "20:20",
+    "from_station": "KHED",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12283",
+    "train_name": "NZM-ERS-NZM DURONTO EXP",
+    "direction": "UP",
+    "sign_on_time": "19:50",
+    "arrives_at": "20:50",
+    "from_station": "RATNAGIRI",
+    "to_station": "VASAI ROAD",
+    "run_days": "3"
+   },
+   {
+    "train_no": "11100",
+    "train_name": "LTT-MAO EXP",
+    "direction": "UP",
+    "sign_on_time": "19:55",
+    "arrives_at": "20:55",
+    "from_station": "KHED",
+    "to_station": "LTT",
+    "run_days": "2"
+   },
+   {
+    "train_no": "12052",
+    "train_name": "CSMT-MAO JANSHATBDI EXP",
+    "direction": "UP",
+    "sign_on_time": "20:25",
+    "arrives_at": "21:25",
+    "from_station": "KHED",
+    "to_station": "CSMT",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "22120",
+    "train_name": "LTT-MAO-LTT AC EXP",
+    "direction": "UP",
+    "sign_on_time": "20:50",
+    "arrives_at": "21:50",
+    "from_station": "KHED",
+    "to_station": "CSMT",
+    "run_days": "2"
+   },
+   {
+    "train_no": "22116",
+    "train_name": "LTT-KRMI EXP",
+    "direction": "UP",
+    "sign_on_time": "20:50",
+    "arrives_at": "21:50",
+    "from_station": "KHED",
+    "to_station": "LTT",
+    "run_days": "4"
+   },
+   {
+    "train_no": "20111",
+    "train_name": "CSMT-MAO KONKAN KANYA EXP",
+    "direction": "DN",
+    "sign_on_time": "00:55",
+    "arrives_at": "01:55",
+    "from_station": "CSMT",
+    "to_station": "RATNAGIRI",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "11003",
+    "train_name": "TUTARI EXP",
+    "direction": "DN",
+    "sign_on_time": "01:55",
+    "arrives_at": "02:55",
+    "from_station": "DADAR",
+    "to_station": "KHED",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "22115",
+    "train_name": "LTT-KRMI EXP",
+    "direction": "DN",
+    "sign_on_time": "02:15",
+    "arrives_at": "03:15",
+    "from_station": "LTT",
+    "to_station": "RATNAGIRI",
+    "run_days": "4"
+   },
+   {
+    "train_no": "11099",
+    "train_name": "LTT-MAO EXP",
+    "direction": "DN",
+    "sign_on_time": "02:20",
+    "arrives_at": "03:20",
+    "from_station": "LTT",
+    "to_station": "RATNAGIRI",
+    "run_days": "2"
+   },
+   {
+    "train_no": "22229",
+    "train_name": "CSMT-MAO-CSMT VANDE BHARAT",
+    "direction": "DN",
+    "sign_on_time": "06:30",
+    "arrives_at": "07:30",
+    "from_station": "CSMT",
+    "to_station": "RATNAGIRI",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12051",
+    "train_name": "CSMT-MAO JANSHATBDI EXP",
+    "direction": "DN",
+    "sign_on_time": "07:10",
+    "arrives_at": "08:10",
+    "from_station": "CSMT",
+    "to_station": "RATNAGIRI",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "22119",
+    "train_name": "LTT-MAO-LTT AC EXP",
+    "direction": "DN",
+    "sign_on_time": "07:30",
+    "arrives_at": "08:30",
+    "from_station": "CSMT",
+    "to_station": "RATNAGIRI",
+    "run_days": "2"
+   },
+   {
+    "train_no": "10103",
+    "train_name": "Mandovi Express",
+    "direction": "DN",
+    "sign_on_time": "09:10",
+    "arrives_at": "10:10",
+    "from_station": "CSMT",
+    "to_station": "RATNAGIRI",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "16345",
+    "train_name": "LTT-TVC NETRAVATI EXP",
+    "direction": "DN",
+    "sign_on_time": "13:15",
+    "arrives_at": "14:15",
+    "from_station": "LTT",
+    "to_station": "RATNAGIRI",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12619",
+    "train_name": "LTT-MAQ MATSYAGANDHA EXP",
+    "direction": "DN",
+    "sign_on_time": "16:50",
+    "arrives_at": "17:50",
+    "from_station": "LTT",
+    "to_station": "RATNAGIRI",
+    "run_days": "DAILY"
+   },
+   {
+    "train_no": "12201",
+    "train_name": "LTT-TVCN GARIB RATH",
+    "direction": "DN",
+    "sign_on_time": "18:35",
+    "arrives_at": "19:35",
+    "from_station": "LTT",
+    "to_station": "RATNAGIRI",
+    "run_days": "1"
+   },
+   {
+    "train_no": "22113",
+    "train_name": "LTT-TVCN SF EXP",
+    "direction": "DN",
+    "sign_on_time": "18:35",
+    "arrives_at": "19:35",
+    "from_station": "LTT",
+    "to_station": "RATNAGIRI",
+    "run_days": "2"
+   },
+   {
+    "train_no": "12223",
+    "train_name": "LTT-ERS DURONTO EXP",
+    "direction": "DN",
+    "sign_on_time": "22:05",
+    "arrives_at": "23:05",
+    "from_station": "LTT",
+    "to_station": "RATNAGIRI",
+    "run_days": "2"
+   },
+   {
+    "train_no": "22629",
+    "train_name": "LTT-TEN-DR EXP",
+    "direction": "DN",
+    "sign_on_time": "22:30",
+    "arrives_at": "23:30",
+    "from_station": "DADAR",
+    "to_station": "RATNAGIRI",
+    "run_days": "4"
+   },
+   {
+    "train_no": "12133",
+    "train_name": "CSMT-MAJN EXP",
+    "direction": "DN",
+    "sign_on_time": "23:50",
+    "arrives_at": "00:50",
+    "from_station": "CSMT",
+    "to_station": "RATNAGIRI",
+    "run_days": "DAILY"
+   }
+  ]
+ }
+}

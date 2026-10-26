@@ -1,0 +1,119 @@
+<%- await include('_nav') %>
+
+<%# WHICH BUILDING — OPTIONAL, unlike cleaning and linen.
+    A round is done in one building and linen sits on one shelf, so those
+    cannot be recorded without saying which. A complaint may genuinely be about
+    the kitchen that serves all four, or about the running room as a whole, and
+    forcing a building would make somebody pick one falsely. So the filter is
+    here and the field below is offered, not demanded. %>
+<% if (blocks && blocks.length) { %>
+  <div class="card blockbar">
+    <div class="bb-row">
+      <span class="bb-lab">Building</span>
+        <a class="btn <%= wantBlock === null ? '' : 'ghost' %> small"
+           href="<%= url('/records/complaints') %>?rr=<%= rr.id %>&date=<%= date %>">All of <%= rr.name %></a>
+        <% blocks.forEach(function(b){ %>
+          <a class="btn <%= wantBlock === b.id ? '' : 'ghost' %> small"
+             href="<%= url('/records/complaints') %>?rr=<%= rr.id %>&date=<%= date %>&block=<%= b.id %>"><%= b.name %>
+             <% if (b.open) { %><span class="pill r" style="margin-left:5px"><%= b.open %> open</span><% } %></a>
+        <% }); %>
+    </div>
+  </div>
+  <div class="blocknote">
+    <a class="btn <%= wantBlock === 'none' ? '' : 'ghost' %> small"
+           href="<%= url('/records/complaints') %>?rr=<%= rr.id %>&date=<%= date %>&block=none">No building named
+           <% if (openNoBlock) { %><span class="pill" style="margin-left:5px"><%= openNoBlock %> open</span><% } %></a>
+  </div>
+<% } %>
+
+
+<div class="grid" style="grid-template-columns:1.5fr 1fr">
+  <div class="card">
+    <div class="card-h"><h3>Complaint book — <%= rr.name %></h3>
+      <span class="sub">open items first · the tender requires this round the clock at the reception counter</span></div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>Raised</th><th>By</th><th>Category</th><th>Complaint</th><th>Severity</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+      <% rows.forEach(function(c){ %>
+        <tr>
+          <td class="tnum"><%= String(c.raised_at).slice(0,16) %></td>
+          <td><%= c.raised_by_name || '—' %>
+            <% if (blocks && blocks.length) { %>
+              <div class="muted" style="font-size:10.5px"><% if (c.block_name) { %><%= c.block_name %><%
+                if (!c.block_live) { %> <span class="st warn" style="font-size:10px"><span class="dot"></span>off the register</span><% } %>
+                <% } else { %>no building named<% } %></div>
+            <% } %></td>
+          <td class="muted" style="font-size:11.5px"><%= catLabel(c.category) || '—' %>
+            <% if (c.category && !isContractors(c.category)) { %>
+              <div style="font-size:10.5px">Railway's own — not against the contractor</div>
+            <% } %>
+          </td>
+          <td style="font-size:12.2px"><%= c.description %>
+            <% if (c.closure_remarks) { %><div class="muted" style="font-size:11px;margin-top:3px">Closed: <%= c.closure_remarks %></div><% } %></td>
+          <td><% if (c.severity === 'critical') { %><span class="st crit"><span class="dot"></span>Critical</span>
+              <% } else if (c.severity === 'major') { %><span class="st warn"><span class="dot"></span>Major</span>
+              <% } else { %><span class="muted">Normal</span><% } %></td>
+          <td><% if (c.status === 'open') { %><span class="st warn"><span class="dot"></span>Open</span>
+              <% } else { %><span class="st good"><span class="dot"></span>Closed</span><% } %></td>
+          <td>
+            <% if (c.status === 'open' && can('feedback.close')) { %>
+              <form method="post" action="<%= url('/records/complaints/' + c.id + '/close') %>" class="row" style="gap:5px">
+                <input class="fi" name="closure_remarks" placeholder="Action taken" style="width:150px;padding:4px 7px;font-size:12px" required>
+                <button class="btn small" type="submit">Close</button>
+              </form>
+            <% } %>
+          </td>
+        </tr>
+      <% }); %>
+      <% if (!rows.length) { %><tr><td colspan="7" class="muted">No complaints recorded.</td></tr><% } %>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h3>Record a complaint</h3></div>
+    <div class="card-b">
+      <% if (can('stay.manage')) { %>
+      <form method="post" action="<%= url('/records/complaints') %>">
+        <input type="hidden" name="rr" value="<%= rr.id %>"><input type="hidden" name="date" value="<%= date %>">
+        <% if (blocks && blocks.length) { %>
+          <div style="margin-bottom:10px"><label class="fl">Which building</label>
+            <select class="fi" name="block">
+              <option value="">— the running room as a whole —</option>
+              <% blocks.forEach(function(b){ %>
+                <option value="<%= b.id %>" <%= wantBlock === b.id ? 'selected' : '' %>><%= b.name %></option>
+              <% }); %>
+            </select>
+            <div class="muted" style="font-size:11px;margin-top:4px">
+              Leave this as the running room where the complaint is about something shared —
+              the kitchen serves all four buildings.
+            </div></div>
+        <% } %>
+        <div style="margin-bottom:10px"><label class="fl">Raised by</label>
+          <input class="fi" name="raised_by_name" placeholder="Crew name, or leave blank"></div>
+        <div style="margin-bottom:10px"><label class="fl">What it is about</label>
+          <select class="fi" name="category" id="compcat" required>
+            <option value="">— choose —</option>
+            <% categories.forEach(function(c){ %>
+              <option value="<%= c.code %>" data-hint="<%= c.hint %>" data-contractor="<%= c.contractor ? 1 : 0 %>"><%= c.label %></option>
+            <% }); %>
+          </select>
+          <div class="muted" style="font-size:11px;margin-top:4px" id="compcathint">
+            Maintenance items — geyser, air conditioning, water, electrical — are the Railway's own and are
+            counted separately, so the contractor is not marked down for them.
+          </div>
+        </div>
+        <div style="margin-bottom:10px"><label class="fl">Complaint</label>
+          <textarea class="fi" name="description" rows="4" required></textarea></div>
+        <div style="margin-bottom:12px"><label class="fl">Severity</label>
+          <select class="fi" name="severity">
+            <option value="normal">Normal</option><option value="major">Major</option><option value="critical">Critical</option>
+          </select></div>
+        <button class="btn" type="submit">Record</button>
+      </form>
+      <% } else { %>
+        <div class="muted" style="font-size:12.5px">Your role has view access only.</div>
+      <% } %>
+    </div>
+  </div>
+</div>

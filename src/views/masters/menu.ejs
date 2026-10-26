@@ -1,0 +1,132 @@
+<%
+/* The rate board master.
+
+   Table A's rates are the tender's own and are held in meal_rates. Table B's
+   are not in the tender at all — the cost column is printed blank and the terms
+   leave the figures to the Railway. So this screen is where they arrive, and
+   every one of them carries the order that set it. */
+const fmt = n => Number(n).toFixed(2);
+const editable = can('menu.manage');
+%>
+
+<% if (saved !== null) { %>
+  <div class="note" style="margin-bottom:14px">
+    <b>Rate board updated.</b> <%= saved %> rate<%= saved === 1 ? '' : 's' %> recorded.
+    Earlier rates are kept — a complaint is judged against the board that was up at the time.
+  </div>
+<% } %>
+
+<% if (unpriced) { %>
+  <div class="note warn" style="margin-bottom:14px">
+    <b><%= unpriced %> of the <%= tableB.length %> optional items have no rate on record.</b>
+    The tender prints Table B with its cost column blank: the rates "shall be fixed by Railways … on the basis
+    of no-profit, no-loss" and displayed in the dining hall. Until the division supplies them,
+    clause <b>B6</b> — overcharging of food items — has no price to be tested against, and the rate board
+    printed for the wall says <i>rate not yet fixed</i> against each of them.
+  </div>
+<% } %>
+
+<div class="card" style="margin-bottom:14px">
+  <div class="card-h"><h3>Table A — the subsidised meals</h3>
+    <span class="sub">the tender's own rates · held since stage 20, shown here for completeness</span></div>
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr><th style="width:170px">Item</th><th>Contents as the tender states them</th></tr></thead>
+    <tbody>
+    <% tableA.forEach(function(i){ %>
+      <tr><td><b><%= i.name %></b><div class="muted" style="font-size:11px"><%= i.unit || '' %></div></td>
+        <td style="font-size:12.2px"><%= i.contents %></td></tr>
+    <% }); %>
+    </tbody>
+  </table></div>
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr><th>Meal</th><th>Effective from</th><th class="num">Railway subsidy</th>
+      <th class="num">Full cost</th><th>Authority</th></tr></thead>
+    <tbody>
+    <% mealRates.forEach(function(r){ %>
+      <tr>
+        <td><b style="text-transform:capitalize"><%= r.meal_type %></b></td>
+        <td class="tnum"><%= String(r.effective_from).slice(0,10) %></td>
+        <td class="num tnum">₹<%= fmt(r.subsidised_rate) %></td>
+        <td class="num tnum">₹<%= fmt(r.full_rate) %></td>
+        <td class="muted" style="font-size:11.5px"><%= r.source_ref || '—' %></td>
+      </tr>
+    <% }); %>
+    <% if (!mealRates.length) { %><tr><td colspan="5" class="muted">Nothing on record.</td></tr><% } %>
+    </tbody>
+  </table></div>
+  <div class="tblfoot">
+    Rates include 5% GST. The Railway pays 90% of the cost or the subsidy figure, whichever is lower; the
+    balance is paid by the running staff directly to the contractor. <b>No amount is computed anywhere in
+    RR-CMS</b> — these are contract facts held beside the counts.
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-h"><h3>Table B — optional and extra items</h3>
+    <span class="sub">fixed by the Railway, no-profit no-loss · not in the tender</span></div>
+  <div class="card-b">
+    <% if (editable) { %>
+    <form method="post" action="<%= url('/masters/menu') %>">
+      <div class="row" style="gap:10px;margin-bottom:12px;align-items:flex-end">
+        <div style="width:170px">
+          <label class="fl">These rates take effect from</label>
+          <input class="fi" type="date" name="effective_from" required
+                 value="<%= today() %>">
+        </div>
+        <div style="flex:1">
+          <label class="fl">Authority — the order or letter that fixed them</label>
+          <input class="fi" type="text" name="authority" maxlength="160"
+                 placeholder="e.g. DRM/BB letter no. … dated …">
+        </div>
+      </div>
+      <div class="muted" style="font-size:11.5px;margin-bottom:10px">
+        Leave a box blank to leave that item as it stands. A rate is never cleared from this screen — a board
+        that silently loses a price is worse than a stale one.
+      </div>
+    <% } %>
+      <div class="tblwrap"><table class="tbl">
+        <thead><tr><th>Item</th><th style="width:110px">Quantity</th>
+          <th class="num" style="width:150px">Rate on <%= on %></th>
+          <th style="width:230px">Set by</th></tr></thead>
+        <tbody>
+        <% tableB.forEach(function(i){ const r = current[i.id]; %>
+          <tr>
+            <td><%= i.name %></td>
+            <td class="muted"><%= i.unit || '—' %></td>
+            <td class="num">
+              <% if (editable) { %>
+                <input class="fi num" type="number" min="0" step="0.01" style="width:110px;text-align:right"
+                       name="r_<%= i.id %>" placeholder="<%= r ? fmt(r.rate) : 'not fixed' %>">
+              <% } else if (r) { %><span class="tnum">₹<%= fmt(r.rate) %></span>
+              <% } else { %><span class="st warn"><span class="dot"></span>not fixed</span><% } %>
+            </td>
+            <td class="muted" style="font-size:11.3px">
+              <% if (r) { %>
+                from <%= String(r.effective_from).slice(0,10) %><% if (r.authority) { %> · <%= r.authority %><% } %>
+                <% if ((history[i.id] || []).length > 1) { %>
+                  <div>(<%= history[i.id].length - 1 %> earlier rate<%= history[i.id].length === 2 ? '' : 's' %> kept)</div>
+                <% } %>
+              <% } else { %>
+                <span class="st warn"><span class="dot"></span>the Railway has not fixed this</span>
+              <% } %>
+            </td>
+          </tr>
+        <% }); %>
+        </tbody>
+      </table></div>
+    <% if (editable) { %>
+      <button class="btn" type="submit" style="margin-top:12px">Save the rate board</button>
+    </form>
+    <% } else { %>
+      <div class="muted" style="font-size:12.5px;margin-top:10px">
+        Fixing these rates is the Railway's act. Your role has view access only.
+      </div>
+    <% } %>
+    <div class="hr"></div>
+    <div class="muted" style="font-size:11.5px">
+      The tender's Table B prints <b>"Parathas"</b> as its fifth line and <b>"Paratha"</b> as its twentieth.
+      Both are kept as they are printed. If they are meant to be one item the Railway should say so — an item
+      quietly removed from a rate board is an item a contractor can be charged against with no recourse.
+    </div>
+  </div>
+</div>

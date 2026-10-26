@@ -1,0 +1,173 @@
+<%- await include('_nav') %>
+
+<%
+/* The week's menu.
+
+   The contractor's supervisor prepares it; the Railway agrees it. Both are on
+   the record because Schedule B requires the consultation, not merely the menu.
+   Once agreed the week is closed, for the same reason a counter-signed muster
+   cannot be re-marked: the agreement was given to a particular menu. */
+const editable = can('stay.manage') && !(plan && plan.status === 'agreed');
+const agreed = plan && plan.status === 'agreed';
+const val = (n, m, f) => (cell[n] && cell[n][m] && cell[n][m][f]) ? cell[n][m][f] : '';
+%>
+
+<% if (saved) { %>
+  <div class="note" style="margin-bottom:14px">
+    <% if (saved === 'agreed') { %>
+      <b>The week has been agreed.</b> It is now closed to editing and can be printed for the kitchen board.
+    <% } else if (saved === 'reopened') { %>
+      <b>The week has been reopened.</b> The agreement is withdrawn until it is given again.
+    <% } else { %>
+      <b>Saved.</b> <%= saved %> meal<%= +saved === 1 ? '' : 's' %> recorded for the week of <%= week %>.
+      It stays a draft until the Railway agrees it.
+    <% } %>
+  </div>
+<% } %>
+
+<div class="card" style="margin-bottom:14px">
+  <div class="card-h">
+    <h3>Weekly menu — <%= week %> to <%= weekEnd %></h3>
+    <span class="sub"><%= rr.name %></span>
+    <span class="spacer"></span>
+    <% if (agreed) { %>
+      <span class="st good"><span class="dot"></span>Agreed<% if (plan.agreed_name) { %> by <%= plan.agreed_name %><% } %><% if (plan.agreed_on) { %> on <%= String(plan.agreed_on).slice(0,10) %><% } %></span>
+    <% } else if (plan) { %>
+      <span class="st warn"><span class="dot"></span>Draft — not yet agreed by the Railway</span>
+    <% } else { %>
+      <span class="st neut"><span class="dot"></span>Nothing prepared for this week</span>
+    <% } %>
+  </div>
+  <div class="card-b">
+    <div class="row" style="gap:8px;margin-bottom:12px">
+      <a class="btn ghost small" href="<%= url('/facility/menu?rr=' + rr.id + '&week=' + prevWeek) %>">‹ previous week</a>
+      <a class="btn ghost small" href="<%= url('/facility/menu?rr=' + rr.id + '&week=' + nextWeek) %>">next week ›</a>
+      <div class="spacer"></div>
+      <a class="btn ghost small" href="<%= url('/facility/menu/card?rr=' + rr.id + '&week=' + week) %>">Menu card &amp; rate board</a>
+    </div>
+
+    <% if (findings.length) { %>
+      <div class="note warn" style="margin-bottom:12px">
+        <b><%= findings.length %> thing<%= findings.length === 1 ? '' : 's' %> to settle before this week is agreed</b>
+        <ul style="margin:6px 0 0;padding-left:18px">
+          <% findings.forEach(function(f){ %><li style="margin-bottom:3px"><%= f.text %></li><% }); %>
+        </ul>
+      </div>
+    <% } %>
+
+    <form method="post" action="<%= url('/facility/menu') %>" id="menuform">
+      <input type="hidden" name="rr" value="<%= rr.id %>">
+      <input type="hidden" name="week" value="<%= week %>">
+      <div class="tblwrap"><table class="tbl">
+        <thead><tr>
+          <th>Day</th><th>Meal</th><th>What is served</th>
+          <th>Seasonal vegetable — dry</th><th>Seasonal vegetable — with curry</th>
+        </tr></thead>
+        <tbody>
+        <% weekdays.forEach(function(w){ const n = w[0]; %>
+          <% menuMeals.forEach(function(m, mi){ const code = m[0]; %>
+            <tr class="li li-<%= code %>">
+              <% if (mi === 0) { %>
+                <td rowspan="3" style="vertical-align:top">
+                  <b><%= w[1] %></b>
+                  <div class="muted tnum" style="font-size:11px"><%= dateOf[n] %></div>
+                </td>
+              <% } %>
+              <td><b><%= m[1] %></b></td>
+              <td>
+                <% if (editable) { %>
+                  <input class="fi" type="text" style="width:100%" maxlength="200"
+                         name="main_<%= n %>_<%= code %>" value="<%= val(n, code, 'main_item') %>"
+                         <%= code === 'breakfast' ? 'list="bfopts"' : '' %>>
+                <% } else { %><%= val(n, code, 'main_item') || '—' %><% } %>
+              </td>
+              <% if (code === 'breakfast') { %>
+                <td colspan="2" class="ro muted" style="font-size:11.5px">
+                  Two seasonal vegetables are required in each <b>meal</b>. Breakfast is fixed by Table A —
+                  a listed option, plus 200 ml milk and tea or coffee, the tea free of cost.
+                </td>
+              <% } else { %>
+                <td>
+                  <% if (editable) { %>
+                    <input class="fi" type="text" style="width:100%" maxlength="120"
+                           name="dry_<%= n %>_<%= code %>" value="<%= val(n, code, 'veg_dry') %>">
+                  <% } else { %><%= val(n, code, 'veg_dry') || '—' %><% } %>
+                </td>
+                <td>
+                  <% if (editable) { %>
+                    <input class="fi" type="text" style="width:100%" maxlength="120"
+                           name="curry_<%= n %>_<%= code %>" value="<%= val(n, code, 'veg_curry') %>">
+                  <% } else { %><%= val(n, code, 'veg_curry') || '—' %><% } %>
+                </td>
+              <% } %>
+            </tr>
+          <% }); %>
+        <% }); %>
+        </tbody>
+      </table></div>
+
+      <datalist id="bfopts">
+        <% ['Two parothas of aloo','Two parothas of cabbage','Two parothas of methi','Two parothas of palak',
+            'Two masala dosa with chutney and sambhar','Sheera and upma','Poha and sheera',
+            'Four idlis and two medu vada with sambhar and chutney','Four puri and 150 gm sabzi',
+            'Two parotha with double egg omelet'].forEach(function(o){ %>
+          <option value="<%= o %>"></option>
+        <% }); %>
+      </datalist>
+
+      <% if (editable) { %>
+        <div class="row" style="gap:10px;align-items:flex-end;margin-top:12px">
+          <div style="flex:1">
+            <label class="fl">Remarks</label>
+            <input class="fi" type="text" name="remarks" maxlength="300"
+                   value="<%= plan && plan.remarks ? plan.remarks : '' %>">
+          </div>
+          <button class="btn" type="submit">Save the week</button>
+        </div>
+      <% } else if (agreed) { %>
+        <div class="muted" style="font-size:12.5px;margin-top:12px">
+          This week has been agreed and is closed to editing.
+          <% if (can('menu.manage')) { %>It can be reopened below.<% } else { %>Ask the Railway to reopen it if it must change.<% } %>
+        </div>
+      <% } else { %>
+        <div class="muted" style="font-size:12.5px;margin-top:12px">Your role has view access only.</div>
+      <% } %>
+    </form>
+
+    <% if (can('menu.manage') && plan) { %>
+      <div class="hr"></div>
+      <form method="post" action="<%= url('/facility/menu') %>">
+        <input type="hidden" name="rr" value="<%= rr.id %>">
+        <input type="hidden" name="week" value="<%= week %>">
+        <input type="hidden" name="action" value="<%= agreed ? 'reopen' : 'agree' %>">
+        <% if (agreed) { %>
+          <button class="btn ghost" type="submit">Reopen this week</button>
+          <span class="muted" style="font-size:11.5px;margin-left:8px">withdraws the agreement so the menu can be corrected</span>
+        <% } else { %>
+          <button class="btn" type="submit">Agree this week on behalf of the Railway</button>
+          <span class="muted" style="font-size:11.5px;margin-left:8px">
+            Schedule B: the menu is prepared by the contractor <b>in consultation with the Railway's representative</b>.
+            <% if (findings.length) { %>There <%= findings.length === 1 ? 'is' : 'are' %> <%= findings.length %> unsettled point<%= findings.length === 1 ? '' : 's' %> above.<% } %>
+          </span>
+        <% } %>
+      </form>
+    <% } %>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-h"><h3>What a plate must contain</h3><span class="sub">Schedule B, Table A — the quantities clause B6 is measured against</span></div>
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr><th style="width:190px">Item</th><th>As the tender states it</th></tr></thead>
+    <tbody>
+    <% tableA.forEach(function(i){ %>
+      <tr><td><b><%= i.name %></b><div class="muted" style="font-size:11px"><%= i.unit || '' %></div></td>
+        <td style="font-size:12.3px"><%= i.contents %></td></tr>
+    <% }); %>
+    </tbody>
+  </table></div>
+  <div class="tblfoot">
+    The tender calls these quantities approximate, and adds that the cost is fixed and cannot be reduced if a
+    man takes less of any item. Serving less than this is clause <b>B6</b>.
+  </div>
+</div>

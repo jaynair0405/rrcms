@@ -1,0 +1,458 @@
+<%- await include('_nav') %>
+
+<%# WHICH BUILDING'S ROUND.
+    Igatpuri's rounds are done in four buildings some distance apart by men who
+    move between them. A register that pools all four can say a round was done
+    but not WHERE — and a round that was missed cannot be put right without a
+    place to send somebody. Forty-three of the forty-five running rooms are one
+    building; for those `blocks` is empty and none of this appears. %>
+<% if (blocks && blocks.length) { %>
+  <div class="card blockbar">
+    <div class="bb-row">
+      <span class="bb-lab">Building</span>
+        <% blocks.forEach(function(b){ %>
+          <a class="btn <%= blockId === b.id ? '' : 'ghost' %> small"
+             href="<%= url('/records/cleaning?rr=' + rr.id + '&date=' + date + '&block=' + b.id + '&round=' + round) %>">
+            <%= b.name %>
+            <% if (b.done || b.not_done) { %>
+              <span class="cnt" style="margin-left:5px"><%= b.done %> of <%= b.due %></span>
+            <% } %>
+            <% if (b.not_done) { %><span class="pill r" style="margin-left:4px"><%= b.not_done %> not done</span><% } %>
+          </a>
+        <% }); %>
+      <% if (orphans) { %>
+        <a class="btn <%= viewNone ? '' : 'ghost' %> small"
+           href="<%= url('/records/cleaning?rr=' + rr.id + '&date=' + date + '&block=none&round=' + round) %>">No building
+           <span class="pill" style="margin-left:5px"><%= orphans %></span></a>
+      <% } %>
+    </div>
+  </div>
+  <div class="blocknote">
+    Each building keeps its own rounds and its own weekly day. The counts above are
+    everything due today in that building, so a building nobody has been to yet reads
+    <b>0 of <%= blocks[0].due %></b> rather than looking finished.
+  </div>
+<% } %>
+<% if (viewNone && orphans) { %>
+  <div class="note warn" style="margin-bottom:14px">
+    <b>Records made before <%= rr.name %> had buildings.</b>
+    These <%= orphans %> row<%= orphans === 1 ? '' : 's' %> belong to no building, because none
+    existed when they were written. They are shown here so they are not lost — nothing new can be
+    recorded against "no building", because a round is done in one building and linen sits on one
+    shelf. Read them, close out anything still open, and the list will empty itself.
+  </div>
+<% } else if (viewNone) { %>
+  <%# The button that leads here only appears when there is something to see,
+      so arriving with nothing means the list has been worked through — or the
+      address was typed. Either way, saying "0 rows belong to no building" as
+      though it were a finding would be the screen inventing a problem. %>
+  <div class="note" style="margin-bottom:14px">
+    Nothing at <%= rr.name %> is on record without a building.
+  </div>
+<% } %>
+
+<% if (needBlock) { %>
+  <%# NOT AN ERROR — A QUESTION THE REGISTER CANNOT ANSWER FOR HIM.
+      Defaulting to the first building would put a man's round in the wrong
+      place on the days he forgot to look at the tab, and a wrongly placed
+      round is worse than an unrecorded one: it says a bathroom was cleaned
+      that nobody went near. %>
+  <div class="note warn">
+    <b>Choose the building above to fill its register.</b>
+    <%= rr.name %> stands in <%= blocks.length %> buildings and a round is done in one of them —
+    "somewhere in <%= rr.name %>" is not a place, and nothing is defaulted on your behalf.
+  </div>
+<% } else { %>
+
+<%
+/* The daily cleaning record.
+
+   Clause A6 — poor cleaning against schedule, Rs 1000 a day — is the largest
+   recurring penalty in Schedule A, and this is the only place it can be
+   answered from. The register serves both sides of that: a shortfall is
+   visible, and so is a schedule properly kept.
+
+   The contractor's supervisor records the rounds; the Railway verifies the day.
+   Verification closes the rounds, because what was confirmed was a particular
+   set of rounds — so correcting one means the Railway REOPENING the day first,
+   which withdraws the confirmation and is itself audited.
+
+   The first cut of this screen removed the save button on verification and
+   offered nothing in its place, so a day verified by mistake could never be
+   corrected by anybody. Found by the RR in-charge on the first walk-through,
+   asking the only question that mattered: how do I change the round now? */
+const editable = can('stay.manage') && !viewNone && !(day && day.verified_at);
+const verified = day && day.verified_at;
+const c = counts;
+const grp = code => String(code).split('-')[0];
+%>
+
+<% if (saved) { %>
+  <div class="note" style="margin-bottom:14px">
+    <% if (saved === 'verified') { %>
+      <b>The day has been verified.</b> The rounds are now closed to editing. If one has to be corrected,
+      reopen the day first — the confirmation was given to a particular set of rounds.
+    <% } else if (saved === 'reopened') { %>
+      <b>The day has been reopened.</b> The verification is withdrawn and the rounds can be corrected. It
+      will need verifying again.
+    <% } else { %>
+      <b>The cleaning record has been saved.</b>
+      <%= saved %> round<%= +saved === 1 ? '' : 's' %> recorded for <%= date %>.
+      Saving again corrects the day; it does not add a second record.
+    <% } %>
+  </div>
+<% } %>
+
+<div class="kpis" style="margin-bottom:14px">
+  <div class="kpi"><i class="strip" style="background:var(--s1)"></i>
+    <div class="lab">Rounds due today</div><div class="val"><%= c.due %></div>
+    <div class="foot">by Schedule C's own schedule</div></div>
+  <div class="kpi"><i class="strip" style="background:var(--good)"></i>
+    <div class="lab">Recorded as done</div><div class="val"><%= c.done %></div>
+    <div class="foot"><%= c.due ? Math.round(c.done / c.due * 100) : 0 %>% of what was due</div></div>
+  <div class="kpi"><i class="strip" style="background:var(--critical)"></i>
+    <div class="lab">Recorded as not done</div><div class="val"><%= c.notDone %></div>
+    <div class="foot"><% if (c.notDone) { %><span class="st crit"><span class="dot"></span><span data-clause="A6" data-rr="<%= rr.id %>" title="What this clause says here">clause A6</span></span>
+      <% } else { %>nothing missed on record<% } %></div></div>
+  <div class="kpi"><i class="strip" style="background:var(--warning)"></i>
+    <div class="lab">Not written down at all</div><div class="val"><%= c.unrecorded %></div>
+    <div class="foot">silence, which is not the same as "not done"</div></div>
+</div>
+
+<div class="card" style="margin-bottom:14px">
+  <div class="card-h">
+    <h3>Cleaning — <%= date %></h3>
+    <span class="sub"><%= rr.name %></span>
+    <span class="spacer"></span>
+    <% if (verified) { %>
+      <span class="st good"><span class="dot"></span>Verified<% if (day.verified_name) { %> by <%= day.verified_name %><% } %>
+        at <%= String(day.verified_at).slice(11,16) %></span>
+    <% } else if (c.done || c.notDone) { %>
+      <span class="st warn"><span class="dot"></span>Not yet verified by the Railway</span>
+    <% } else { %>
+      <span class="st neut"><span class="dot"></span>Nothing recorded for this day</span>
+    <% } %>
+  </div>
+  <div class="card-b">
+    <%# ONE ROUND AT A TIME. Seventeen items, five of them done more than once a
+        day, made 25 rows -- sweeping printed three times before the second item.
+        The tab carries how many of ITS rounds are recorded, so showing one round
+        cannot let another be forgotten. %>
+    <% if (typeof roundTabs !== 'undefined' && roundTabs.length > 1) { %>
+      <div class="tabs rounds" style="margin:-4px 0 12px">
+        <% roundTabs.forEach(function(t){ %>
+          <a class="tab<%= round === t.key ? ' active' : '' %>"
+             href="<%= url('/records/cleaning?rr=' + rr.id + '&date=' + date + (blockId ? '&block=' + blockId : '') + '&round=' + t.key) %>"><%= t.label %>
+            <span class="cnt"><%= t.recorded %> of <%= t.total %></span></a>
+        <% }); %>
+      </div>
+    <% } %>
+    <%# enctype, or the browser posts filenames instead of files and the
+        photograph disappears with no error anywhere. %>
+    <form method="post" action="<%= url('/records/cleaning') %>" id="cleanform"
+          enctype="multipart/form-data">
+      <input type="hidden" name="rr" value="<%= rr.id %>">
+      <input type="hidden" name="date" value="<%= date %>">
+      <input type="hidden" name="round" value="<%= typeof round === 'undefined' ? 'all' : round %>">
+      <% if (blockId) { %><input type="hidden" name="block" value="<%= blockId %>"><% } %>
+      <%# Which rows this form was showing. A blank box means "unrecorded" and
+          the route DELETES on it, so a form carrying only round 1 would wipe
+          rounds 2 and 3 unless it says what it held. %>
+      <input type="hidden" name="ids" value="<%= rounds.map(function(r){ return r.s.id; }).join(',') %>">
+      <div class="tblwrap"><table class="tbl">
+        <thead><tr>
+          <th style="width:34%">Area, and how often the tender asks for it</th>
+          <th style="width:110px">Window</th>
+          <th style="width:190px">Done?</th>
+          <th style="width:110px">Finished at</th>
+          <th>By</th>
+          <th style="width:96px">Freshener</th>
+        </tr></thead>
+        <tbody>
+        <% let lastArea = null; rounds.forEach(function(r){ const s = r.s, l = r.log;
+             const repeat = (s.area_name === lastArea); lastArea = s.area_name; %>
+          <tr class="cl cl-<%= grp(s.code).toLowerCase() %>">
+            <td<%= repeat ? ' style="padding-left:30px"' : '' %>>
+              <% if (repeat) { %>
+                <%# The same item, a later round. Printing the whole name again
+                    is what made this page long enough to lose your place in. %>
+                <span class="muted" style="font-size:12px">round <%= s.round_no %> of <%= r.roundsInDay %></span>
+              <% } else { %>
+              <b><%= s.area_name %></b>
+              <div class="muted" style="font-size:11px">
+                <%= r.freqLabel %><% if (r.roundsInDay > 1 && round === 'all') { %> · round <%= s.round_no %> of <%= r.roundsInDay %><% } %>
+                · <%= s.source_ref %>
+              </div>
+              <% } %>
+              <% if (editable) { %>
+                <input class="fi" type="text" style="width:100%;margin-top:5px;font-size:12px"
+                       name="rm_<%= s.id %>" maxlength="300" placeholder="Remarks"
+                       value="<%= l && l.remarks ? l.remarks : '' %>">
+              <% } else if (l && l.remarks) { %>
+                <div class="muted" style="font-size:11.5px;margin-top:3px"><%= l.remarks %></div>
+              <% } %>
+            </td>
+            <td class="tnum">
+              <% if (s.window_from) { %><%= s.window_from %>–<%= s.window_to %>
+              <% } else { %><span class="muted">no hour set</span><% } %>
+            </td>
+            <td>
+              <% if (editable) { %>
+                <div class="marks">
+                  <label class="mark"><input type="radio" name="st_<%= s.id %>" value="done"
+                    <%= l && l.status === 'done' ? 'checked' : '' %>><span>Done</span></label>
+                  <label class="mark"><input type="radio" name="st_<%= s.id %>" value="not_done"
+                    <%= l && l.status === 'not_done' ? 'checked' : '' %>><span>Not done</span></label>
+                </div>
+                <%# THE PHOTOGRAPH ALREADY ON RECORD IS ALWAYS SHOWN.
+                    It sits OUTSIDE the box below, and that is the whole point.
+                    It used to be inside, so correcting a round to Done hid the
+                    picture along with the file input — the officer found it
+                    gone on 10.09.2026. The system was keeping evidence it never
+                    displayed. A photograph is a fact about the moment it was
+                    taken; a later correction is a second fact, not a reason to
+                    lose the first. %>
+                <% if (l && l.photo_file_id) {
+                     const pAt = l.photo_at ? String(l.photo_at).slice(11,16) : null; %>
+                  <a href="<%= url('/photo/' + l.photo_file_id) %>" target="_blank"
+                     title="the round as it was found" style="display:block;margin:5px 0 2px">
+                    <img src="<%= url('/photo/' + l.photo_file_id) %>" alt="the round as found"
+                         style="height:40px;width:auto;max-width:96px;object-fit:cover;
+                                border:1px solid var(--border);border-radius:4px"></a>
+                  <div class="muted" style="font-size:10.5px">attached<% if (pAt) { %> <%= pAt %><% } %><%
+                    if (l.status === 'done') { %> · taken when this was marked not done<% } %></div>
+                <% } %>
+                <%# THE FILE BOX, only on a round marked not done. A hundred
+                    rounds a day at IGP across its four buildings, so a file box
+                    on every row would make the register unfillable — which is
+                    the fault this stage exists not to cause. Offered, never
+                    demanded: see migration 067. %>
+                <div class="failphoto" data-for="st_<%= s.id %>"
+                     <%= l && l.status === 'not_done' ? '' : 'hidden' %>>
+                  <input class="fi" type="file" name="ph_<%= s.id %>" accept="image/*"
+                         style="margin-top:4px;font-size:10.5px;padding:3px">
+                  <% if (l && l.photo_file_id) { %>
+                    <div class="muted" style="font-size:10.5px">Choosing another replaces it.</div>
+                  <% } %>
+                </div>
+              <% } else if (!l) { %><span class="st warn"><span class="dot"></span>not recorded</span>
+              <% } else if (l.status === 'done') { %><span class="st good"><span class="dot"></span>Done</span>
+                <%# A ROUND NOW MARKED DONE THAT WAS PHOTOGRAPHED WHILE IT WAS NOT.
+                    The photograph is kept -- what was seen at that moment is a
+                    fact, and a later correction is a second fact rather than a
+                    reason to lose the first. It was HIDDEN until the officer
+                    tried it on 10.09.2026 and found the picture gone: the system
+                    was storing evidence it never showed, which is the same fault
+                    in a different coat. Shown now, and said plainly, because the
+                    one direction that must not be easy is attaching a photograph
+                    of a mess and then quietly marking the round done. %>
+                <% if (l.photo_file_id) { %>
+                  <%
+                     const pAt = l.photo_at ? String(l.photo_at).slice(11,16) : null; %>
+                  <a href="<%= url('/photo/' + l.photo_file_id) %>" target="_blank"
+                     title="the round as it was found" style="display:block;margin:5px 0 2px">
+                    <img src="<%= url('/photo/' + l.photo_file_id) %>" alt="the round as found"
+                         style="height:40px;width:auto;max-width:96px;object-fit:cover;
+                                border:1px solid var(--border);border-radius:4px"></a>
+                  <div class="muted" style="font-size:10.5px">attached<% if (pAt) { %> <%= pAt %><% } %></div>
+                  <div class="muted" style="font-size:10.5px">taken when this was marked not done</div>
+                <% } %>
+              <% } else { %><span class="st crit"><span class="dot"></span>Not done</span>
+                <% if (l.photo_file_id) { %>
+                  <%
+                     const pAt = l.photo_at ? String(l.photo_at).slice(11,16) : null; %>
+                  <a href="<%= url('/photo/' + l.photo_file_id) %>" target="_blank"
+                     title="the round as it was found" style="display:block;margin:5px 0 2px">
+                    <img src="<%= url('/photo/' + l.photo_file_id) %>" alt="the round as found"
+                         style="height:40px;width:auto;max-width:96px;object-fit:cover;
+                                border:1px solid var(--border);border-radius:4px"></a>
+                  <div class="muted" style="font-size:10.5px">attached<% if (pAt) { %> <%= pAt %><% } %></div>
+                <% } %>
+              <% } %>
+              <% if (r.late) { %>
+                <div style="margin-top:4px"><span class="st warn"><span class="dot"></span>after the window closed</span></div>
+              <% } %>
+            </td>
+            <td>
+              <% if (editable) { %>
+                <input class="fi" type="time" style="width:104px" name="at_<%= s.id %>"
+                       value="<%= l && l.done_at ? String(l.done_at).slice(0,5) : '' %>">
+              <% } else { %><span class="tnum"><%= l && l.done_at ? String(l.done_at).slice(0,5) : '—' %></span><% } %>
+            </td>
+            <td>
+              <% if (editable) { %>
+                <select class="fi" style="width:100%" name="by_<%= s.id %>">
+                  <option value="">— not stated —</option>
+                  <% men.forEach(function(m){ %>
+                    <option value="<%= m.id %>" <%= l && l.done_by_staff_id === m.id ? 'selected' : '' %>>
+                      <%= m.full_name %><% if (m.designation) { %> · <%= m.designation %><% } %></option>
+                  <% }); %>
+                </select>
+              <% } else { %>
+                <% const who = l && l.done_by_staff_id ? (men.find(m => m.id === l.done_by_staff_id) || {}).full_name : null; %>
+                <%= who || '—' %>
+              <% } %>
+            </td>
+            <td style="text-align:center">
+              <% if (editable) { %>
+                <input type="checkbox" name="fr_<%= s.id %>" value="1"
+                       style="width:19px;height:19px;cursor:pointer"
+                       <%= l && l.freshener ? 'checked' : '' %>>
+              <% } else { %><%= l && l.freshener ? '✓' : '—' %><% } %>
+            </td>
+          </tr>
+        <% }); %>
+        <% if (!rounds.length) { %>
+          <tr><td colspan="6" class="muted">Nothing falls due on this date.</td></tr>
+        <% } %>
+        </tbody>
+      </table></div>
+
+      <%# WHICH DAY THE WEEKLY ITEMS FALL ON HERE.
+          The contract says "Once in Week" and names no day, so the day belongs
+          to the running room -- sites hundreds of kilometres apart keep their own
+          quiet days, and a hard-coded Monday called Wednesday's work late.
+          Set by the Railway, not the contractor: a contractor who could move his
+          own due date could never be late. %>
+      <% if (typeof weeklyItems !== 'undefined' && weeklyItems.length) { %>
+      <div class="note" style="margin:12px 0">
+        <b>Weekly items are done on:</b>
+        <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:flex-end">
+          <% weeklyItems.forEach(function(w){ %>
+            <div style="min-width:190px;max-width:280px">
+              <label class="fl" for="wd<%= w.id %>" style="white-space:normal"><%= w.name.length > 58 ? w.name.slice(0,56) + '…' : w.name %></label>
+              <% if (can('cleaning.verify')) { %>
+                <select class="fi" id="wd<%= w.id %>" name="wd_<%= w.id %>" form="weeklydayform">
+                  <% dayNames.forEach(function(dn, i){ %>
+                    <option value="<%= i %>" <%= w.weekday === i ? 'selected' : '' %>><%= dn %></option>
+                  <% }); %>
+                </select>
+              <% } else { %>
+                <div style="font-size:13px;font-weight:600"><%= dayNames[w.weekday] %><%
+                  if (w.isDefault) { %> <span class="muted" style="font-weight:400">(not set — Monday assumed)</span><% } %></div>
+              <% } %>
+            </div>
+          <% }); %>
+        </div>
+        <% if (can('cleaning.verify')) { %>
+          <div style="margin-top:10px">
+            <button class="btn ghost small" type="submit" form="weeklydayform">Set the weekly day</button>
+            <span class="muted" style="font-size:11.3px;margin-left:8px">
+              Changing a day changes when the row falls due here. It does not move any round already recorded.
+            </span>
+          </div>
+        <% } else { %>
+          <div class="muted" style="font-size:11.3px;margin-top:6px">
+            Set by the Railway. The contract names no day for these, so each running room keeps its own.
+          </div>
+        <% } %>
+      </div>
+      <% } %>
+
+      <div class="muted" style="font-size:11.5px;margin:10px 0 12px">
+        A round left blank stays <b>unrecorded</b> — it is not written down as "not done". Silence and a
+        statement are different things, and an officer reading this a month later has to be able to tell them
+        apart. <b>Freshener</b> is Schedule C: room freshener sprayed after each schedule is completed.
+        Pest control is monthly, by a specialist agency, and keeps its
+        <a href="<%= url('/facility/pest?rr=' + rr.id) %>">own register</a>.
+      </div>
+
+      <% if (editable) { %>
+        <button class="btn" type="submit">Save the day</button>
+      <% } else if (verified) { %>
+        <div class="muted" style="font-size:12.5px">
+          This day has been verified and is closed to editing.
+          <% if (can('cleaning.verify')) { %>
+            To correct a round, <b>reopen the day</b> below — the verification was given to a particular set
+            of rounds, so it is withdrawn rather than carried over.
+          <% } else { %>
+            Ask the Railway to reopen it if a round has to be corrected.
+          <% } %>
+        </div>
+      <% } else { %>
+        <div class="muted" style="font-size:12.5px">Your role has view access only.</div>
+      <% } %>
+    </form>
+
+    <%# The weekly-day controls sit inside the table's card but belong to their
+        own form -- HTML forms cannot nest. The selects above carry
+        form="weeklydayform" and post here. %>
+    <% if (can('cleaning.verify') && typeof weeklyItems !== 'undefined' && weeklyItems.length) { %>
+      <form method="post" action="<%= url('/records/cleaning/weekly-day') %>" id="weeklydayform">
+        <input type="hidden" name="rr" value="<%= rr.id %>">
+        <input type="hidden" name="date" value="<%= date %>">
+        <input type="hidden" name="round" value="<%= typeof round === 'undefined' ? 'all' : round %>">
+        <% if (blockId) { %><input type="hidden" name="block" value="<%= blockId %>"><% } %>
+      </form>
+    <% } %>
+
+    <% if (can('cleaning.verify') && (c.done || c.notDone)) { %>
+      <div class="hr"></div>
+      <form method="post" action="<%= url('/records/cleaning/verify') %>">
+        <input type="hidden" name="rr" value="<%= rr.id %>">
+        <input type="hidden" name="date" value="<%= date %>">
+        <div class="row" style="gap:10px;align-items:flex-end">
+          <div style="flex:1">
+            <label class="fl">What the Railway saw</label>
+            <input class="fi" type="text" name="verify_remarks" maxlength="300"
+                   value="<%= day && day.verify_remarks ? day.verify_remarks : '' %>">
+          </div>
+          <button class="btn<%= verified ? ' ghost' : '' %>" type="submit">
+            <%= verified ? 'Verify again' : 'Verify this day' %></button>
+        </div>
+        <div class="muted" style="font-size:11.5px;margin-top:6px">
+          A record the contractor fills and nobody confirms is the contractor marking his own work. A remark
+          against the verification is worth more at a review than a bare tick.
+        </div>
+      </form>
+      <% if (verified) { %>
+        <form method="post" action="<%= url('/records/cleaning/verify') %>" style="margin-top:10px">
+          <input type="hidden" name="rr" value="<%= rr.id %>">
+          <input type="hidden" name="date" value="<%= date %>">
+          <input type="hidden" name="action" value="reopen">
+          <button class="btn ghost" type="submit">Reopen this day so a round can be corrected</button>
+          <span class="muted" style="font-size:11.5px;margin-left:8px">
+            withdraws the verification and puts the rounds back in hand; it is recorded in the audit trail
+          </span>
+        </form>
+      <% } %>
+    <% } %>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-h"><h3>The last fortnight</h3>
+    <span class="sub">rounds due, kept, missed and never written down</span></div>
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr><th>Date</th><th class="num">Due</th><th class="num">Done</th>
+      <th class="num">Not done</th><th class="num">Unrecorded</th><th>Position</th></tr></thead>
+    <tbody>
+    <% history.slice().reverse().forEach(function(h){ %>
+      <tr <%= h.date === date ? 'style="background:rgba(42,120,214,.05)"' : '' %>>
+        <td class="tnum"><a href="<%= url('/records/cleaning?rr=' + rr.id + '&date=' + h.date) %>"><%= h.date %></a></td>
+        <td class="num tnum"><%= h.due %></td>
+        <td class="num tnum"><%= h.done %></td>
+        <td class="num tnum"><%= h.notDone || '—' %></td>
+        <td class="num tnum"><%= h.missing || '—' %></td>
+        <td>
+          <% if (h.notDone) { %>
+            <span class="st crit"><span class="dot"></span><%= h.notDone %> round<%= h.notDone > 1 ? 's' : '' %> missed — <span data-clause="A6" data-rr="<%= rr.id %>" title="What this clause says here">clause A6</span></span>
+          <% } else if (h.missing === h.due) { %>
+            <span class="st warn"><span class="dot"></span>nothing recorded</span>
+          <% } else if (h.missing) { %>
+            <span class="st warn"><span class="dot"></span><%= h.missing %> not written down</span>
+          <% } else { %>
+            <span class="st good"><span class="dot"></span>schedule kept</span>
+          <% } %>
+        </td>
+      </tr>
+    <% }); %>
+    </tbody>
+  </table></div>
+  <div class="tblfoot">
+    <b>Unrecorded</b> is not evidence of a missed round and is not counted as one — but a fortnight of
+    unrecorded rounds is its own answer at a review, and a contractor who kept the schedule and never wrote
+    it down cannot prove he did.
+  </div>
+</div>
+<% } %>

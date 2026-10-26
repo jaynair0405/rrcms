@@ -1,0 +1,73 @@
+<form class="row" method="get" style="margin-bottom:14px;align-items:flex-end">
+  <div style="flex:0 0 200px"><label class="fl">Month</label>
+    <select class="fi" name="month" onchange="this.form.submit()">
+      <% months.forEach(function(m){ %>
+        <option value="<%= m.value %>" <%= m.value===month?'selected':'' %>><%= m.label %></option>
+      <% }); %>
+    </select></div>
+  <noscript><button class="btn" type="submit">Go</button></noscript>
+</form>
+
+<div class="kpis" style="margin-bottom:14px">
+  <div class="kpi"><i class="strip" style="background:var(--text-muted)"></i>
+    <div class="lab">Not yet generated</div><div class="val"><%= counts.pending %> <small>/ <%= counts.total %></small></div>
+    <div class="foot">no sheet exists for <%= monthLabel %></div></div>
+  <div class="kpi"><i class="strip" style="background:var(--warning)"></i>
+    <div class="lab">Draft</div><div class="val"><%= counts.draft %></div>
+    <div class="foot">generated, awaiting certification</div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s1)"></i>
+    <div class="lab">Certified</div><div class="val"><%= counts.certified %></div>
+    <div class="foot">signed by the RR In-charge</div></div>
+  <div class="kpi"><i class="strip" style="background:var(--good)"></i>
+    <div class="lab">Counter-signed</div><div class="val"><%= counts.countersigned %></div>
+    <div class="foot">ready to travel with the bill</div></div>
+  <% if (counts.returned) { %>
+  <div class="kpi"><i class="strip" style="background:var(--critical)"></i>
+    <div class="lab">Returned</div><div class="val"><%= counts.returned %></div>
+    <div class="foot">sent back for correction</div></div>
+  <% } %>
+</div>
+
+<div class="note" style="margin-bottom:14px">
+  <b>The certificate states no amount.</b> It records what was delivered — manpower and attendance,
+  occupant ratings, deficiencies, inspections and the facility obligations — and is signed by the
+  RR In-charge and the divisional officer. Contract rates, the Schedule-B meal quantity (which RRMS
+  maintains) and any penalty deduction are settled separately when the bill is passed.
+</div>
+
+<div class="card">
+  <div class="card-h"><h3>Running rooms</h3><span class="sub"><%= monthLabel %> · ungenerated first</span></div>
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr>
+      <th>Running room</th><th>Division</th><th>Contractor</th>
+      <th class="num">Man-days</th><th class="num">Coverage</th><th class="num">Deficiencies</th>
+      <th>Status</th><th></th>
+    </tr></thead>
+    <tbody>
+    <% rows.forEach(function(r){ %>
+      <tr>
+        <td><a href="<%= url('/certificates/' + r.id + '/' + month.slice(0,7)) %>"><%= r.name %></a>
+            <span class="muted"><%= r.code %></span>
+            <% if (!r.has_meal_facility) { %><span class="pill" style="margin-left:4px">no meals</span><% } %></td>
+        <td class="muted"><%= r.div_code %></td>
+        <td><%= r.contractor || '—' %></td>
+        <td class="num"><% if (r.cert_id) { %><%= fmtInt(r.man_days_present) %> <span class="muted">/ <%= fmtInt(r.man_days_due) %></span>
+            <% } else { %><span class="muted">—</span><% } %></td>
+        <td class="num"><% if (!r.cert_id) { %><span class="muted">—</span>
+            <% } else if (r.meets_floor) { %><span class="st good"><span class="dot"></span><%= Number(r.coverage_pct).toFixed(1) %>%</span>
+            <% } else { %><span class="st crit"><span class="dot"></span><%= Number(r.coverage_pct).toFixed(1) %>%</span><% } %></td>
+        <td class="num"><% if (!r.cert_id) { %><span class="muted">—</span>
+            <% } else { %><%= r.deficiencies_raised %><% if (r.deficiencies_open) { %>
+              <span class="muted">(<%= r.deficiencies_open %> open)</span><% } %><% } %></td>
+        <td><% if (!r.cert_id) { %><span class="st neut"><span class="dot"></span>Not generated</span>
+            <% } else if (r.status === 'countersigned') { %><span class="st good"><span class="dot"></span>Counter-signed</span>
+            <% } else if (r.status === 'certified') { %><span class="st warn"><span class="dot"></span>Awaiting counter-signature</span>
+            <% } else if (r.status === 'returned') { %><span class="st crit"><span class="dot"></span>Returned</span>
+            <% } else { %><span class="st warn"><span class="dot"></span>Draft</span><% } %></td>
+        <td><a class="btn ghost small" href="<%= url('/certificates/' + r.id + '/' + month.slice(0,7)) %>">Open</a></td>
+      </tr>
+    <% }); %>
+    <% if (!rows.length) { %><tr><td colspan="8" class="muted">No running room within your access.</td></tr><% } %>
+    </tbody>
+  </table></div>
+</div>

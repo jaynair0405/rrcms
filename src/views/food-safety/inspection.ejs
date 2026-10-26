@@ -1,0 +1,87 @@
+<%
+  const RESULT = { satisfactory:['g','Satisfactory'], needs_improvement:['y','Needs improvement'],
+                   unsatisfactory:['r','Unsatisfactory'] };
+  const fails = rows.filter(r => r.status === 'not_complied');
+  const groups = [];
+  rows.forEach(function(r){
+    const g = groups.find(x => x.key === r.section);
+    if (g) g.items.push(r); else groups.push({ key: r.section, name: r.section_name, items: [r] });
+  });
+%>
+
+<div class="row" style="margin-bottom:14px">
+  <a class="btn small ghost" href="<%= url('/food-safety/' + insp.rr_id) %>">← <%= insp.rr_name %></a>
+  <div class="spacer"></div>
+  <a class="btn small ghost" href="javascript:window.print()">Print</a>
+</div>
+
+<div class="kpis" style="margin-bottom:14px">
+  <div class="kpi"><div class="strip" style="background:var(--s1)"></div>
+    <div class="lab">Items checked</div><div class="val"><%= insp.items_checked %></div>
+    <div class="foot">excluding not applicable</div></div>
+  <div class="kpi"><div class="strip" style="background:var(--warning)"></div>
+    <div class="lab">Not complied</div><div class="val"><%= insp.items_failed %></div>
+    <div class="foot">to be put right</div></div>
+  <div class="kpi"><div class="strip" style="background:var(--critical)"></div>
+    <div class="lab">Critical failures</div><div class="val"><%= insp.critical_failed %></div>
+    <div class="foot">any one decides the result</div></div>
+  <div class="kpi"><div class="strip" style="background:var(--good)"></div>
+    <div class="lab">Result</div>
+    <div class="val" style="font-size:19px">
+      <% if (RESULT[insp.result]) { %><span class="pill <%= RESULT[insp.result][0] %>"><%= RESULT[insp.result][1] %></span><% } %></div>
+    <div class="foot"><%= insp.inspection_date %></div></div>
+</div>
+
+<div class="note" style="margin-bottom:14px">
+  <b><%= insp.rr_name %></b> (<%= insp.div_code %>) inspected on <b><%= insp.inspection_date %></b>
+  by <%= insp.inspector || insp.inspector_name || 'not recorded' %><%
+  if (insp.contractor_rep_name) { %>, with <%= insp.contractor_rep_name %> for the contractor<% } %>.
+</div>
+
+<% if (fails.length) { %>
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-h"><h3>What was found wanting</h3>
+      <span class="sub"><%= fails.length %> item(s)</span></div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>Item</th><th>Requirement</th><th>Observation</th><th>Source</th></tr></thead>
+      <tbody>
+      <% fails.forEach(function(r){ %>
+        <tr><td class="tnum"><%= r.item_code %>
+              <% if (r.is_critical) { %><span class="pill r" style="margin-left:4px">critical</span><% } %></td>
+            <td><%= r.description %></td>
+            <td><%= r.observation || '—' %></td>
+            <td class="muted"><%= r.source_ref || '' %></td></tr>
+      <% }); %>
+      </tbody>
+    </table></div>
+  </div>
+<% } else { %>
+  <div class="note" style="margin-bottom:14px">
+    Nothing was found wanting at this visit. The full checklist is below as it was recorded.
+  </div>
+<% } %>
+
+<% groups.forEach(function(g){ %>
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-h"><h3><%= g.name %></h3></div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th style="width:80px">Item</th><th>Requirement</th>
+        <th style="width:130px">Finding</th><th style="width:260px">Observation</th></tr></thead>
+      <tbody>
+      <% g.items.forEach(function(r){ %>
+        <tr><td class="tnum"><%= r.item_code %></td>
+            <td><%= r.description %></td>
+            <td><% if (r.status === 'complied') { %><span class="pill g">complied</span>
+                <% } else if (r.status === 'not_complied') { %><span class="pill r">not complied</span>
+                <% } else { %><span class="pill">not applicable</span><% } %></td>
+            <td><%= r.observation || '' %></td></tr>
+      <% }); %>
+      </tbody>
+    </table></div>
+  </div>
+<% }); %>
+
+<% if (insp.remarks) { %>
+  <div class="card"><div class="card-h"><h3>Remarks</h3></div>
+    <div class="card-b"><p style="white-space:pre-wrap;margin:0"><%= insp.remarks %></p></div></div>
+<% } %>

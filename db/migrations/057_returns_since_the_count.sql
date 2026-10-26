@@ -1,0 +1,45 @@
+-- 057 — linen that comes back AFTER the shelf was counted
+--
+-- WHAT WAS WRONG
+--
+-- The officer counted 300 bed sheets on the shelf at LP Mail, issued 40, sent
+-- 12 to the wash and received all 12 back the same day. The stock page then
+-- reported 264 unaccounted — and twelve of those were lying on the shelf in
+-- front of anybody who cared to look.
+--
+-- The ledger works out the shelf as
+--
+--     yesterday's stock  −  issued today  +  back from the wash today
+--
+-- which is right, and a PHYSICAL COUNT overrides it, which is also right: a
+-- man who counted beats arithmetic. But a count is taken at a MOMENT, and the
+-- twelve came back after that moment. They fell between the two: too late for
+-- the count, and the count had already replaced the arithmetic that would have
+-- caught them.
+--
+-- Worse, they never arrived. The next day opens from today's figure — 300 —
+-- and the twelve sat in TODAY's returns, so they are lost from the books
+-- permanently unless somebody counts again. Found by the officer's own test,
+-- not by any check in this system.
+--
+-- WHAT THIS COLUMN IS
+--
+-- How many pieces had come back from the wash AT THE MOMENT the row was saved.
+-- Compare it with the returns on record now and the difference is exactly what
+-- has arrived since — no timestamps, no guessing at what a count included.
+--
+-- WHAT IT DELIBERATELY DOES NOT DO
+--
+-- It does not correct the figure. The screen tells the supervisor what came
+-- back after his count and offers to add it; pressing the button is his act.
+-- Writing a shelf figure nobody verified would turn a count into arithmetic
+-- wearing a count's clothes, and the count is the only evidence this register
+-- has that anyone went and looked.
+
+ALTER TABLE linen_daily_item
+  ADD COLUMN returns_seen SMALLINT UNSIGNED NOT NULL DEFAULT 0 AFTER computed_in_hand;
+
+-- Rows written before this column existed knew nothing about returns, so the
+-- honest starting value is "none seen" -- which is what the default gives, and
+-- which will prompt on any day that had returns. A prompt the supervisor can
+-- dismiss is better than a silent figure nobody questioned.

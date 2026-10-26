@@ -1,0 +1,49 @@
+<%- await include('_tabs') %>
+
+<div class="note" style="margin-bottom:14px">
+  Print and put these up at the bedside and in the dining hall. A crew member scans, rates and submits —
+  <b>no login</b>, four taps, under a minute. The printed address must be reachable from a phone, so set
+  <code>PUBLIC_BASE_URL</code> in <code>.env</code> to the real address before printing for a live running room.
+  Right now the codes point at <b><%= base %></b>.
+</div>
+
+<form class="row" method="get" style="margin-bottom:14px" id="qrform">
+  <div style="flex:0 0 280px"><label class="fl">Running room</label>
+    <select class="fi" name="rr" onchange="this.form.submit()">
+      <option value="">All — print the full set</option>
+      <% rooms.forEach(function(r){ %><option value="<%= r.id %>" <%= String(selected)===String(r.id)?'selected':'' %>><%= r.name %></option><% }); %>
+    </select></div>
+  <div class="spacer"></div>
+  <button class="btn" type="button" onclick="window.print()">Print</button>
+</form>
+
+<style>
+  .posters{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+  .poster{background:#fff;border:1px solid var(--border);border-radius:10px;padding:18px;text-align:center;break-inside:avoid}
+  .poster .rr{font-size:18px;font-weight:700;letter-spacing:-.3px}
+  .poster .dv{font-size:11.5px;color:var(--text-muted);margin-bottom:12px}
+  .poster svg{width:170px;height:170px}
+  .poster .ask{font-size:13px;font-weight:600;margin-top:12px}
+  .poster .sub{font-size:11.5px;color:var(--text-secondary);margin-top:3px;line-height:1.4}
+  .poster .u{font-size:10.5px;color:var(--text-muted);margin-top:8px;word-break:break-all}
+  @media print{
+    .sidebar,.topbar,.tabs,#qrform,.note{display:none!important}
+    .app{display:block}.content{padding:0}
+    .posters{grid-template-columns:repeat(2,1fr)}
+    .poster{border:1px solid #999}
+  }
+</style>
+
+<div class="posters">
+  <% only.forEach(function(r){ const link = base + '/f/' + r.code; %>
+    <div class="poster">
+      <div class="rr"><%= r.name %> Running Room</div>
+      <div class="dv"><%= r.div_name %> Division · Central Railway</div>
+      <%- qr.svg(link, 170) %>
+      <div class="ask">How was your stay?</div>
+      <div class="sub">Scan with your phone camera and rate cleanliness,<br>linen, food and staff behaviour.</div>
+      <div class="sub" style="margin-top:6px"><b>No login. Under a minute.</b></div>
+      <div class="u"><%= link %></div>
+    </div>
+  <% }); %>
+</div>

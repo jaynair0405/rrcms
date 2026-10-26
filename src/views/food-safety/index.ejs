@@ -1,0 +1,93 @@
+<%
+  // Only rooms with a kitchen reach this page — a rest-only room is not a food
+  // business under the Act, so its absence here is the correct answer, not a gap.
+  const TONE = { ok:'g', warn:'y', err:'r' };
+  const RESULT = { satisfactory:['g','Satisfactory'], needs_improvement:['y','Needs improvement'],
+                   unsatisfactory:['r','Unsatisfactory'] };
+%>
+
+<div class="kpis" style="margin-bottom:14px">
+  <div class="kpi"><div class="strip" style="background:var(--s1)"></div>
+    <div class="lab">Kitchens in scope</div><div class="val"><%= counts.total %></div>
+    <div class="foot">rooms with a meal facility</div></div>
+  <div class="kpi"><div class="strip" style="background:var(--good)"></div>
+    <div class="lab">Licence valid</div><div class="val"><%= counts.valid %></div>
+    <div class="foot">more than 180 days to run</div></div>
+  <div class="kpi"><div class="strip" style="background:var(--warning)"></div>
+    <div class="lab">Renewal due or overdue</div><div class="val"><%= counts.attention %></div>
+    <div class="foot">inside or past the FSSAI window</div></div>
+  <div class="kpi"><div class="strip" style="background:var(--critical)"></div>
+    <div class="lab">No licence on record</div><div class="val"><%= counts.missing %></div>
+    <div class="foot">kitchen running unlicensed</div></div>
+  <div class="kpi"><div class="strip" style="background:var(--critical)"></div>
+    <div class="lab">Returns overdue</div><div class="val"><%= counts.overdue %></div>
+    <div class="foot">annual return or lab test</div></div>
+</div>
+
+<% if (counts.missing) { %>
+  <div class="note err" style="margin-bottom:14px">
+    <b><%= counts.missing %></b> of <%= counts.total %> kitchens have no FSSAI licence recorded.
+    Serving food from unlicensed premises is an offence under section 63 of the FSS Act, and the
+    Railway is the occupier of the premises. Either the licence exists and has not been lodged here,
+    or it does not exist — both need finding out.
+  </div>
+<% } %>
+<% if (counts.stopped) { %>
+  <div class="note err" style="margin-bottom:14px">
+    <b><%= counts.stopped %></b> licence(s) are suspended, cancelled or surrendered. Those kitchens
+    must not serve until the position is restored, whatever the validity dates say.
+  </div>
+<% } %>
+
+<div class="card">
+  <div class="card-h"><h3>Licence position by running room</h3>
+    <span class="sub">FSSAI Form C · Central License – Indian Railways</span></div>
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr>
+      <th>Running room</th><th>Licensee</th><th>Licence no.</th><th>Valid upto</th>
+      <th>Standing</th><th class="num">Returns due</th><th>Last inspection</th><th></th>
+    </tr></thead>
+    <tbody>
+    <% rows.forEach(function(r){ %>
+      <tr>
+        <td><b><%= r.name %></b> <span class="muted">(<%= r.div_code %>)</span></td>
+        <td><%= r.licensee_name || r.contractor || '—' %></td>
+        <td class="tnum"><% if (r.licence_number) { %><%= r.licence_number %><%
+              if (r.certificate_file_id) { %> <a class="pill b" style="text-decoration:none"
+                href="<%= url('/food-safety/' + r.id + '/licence/' + r.licence_id + '/file') %>">copy</a><%
+              } else { %> <span class="pill y" title="No Form C scan lodged">no scan</span><% }
+            } else { %><span class="muted">not recorded</span><% } %></td>
+        <td class="tnum"><%= r.valid_upto || '—' %></td>
+        <td><span class="pill <%= TONE[r.state.tone] %>"><%= r.state.label %></span>
+            <% if (r.state.left !== null && r.state.key !== 'valid') { %>
+              <div class="muted" style="font-size:11px;margin-top:2px">
+                <%= r.state.left < 0 ? Math.abs(r.state.left) + ' days past expiry'
+                                     : r.state.left + ' days left' %></div>
+            <% } %></td>
+        <td class="num"><% if (r.overdue) { %><span class="pill r"><%= r.overdue %> overdue</span>
+            <% } else if (r.pending) { %><span class="pill y"><%= r.pending %> pending</span>
+            <% } else { %><span class="pill g">clear</span><% } %></td>
+        <td><% if (r.last_inspection) { %>
+              <span class="tnum"><%= r.last_inspection %></span>
+              <% if (r.last_result && RESULT[r.last_result]) { %>
+                <span class="pill <%= RESULT[r.last_result][0] %>" style="margin-left:5px"><%= RESULT[r.last_result][1] %></span>
+              <% } %>
+            <% } else { %><span class="muted">never</span><% } %></td>
+        <td><a class="btn small ghost" href="<%= url('/food-safety/' + r.id) %>">Open</a></td>
+      </tr>
+    <% }); %>
+    <% if (!rows.length) { %>
+      <tr><td colspan="8" class="muted" style="padding:18px">
+        No running room within your access has a meal facility, so no FSSAI licence is required.</td></tr>
+    <% } %>
+    </tbody>
+  </table></div>
+</div>
+
+<div class="note" style="margin-top:14px">
+  <b>What is counted as due.</b> The licence itself, plus the two duties printed on the Form C that
+  lapse quietly:
+  <% expected.forEach(function(e, i){ %><%= i ? ' · ' : '' %><b><%= e.label %></b> (due <%= e.due_on %>)<% }); %>.
+  A renewal application may be filed from 180 days before expiry, and late renewal is allowed for
+  180 days after expiry against penalty — after that the kitchen needs a fresh licence, not a renewal.
+</div>

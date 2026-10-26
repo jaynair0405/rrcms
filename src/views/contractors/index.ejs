@@ -1,0 +1,20 @@
+<div class="card"><div class="tblwrap"><table class="tbl">
+  <thead><tr><th>Contractor</th><th class="num">Running rooms</th><th class="num">Beds</th><th class="num">Contracts</th>
+    <th class="num">Staff</th><th>Earliest expiry</th><th>Status</th></tr></thead>
+  <tbody>
+  <% rows.forEach(function(r){ %>
+    <tr>
+      <td><a href="<%= url('/contractors/' + r.id) %>"><%= r.name %></a>
+        <div class="muted" style="font-size:10.5px"><%= r.code %></div></td>
+      <td class="num"><%= r.rr_count %></td>
+      <td class="num"><%= fmtInt(r.beds) %></td>
+      <td class="num"><%= r.contracts %></td>
+      <td class="num"><%= r.staff %></td>
+      <td class="tnum"><%= r.earliest_expiry %></td>
+      <td><% if (r.is_blacklisted) { %><span class="st crit"><span class="dot"></span>Blacklisted</span>
+          <% } else { %><span class="st good"><span class="dot"></span>Active</span><% } %></td>
+    </tr>
+  <% }); %>
+  <% if (!rows.length) { %><tr><td colspan="7" class="muted">No contractors within your access.</td></tr><% } %>
+  </tbody>
+</table></div></div>

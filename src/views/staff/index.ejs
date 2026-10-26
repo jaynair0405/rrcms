@@ -1,0 +1,174 @@
+<%# THE WAY BACK.
+    Arriving here from a running room's strength table, the officer is one
+    click deep in a question — "which fifteen kitchen helpers?" — and the page
+    said nothing about where he had come from or how to return. A drill-down
+    that cannot be walked back up is a dead end with a browser button for a
+    remedy. %>
+<% const camefrom = room && (rooms || []).find(function(r){ return String(r.id) === String(rr); }); %>
+<% if (camefrom) { %>
+  <% const dg = (designations || []).find(function(d){ return String(d.id) === String(designation); }); %>
+  <div class="note" style="margin-bottom:14px">
+    <a href="<%= url('/running-rooms/' + camefrom.id) %>">&larr; <%= camefrom.name %></a>
+    <% if (dg) { %> · <b><%= dg.name %></b>
+      <span class="muted">— <%= rows.length %> on roll</span>
+      <span class="muted"> · <a href="<%= url('/staff') %>?rr=<%= camefrom.id %>">everyone at <%= camefrom.name %></a></span>
+    <% } else { %> · <b>everyone on the roll</b>
+      <span class="muted">— <%= rows.length %> <%= rows.length === 1 ? 'person' : 'people' %></span>
+    <% } %>
+    <span class="muted"> · a name below opens that person's record.</span>
+  </div>
+<% } %>
+
+<% if (can('staff.edit')) { %>
+<div class="row" style="margin-bottom:14px;align-items:center">
+  <div class="spacer"></div>
+  <a class="btn" href="<%= url('/staff/new') %>">Add contract staff</a>
+</div>
+<% } %>
+
+<div class="kpis" style="margin-bottom:16px">
+  <div class="kpi"><i class="strip" style="background:var(--s1)"></i>
+    <div class="lab">Staff on roll</div><div class="val"><%= fmtInt(counts.total || 0) %></div>
+    <div class="foot">within your access</div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s3)"></i>
+    <div class="lab">Screened &amp; approved</div><div class="val"><%= fmtInt(counts.approved || 0) %></div>
+    <div class="foot"><%= counts.total ? Math.round((counts.approved||0)/counts.total*100) : 0 %>% of the register</div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s4)"></i>
+    <div class="lab">Awaiting screening</div><div class="val"><%= fmtInt(counts.pending || 0) %></div>
+    <div class="foot"><span class="st <%= (counts.pending||0) ? 'warn':'good' %>"><span class="dot"></span>may not be deployed</span></div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s4)"></i>
+    <div class="lab">Working, not screened</div><div class="val"><%= fmtInt(counts.provisional || 0) %></div>
+    <div class="foot"><% if (counts.provisional) { %><span class="st warn"><span class="dot"></span>admitted provisionally</span>
+      <% } else { %><span class="st good"><span class="dot"></span>none outstanding</span><% } %></div></div>
+  <div class="kpi"><i class="strip" style="background:var(--s8)"></i>
+    <div class="lab">Rejected</div><div class="val"><%= fmtInt(counts.rejected || 0) %></div>
+    <div class="foot">must be replaced by the contractor</div></div>
+</div>
+
+<div class="note" style="margin-bottom:14px">
+  The tender requires every person to be <b>screened and approved by the Railway before deployment</b>, with photo ID,
+  police verification, medical fitness, bank, EPF and ESIC particulars on file. Manager, Supervisor and Head Cook
+  additionally need a hotel-management qualification. A man who is not approved <b>cannot be marked present on the
+  muster</b> — the form posts him as absent and says why.
+</div>
+
+<%# The go-live problem, and the honest answer to it. On the day RR-CMS is
+    switched on, every man on the roster is pending and no muster can be filed
+    at all — yet those men are working. This admits them as a body and says so
+    on the record, which is not the same as pretending they were screened. %>
+<%# AND WHERE THE LIST SPANS SEVERAL SITES, SAY SO. A bulk admission has to
+    name a roster, so the card cannot stand over a list of forty-four running
+    rooms -- but a figure saying men are awaiting screening, with nothing on
+    the page to act on it, sends somebody hunting for a button that is not
+    there. %>
+<% if (can('staff.admit') && !room && (counts.pending || 0) > 0) { %>
+  <div class="note warn" style="margin-bottom:14px">
+    <b><%= fmtInt(counts.pending) %> on these rosters have never been decided about</b>
+    &mdash; and a pending man cannot be marked present, so no muster can be filed for him.
+    Men are admitted provisionally one running room at a time, because a bulk admission
+    has to say whose roster it means.
+    <b>Choose a running room in the filter above</b> and the card will appear here.
+  </div>
+<% } %>
+
+<% if (can('staff.admit') && room && (counts.pending || 0) > 0) { %>
+  <div class="card" style="margin-bottom:16px">
+    <div class="card-h"><h3>Switching this running room on</h3>
+      <span class="sub"><%= fmtInt(counts.pending) %> on the roster have never been decided about</span></div>
+    <div class="card-b">
+      <div class="note warn" style="font-size:12.5px;margin-bottom:12px">
+        These people are working at <b><%= room.name %></b> today, but RR-CMS has never seen them, so every one is
+        <b>pending</b> — and a pending man cannot be marked present. That means <b>no muster can be filed here at
+        all</b> until somebody decides.
+        <br><br>
+        Admitting them <b>provisionally</b> lets the register be kept from day one while saying plainly that
+        <b>nobody has screened them</b>. They stay flagged on every screen, and the count above stays until the
+        Railway works through them one by one. This is <b>not</b> an approval, and there is deliberately no way to
+        approve many men at once: screening is what keeps an unverified person out of a running room, and a
+        control that one click satisfies is not a control.
+      </div>
+      <form method="post" action="<%= url('/staff/admit-provisional') %>">
+        <input type="hidden" name="rr" value="<%= room.id %>">
+        <label class="fl">Why they are being admitted</label>
+        <input class="fi" name="note" maxlength="300" style="margin-bottom:10px"
+               placeholder="already working when RR-CMS was introduced">
+        <button class="btn warn" type="submit">
+          Admit <%= fmtInt(counts.pending) %> provisionally — they are not screened</button>
+      </form>
+    </div>
+  </div>
+<% } %>
+
+<% if (admitted) { %>
+  <div class="note ok" style="margin-bottom:14px">
+    <b><%= fmtInt(admitted) %></b> admitted provisionally. They can be marked present from now on, and every one
+    is flagged as unscreened until the Railway screens him properly.
+  </div>
+<% } %>
+
+<form class="row" method="get" style="margin-bottom:14px">
+  <input class="fi" name="q" value="<%= q %>" placeholder="Name or staff code…" style="max-width:220px">
+  <select class="fi" name="rr" style="max-width:200px">
+    <option value="">All running rooms</option>
+    <% rooms.forEach(function(r){ %><option value="<%= r.id %>" <%= String(rr)===String(r.id)?'selected':'' %>><%= r.name %></option><% }); %>
+  </select>
+  <select class="fi" name="designation" style="max-width:190px">
+    <option value="">All designations</option>
+    <% designations.forEach(function(d){ %><option value="<%= d.id %>" <%= String(designation)===String(d.id)?'selected':'' %>><%= d.name %></option><% }); %>
+  </select>
+  <select class="fi" name="screening" style="max-width:170px">
+    <option value="">Any screening state</option>
+    <% ['pending','provisional','approved','rejected'].forEach(function(s){ %><option value="<%= s %>" <%= screening===s?'selected':'' %>><%= s %></option><% }); %>
+  </select>
+  <select class="fi" name="flag" style="max-width:230px">
+    <option value="">Needs attention: any</option>
+    <option value="unscreened"  <%= flag==='unscreened'?'selected':'' %>>Not approved for deployment</option>
+    <option value="provisional" <%= flag==='provisional'?'selected':'' %>>Working but never screened</option>
+    <option value="no_medical"  <%= flag==='no_medical'?'selected':'' %>>Medical fitness missing or expired</option>
+    <option value="no_qual"     <%= flag==='no_qual'?'selected':'' %>>Qualification missing (skilled posts)</option>
+    <option value="expiring"    <%= flag==='expiring'?'selected':'' %>>Document expiring within 60 days</option>
+    <option value="uniform_due" <%= flag==='uniform_due'?'selected':'' %>>Uniform overdue (6-month cycle)</option>
+    <option value="left"        <%= flag==='left'?'selected':'' %>>Left — no longer on roll</option>
+  </select>
+  <button class="btn" type="submit">Filter</button>
+  <div class="spacer"></div>
+  <span class="muted" style="font-size:12px"><%= rows.length %> shown</span>
+</form>
+
+<% if (can('staff.grade')) { %>
+  <div class="row" style="gap:8px;margin-bottom:14px;align-items:center">
+    <a class="btn ghost" href="<%= url('/staff/grading') %>">Monthly grading</a>
+    <div class="muted" style="font-size:11.5px">
+      Who to keep and who to replace — the occupant rating and attendance are worked out for you.
+    </div>
+  </div>
+<% } %>
+<div class="card"><div class="tblwrap"><table class="tbl">
+  <thead><tr><th>Staff</th><th>Designation</th><th>Skill</th><th>Running room</th><th>Contractor</th>
+    <th>Joined</th><th class="num">Docs</th><th>Next expiry</th><th>Uniform</th><th>Screening</th></tr></thead>
+  <tbody>
+  <% rows.forEach(function(r){
+       const uniformDue = !r.last_uniform || (new Date(r.last_uniform) < new Date(Date.now() - 182*86400000)); %>
+    <tr>
+      <td><a href="<%= url('/staff/' + r.id) %>"><%= r.full_name %></a>
+        <div class="muted" style="font-size:10.5px"><%= r.staff_code %></div></td>
+      <td><%= r.designation %></td>
+      <td><span class="pill"><%= r.skill_category.replace('_','-') %></span></td>
+      <td><a href="<%= url('/running-rooms/' + r.rr_id) %>"><%= r.rr_name %></a>
+        <span class="muted" style="font-size:10.5px"><%= r.div_code %></span></td>
+      <td style="font-size:11.8px"><%= r.contractor %></td>
+      <td class="tnum"><%= r.date_of_joining %></td>
+      <td class="num"><%= r.doc_count %></td>
+      <td class="tnum"><% if (r.next_expiry) { %><%= r.next_expiry %><% } else { %><span class="muted">—</span><% } %></td>
+      <td><% if (uniformDue) { %><span class="st warn"><span class="dot"></span>Due</span>
+          <% } else { %><span class="st good"><span class="dot"></span>Current</span><% } %></td>
+      <td><% if (r.screening_status === 'provisional') { %><span class="st warn"><span class="dot"></span>Provisional</span>
+            <div class="muted" style="font-size:10px">working, not screened</div>
+          <% } else if (r.screening_status === 'approved') { %><span class="st good"><span class="dot"></span>Approved</span>
+          <% } else if (r.screening_status === 'rejected') { %><span class="st crit"><span class="dot"></span>Rejected</span>
+          <% } else { %><span class="st warn"><span class="dot"></span>Pending</span><% } %></td>
+    </tr>
+  <% }); %>
+  <% if (!rows.length) { %><tr><td colspan="10" class="muted">No staff match.</td></tr><% } %>
+  </tbody>
+</table></div></div>

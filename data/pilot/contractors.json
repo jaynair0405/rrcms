@@ -1,0 +1,90 @@
+{
+  "_note": [
+    "The contractors holding the pilot running rooms, one entry per SITE.",
+    "",
+    "A firm may hold more than one site: Prabhakar Enterprises holds both ROHA and",
+    "IGP, confirmed by the officer on 02.09.2026. Two entries carrying the same",
+    "code are the same firm under two agreements, which is what the paperwork is.",
+    "",
+    "IGP's agreement has ARRIVED and is entered below from the executed GeM",
+    "contract. The other three are still awaited, so the loader writes an agreement",
+    "number beginning AGREEMENT-AWAITED/ and leaves the period blank rather than",
+    "assuming one -- an assumed date anchors the standing-obligation clocks and was",
+    "twice mistaken for a real one.",
+    "",
+    "A firm's name matters beyond the paperwork: the FSSAI licence for a kitchen is",
+    "issued to the licensee named on it, so the Form C for each of these sites",
+    "should stand in the name of the firm shown here. A licence in another firm's",
+    "name is a finding, not a clerical difference."
+  ],
+  "contractors": [
+    {
+      "code": "PRE",
+      "name": "M/S Prabhakar Enterprises",
+      "address": "48, Padmavati Nagar, Rajpipla Road, Ankleshwar, Bharuch, Gujarat 393001",
+      "gstin": "24AMTPS4727K1ZC",
+      "udyam_no": "UDYAM-GJ-06-0008530",
+      "contact_person": null,
+      "phone": "09898035684",
+      "email": "prabhakarenterprises2006@yahoo.co.in",
+      "placeholder": false,
+      "site": "ROHA",
+      "remarks": "Holds ROHA and IGP. ROHA's own agreement particulars are still awaited."
+    },
+    {
+      "code": "PRE",
+      "name": "M/S Prabhakar Enterprises",
+      "address": "48, Padmavati Nagar, Rajpipla Road, Ankleshwar, Bharuch, Gujarat 393001",
+      "gstin": "24AMTPS4727K1ZC",
+      "udyam_no": "UDYAM-GJ-06-0008530",
+      "contact_person": null,
+      "phone": "09898035684",
+      "email": "prabhakarenterprises2006@yahoo.co.in",
+      "placeholder": false,
+      "site": "IGP",
+      "agreement": {
+        "agreement_no": "GEMC-511687722391404",
+        "bid_no": "GEM/2026/B/7412878",
+        "loa_date": "2026-08-28",
+        "start_date": "2026-09-10",
+        "end_date": "2028-09-09",
+        "total_value": 80852475.88,
+        "epbg_percent": 5.0,
+        "advisory_bank": "State Bank of India",
+        "buyer_office": "Sr. DEE/TRSO/CSMT, 2nd Floor, DRM Annex Building, Mumbai Division, CST Mumbai 400001",
+        "paying_authority": "SR DFM/BB",
+        "billing_cycle": "monthly",
+        "status": "active",
+        "source_ref": "GEMC-511687722391404 dated 28.08.2026",
+        "remarks": "Executed GeM contract, generated 28.08.2026. Tender BB/TRSO/375/G/RR/IGP/Subsidize Meal/2026. Value Rs 8,08,52,475.88 including all duties and taxes across 28 priced lines. Administrative approval DRM/BB."
+      },
+      "remarks": "Holds ROHA and IGP."
+    },
+    {
+      "code": "PIT",
+      "name": "M/S Piyush Traders",
+      "site": "LNL",
+      "address": null,
+      "contact_person": null,
+      "phone": null,
+      "placeholder": false,
+      "remarks": "Address not yet supplied by the Railway."
+    },
+    {
+      "code": "PLC-JNPT",
+      "name": "M/S Placeholder Caterers (JNPT)",
+      "site": "JNPT",
+      "address": null,
+      "contact_person": "Contract not finalised",
+      "phone": null,
+      "placeholder": true,
+      "remarks": "PLACEHOLDER. JNPT's contract is not finalised; this firm does not exist."
+    }
+  ],
+  "contract_defaults": {
+    "start_date": null,
+    "end_date": null,
+    "status": "active",
+    "remarks": "Agreement particulars not yet supplied -- number, LOA date, period, security deposit and performance guarantee all awaited. No period is assumed: migration 037 made the dates nullable precisely so an invented date could not be mistaken for a real one."
+  }
+}

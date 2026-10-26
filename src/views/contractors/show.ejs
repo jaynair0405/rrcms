@@ -1,0 +1,96 @@
+<div style="margin-bottom:14px"><a href="<%= url('/contractors') %>">← All contractors</a></div>
+<div class="card" style="margin-bottom:14px"><div class="card-b" style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:20px;align-items:center">
+  <div>
+    <div style="font-size:21px;font-weight:680;letter-spacing:-.5px"><%= contractor.name %></div>
+    <div class="muted" style="font-size:12.5px"><%= contractor.code %><%= contractor.gst_no ? ' · GST ' + contractor.gst_no : '' %></div>
+  </div>
+  <%# rooms.length counted LINK ROWS, so a room held under two agreements was
+      counted twice and its beds added twice with it. Distinct rooms held today. %>
+  <div><div class="muted" style="font-size:10.5px">RUNNING ROOMS</div>
+    <div style="font-size:26px;font-weight:680;letter-spacing:-1px"><%= heldTotals.rooms %></div>
+    <div class="muted" style="font-size:11.5px"><%= heldTotals.beds %> beds<%
+      if (heldTotals.past) { %> · <%= heldTotals.past %> past<% } %></div></div>
+  <div><div class="muted" style="font-size:10.5px">STAFF ON ROLL</div>
+    <div style="font-size:26px;font-weight:680;letter-spacing:-1px"><%= staff.total || 0 %></div>
+    <div class="muted" style="font-size:11.5px"><%= staff.pending || 0 %> awaiting screening</div></div>
+</div></div>
+
+<div class="grid" style="grid-template-columns:1.55fr 1fr">
+  <div class="card">
+    <div class="card-h"><h3>Agreements</h3>
+      <span class="spacer"></span>
+      <% if (can('contract.edit')) { %>
+        <a class="btn ghost" href="<%= url('/contractors/contracts/new') %>">Record an agreement</a>
+      <% } %>
+    </div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>LOA</th><th>Agreement</th><th>Division</th><th class="num">RRs</th><th>Period</th><th>Status</th></tr></thead>
+      <tbody>
+      <% contracts.forEach(function(c){ %>
+        <tr>
+          <td><% if (c.loa_no) { %><b class="tnum"><%= c.loa_no %></b>
+                <div class="muted tnum" style="font-size:11px"><%= c.loa_date ? String(c.loa_date).slice(0,10) : 'no date' %></div>
+              <% } else { %><span class="muted">not on record</span><% } %></td>
+          <td><a class="tnum" href="<%= url('/contractors/contracts/' + c.id) %>"><%= c.agreement_no %></a>
+            <% if (c.gaps && c.gaps.length) { %>
+              <div class="muted" style="font-size:11px">not on record: <%= c.gaps.join(', ') %></div>
+            <% } %></td>
+          <td><%= c.division %></td>
+          <td class="num"><%= c.rr_count %></td>
+          <td class="tnum"><% if (c.start_date && c.end_date) { %>
+              <%= String(c.start_date).slice(0,10) %> to <%= String(c.end_date).slice(0,10) %>
+              <% if (c.extended_to) { %><div class="muted" style="font-size:11px">extended to <%= String(c.extended_to).slice(0,10) %></div><% } %>
+            <% } else { %><span class="muted">not on record</span><% } %></td>
+          <td><span class="pill <%= c.status==='active'?'g':'' %>"><%= c.status %></span></td>
+        </tr>
+      <% }); %>
+      <% if (!contracts.length) { %>
+        <tr><td colspan="6" class="muted">No agreement is on record for this contractor.</td></tr>
+      <% } %>
+      </tbody>
+    </table></div>
+  </div>
+  <div class="card">
+    <%# One row per running room PER AGREEMENT, with the dates that link was
+        held. The old table showed the room alone with no dates, so a site that
+        had changed hands appeared twice with nothing to say which was which. %>
+    <div class="card-h"><h3>Running rooms held</h3>
+      <span class="sub">one row per room per agreement</span></div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>Running room</th><th>Agreement</th><th>Held</th>
+        <th class="num">Beds</th><th class="num">Men</th><th>Meals</th></tr></thead>
+      <tbody>
+      <% let seenPast = false; rooms.forEach(function(r){
+           if (!r.is_live && !seenPast) { seenPast = true; %>
+        <tr style="background:var(--plane)"><td colspan="6" class="muted" style="font-size:11.5px">
+          <b>No longer held.</b> Kept because who was answerable for a site last March
+          is what this table exists to answer.</td></tr>
+      <%   } %>
+        <tr<%= r.is_live ? '' : ' class="muted"' %>>
+          <td><a href="<%= url('/running-rooms/' + r.id) %>"><%= r.name %></a>
+            <div class="muted" style="font-size:10.5px"><%= r.rr_code %> ·
+              <%= r.div_code %> · cat <%= r.category %> · <%= r.physical_rooms %> rooms</div></td>
+          <td><a class="tnum" style="font-size:11.5px"
+                 href="<%= url('/contractors/contracts/' + r.contract_id) %>"><%= r.agreement_no %></a></td>
+          <td class="tnum" style="font-size:11.5px">
+            <%= String(r.effective_from).slice(0,10) %> →
+            <% if (!r.effective_to) { %><span class="st good"><span class="dot"></span>open</span>
+            <% } else { %><%= String(r.effective_to).slice(0,10) %><% } %></td>
+          <td class="num"><%= r.total_beds %></td>
+          <td class="num"><% if (r.is_live) { %><b><%= r.on_roll %></b><span class="muted">/<%= r.sanctioned %></span>
+              <% if (r.on_roll < r.sanctioned) { %>
+                <div class="st crit" style="font-size:10px"><span class="dot"></span>short <%= r.sanctioned - r.on_roll %></div>
+              <% } %><% } else { %>—<% } %></td>
+          <td><%= r.has_meal_facility ? 'Subsidised' : '—' %></td></tr>
+      <% }); %>
+      <% if (!rooms.length) { %><tr><td colspan="6" class="muted">No running room is on record against this contractor.</td></tr><% } %>
+      </tbody>
+    </table></div>
+    <div class="tblfoot">
+      <b>Men</b> is this firm's staff on the roll at that running room, against the sanctioned
+      strength for the room — from the contract where its own establishment has been read in,
+      from the tender's bed-band table where it has not. A room appearing twice means it changed
+      hands: both rows carry their own dates.
+    </div>
+  </div>
+</div>

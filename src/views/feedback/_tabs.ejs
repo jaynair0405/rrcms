@@ -1,0 +1,7 @@
+<div class="tabs" style="margin-bottom:16px">
+  <% [['inbox','','Inbox'],['register','/register','Signed register'],
+      ['coverage','/coverage','Coverage vs 50% floor'],
+      ['grading','/grading','Occupant grading'],['qr','/qr','QR codes']].forEach(function(t){ %>
+    <a class="tab <%= tab===t[0]?'active':'' %>" style="text-decoration:none" href="<%= url('/feedback' + t[1]) %>"><%= t[2] %></a>
+  <% }); %>
+</div>

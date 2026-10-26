@@ -1,0 +1,287 @@
+<%- await include('_nav') %>
+
+<%# WHICH BUILDING. Treating one building every two months would satisfy a
+    register that only counts treatments. It would not satisfy the clause,
+    which prices the whole 53,010 square feet, and it would not keep the
+    cockroaches out of the other three. %>
+<% if (blocks && blocks.length) { %>
+  <div class="card blockbar">
+    <div class="bb-row">
+      <span class="bb-lab">Building</span>
+        <a class="btn <%= wantBlock === null ? '' : 'ghost' %> small"
+           href="<%= url('/facility/pest') %>?rr=<%= rr.id %>">All of <%= rr.name %></a>
+        <% blocks.forEach(function(b){ %>
+          <a class="btn <%= wantBlock === b.id ? '' : 'ghost' %> small"
+             href="<%= url('/facility/pest') %>?rr=<%= rr.id %>&block=<%= b.id %>"><%= b.name %>
+             <% if (b.pest_due) { %><span class="pill r" style="margin-left:5px"><%
+                 if (b.last_pest === null) { %>never<% } else { %><%= b.pest_age %> days<% } %></span>
+             <% } else { %><span class="cnt" style="margin-left:5px"><%= b.pest_age %> days ago</span><% } %></a>
+        <% }); %>
+    </div>
+  </div>
+  <div class="blocknote">
+    Red past <%= pestEvery %> days, which is the two months the contract allows with a day's
+    grace either side of the month lengths. A building never treated reads <b>never</b> —
+    not a pass.
+  </div>
+<% } %>
+
+
+<%
+  const TREAT = { rodent:'Rodent control', insecticide:'Insecticide spray', flying_insect:'Flying insects',
+                  bed_bug:'Bed bug treatment', fumigation:'Fumigation' };
+  const done = rows.filter(function(r){ return r.performed_on; });
+  const late = done.filter(function(r){ return r.delay_days > 0; }).length;
+  const noNotice = done.filter(function(r){ return !r.notice_given_on; }).length;
+%>
+
+<div class="kpis" style="margin-bottom:14px">
+  <div class="kpi"><div class="strip" style="background:var(--s1)"></div>
+    <div class="lab">Treatments carried out</div><div class="val"><%= done.length %></div>
+    <div class="foot">of <%= rows.length %> scheduled</div></div>
+  <div class="kpi"><div class="strip" style="background:var(--critical)"></div>
+    <div class="lab">Overdue</div><div class="val"><%= overdue %></div>
+    <div class="foot">scheduled date passed, not done</div></div>
+  <div class="kpi"><div class="strip" style="background:var(--warning)"></div>
+    <div class="lab">Done late</div><div class="val"><%= late %></div>
+    <div class="foot">after the scheduled date</div></div>
+  <div class="kpi"><div class="strip" style="background:var(--s4)"></div>
+    <div class="lab">Without advance notice</div><div class="val"><%= noNotice %></div>
+    <div class="foot">crew must be told beforehand</div></div>
+</div>
+
+<div class="grid" style="grid-template-columns:1.5fr 1fr">
+  <div class="card">
+    <div class="card-h"><h3>Pest control log</h3><span class="sub"><%= rr.name %></span></div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>Scheduled</th><th>Treatment</th><th>Agency</th><th>Carried out</th>
+        <th>Notice</th><th>Areas</th><th>Position</th></tr></thead>
+      <tbody>
+      <% rows.forEach(function(r){ %>
+        <tr>
+          <td class="tnum"><%= r.scheduled_on %></td>
+          <td><%= TREAT[r.treatment_type] || r.treatment_type %>
+              <% if (r.chemical_used) { %><div class="muted" style="font-size:11.3px"><%= r.chemical_used %></div><% } %></td>
+          <td><% if (r.vendor_name) { %><%= r.vendor_name %>
+                <% if (r.licence_valid_till && String(r.licence_valid_till).slice(0,10) < date) { %>
+                  <span class="pill r" style="margin-left:4px">licence expired</span><% } %>
+              <% } else { %><span class="muted">not recorded</span><% } %></td>
+          <td class="tnum"><%= r.performed_on || '—' %></td>
+          <td class="tnum"><% if (r.notice_given_on) { %><%= r.notice_given_on %>
+              <% } else if (r.performed_on) { %><span class="st warn"><span class="dot"></span>none</span>
+              <% } else { %><span class="muted">—</span><% } %></td>
+          <td class="muted"><%= r.areas_covered || '—' %></td>
+          <td><% if (!r.performed_on && r.scheduled_on < date) { %>
+                <span class="st crit"><span class="dot"></span>Overdue</span>
+              <% } else if (!r.performed_on) { %><span class="st neut"><span class="dot"></span>Due</span>
+              <% } else if (r.delay_days > 0) { %>
+                <span class="st warn"><span class="dot"></span><%= r.delay_days %> day<%= r.delay_days>1?'s':'' %> late</span>
+              <% } else { %><span class="st good"><span class="dot"></span>On schedule</span><% } %></td>
+        </tr>
+      <% }); %>
+      <% if (!rows.length) { %><tr><td colspan="7" class="muted">Nothing scheduled yet.</td></tr><% } %>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h3>Schedule or record a treatment</h3></div>
+    <div class="card-b">
+      <% if (can('stay.manage')) { %>
+      <form method="post" action="<%= url('/facility/pest') %>">
+        <input type="hidden" name="rr" value="<%= rr.id %>">
+        <% if (blocks && blocks.length) { %>
+          <div style="margin-bottom:10px"><label class="fl">Which building</label>
+            <select class="fi" name="block">
+              <option value="">— all of <%= rr.name %> —</option>
+              <% blocks.forEach(function(b){ %>
+                <option value="<%= b.id %>" <%= wantBlock === b.id ? 'selected' : '' %>><%= b.name %></option>
+              <% }); %>
+            </select>
+            <div class="muted" style="font-size:11px;margin-top:4px">
+              Leave this as all of <%= rr.name %> only where one visit really did cover the
+              whole site. Naming the building is what lets each one's two months be counted.
+            </div></div>
+        <% } %>
+        <div style="margin-bottom:10px"><label class="fl">Treatment</label>
+          <select class="fi" name="treatment_type">
+            <% Object.keys(TREAT).forEach(function(k){ %><option value="<%= k %>"><%= TREAT[k] %></option><% }); %>
+          </select></div>
+        <div style="margin-bottom:10px"><label class="fl">Agency</label>
+          <select class="fi" name="vendor_id">
+            <option value="">— not recorded —</option>
+            <% vendors.forEach(function(v){ %><option value="<%= v.id %>"><%= v.name %></option><% }); %>
+          </select></div>
+        <div class="row" style="gap:8px;margin-bottom:10px">
+          <div style="flex:1"><label class="fl">Scheduled on</label>
+            <input class="fi" type="date" name="scheduled_on" value="<%= date %>" required></div>
+          <div style="flex:1"><label class="fl">Carried out on</label>
+            <input class="fi" type="date" name="performed_on"></div>
+        </div>
+        <div style="margin-bottom:10px"><label class="fl">Notice to crew given on</label>
+          <input class="fi" type="date" name="notice_given_on"></div>
+        <div style="margin-bottom:10px"><label class="fl">Areas covered</label>
+          <input class="fi" type="text" name="areas_covered" placeholder="dormitory, kitchen, drains, garden"></div>
+        <div style="margin-bottom:12px"><label class="fl">Chemical used</label>
+          <input class="fi" type="text" name="chemical_used"></div>
+        <button class="btn" type="submit">Save</button>
+      </form>
+      <% } else { %>
+        <div class="muted" style="font-size:12.5px">Your role has view access only.</div>
+      <% } %>
+      <div class="hr"></div>
+      <div class="muted" style="font-size:11.5px">
+        Leave "carried out on" blank to schedule; fill it in later and the delay is worked out for you.
+        Garden upkeep sits under the same monthly head, so the gardener's post is judged here too.
+      </div>
+    </div>
+  </div>
+</div>
+
+<%
+/* Garden and lawn upkeep — audit item P12.
+
+   The tab has said "Pest & garden" since stage 6 and the garden half was a
+   sentence of prose with no field behind it. The tender gives it its own
+   heading and its own penalty.
+
+   One obligation of the four is countable and dated, so the page works it out
+   rather than leaving an officer to count backwards through a log: TEN plants
+   in cement or fibre gamlas of at least eighteen inches, every six months. */
+const gtypes = [['lawn_cutting','Lawn grass cut'],['trimming','Plants and fencing trimmed'],
+                ['watering','Watering'],['fertiliser','Fertiliser applied'],
+                ['pesticide','Pesticide applied'],['fencing','Fencing and gamlas cleaned or repaired'],
+                ['gamla_supply','Plants supplied in gamlas'],['other','Other garden work']];
+const glabel = t => (gtypes.find(x => x[0] === t) || [null, t])[1];
+const gdt = v => v ? String(v).slice(0, 10) : '';
+%>
+
+<% if (savedGarden) { %>
+  <div class="note" style="margin:14px 0">
+    <b>Garden work recorded.</b>
+  </div>
+<% } %>
+
+<div class="card" style="margin-top:14px">
+  <div class="card-h">
+    <h3>Garden and lawn upkeep</h3>
+    <span class="sub"><%= rr.name %></span>
+    <span class="spacer"></span>
+    <% if (gamlas.short) { %>
+      <span class="st warn"><span class="dot"></span><%= gamlas.short %> of <%= gamlas.target %> plants still due</span>
+    <% } else { %>
+      <span class="st good"><span class="dot"></span>the half-yearly plants are supplied</span>
+    <% } %>
+  </div>
+
+  <div class="card-b">
+    <div class="note<%= gamlas.short ? ' warn' : '' %>" style="margin-bottom:12px">
+      <b>Ten plants in gamlas, every six months.</b>
+      The tender: <i>"To improve the scenario of the garden, contractor will provide 10 Nos. plants in
+      GAMLAS / Flower pots. (Pots will be made by Cement or Fiber with minimum 18" dimension) in every six
+      month interval or as desired by railway."</i>
+      <div style="margin-top:6px">
+        Since <b><%= gamlas.since %></b>: <b><%= gamlas.supplied %></b> supplied of <b><%= gamlas.target %></b>
+        <% if (gamlas.short) { %>— <b><%= gamlas.short %> short</b><% } else { %>— met<% } %>.
+        <% if (gamlas.wrongPot) { %>
+          <span class="st warn"><span class="dot"></span><%= gamlas.wrongPot %> delivery in a pot the tender does not allow</span>
+        <% } %>
+      </div>
+    </div>
+
+    <% if (can('stay.manage')) { %>
+    <form method="post" action="<%= url('/facility/pest/garden') %>" id="gardenform">
+      <input type="hidden" name="rr" value="<%= rr.id %>">
+      <div class="row" style="gap:8px;margin-bottom:10px;align-items:flex-end">
+        <div style="width:160px">
+          <label class="fl">Date</label>
+          <input class="fi" type="date" name="work_date" value="<%= date %>" max="<%= date %>">
+        </div>
+        <div style="width:250px">
+          <label class="fl">Work done</label>
+          <select class="fi" name="work_type" id="gtype">
+            <% gtypes.forEach(function(t){ %><option value="<%= t[0] %>"><%= t[1] %></option><% }); %>
+          </select>
+        </div>
+        <div style="width:190px">
+          <label class="fl">By</label>
+          <select class="fi" name="done_by_staff_id">
+            <option value="">— not stated —</option>
+            <% gardenStaff.forEach(function(m){ %><option value="<%= m.id %>"><%= m.full_name %></option><% }); %>
+          </select>
+        </div>
+      </div>
+
+      <div class="row" style="gap:8px;margin-bottom:10px;align-items:flex-end" id="gamlafields" hidden>
+        <div style="width:150px">
+          <label class="fl">Plants supplied</label>
+          <input class="fi" type="number" min="1" name="plants_supplied">
+        </div>
+        <div style="width:150px">
+          <label class="fl">Pot material</label>
+          <select class="fi" name="pot_material">
+            <option value="cement">cement</option><option value="fibre">fibre</option>
+            <option value="other">other</option>
+          </select>
+        </div>
+        <div style="width:170px">
+          <label class="fl">Pot size (inches)</label>
+          <input class="fi" type="number" min="1" name="pot_size_inches" value="18">
+          <div class="muted" style="font-size:11px;margin-top:3px">18 inches is the minimum</div>
+        </div>
+      </div>
+
+      <div class="row" style="gap:8px;margin-bottom:10px;align-items:flex-end" id="fertfields" hidden>
+        <label class="mark" style="display:inline-flex;align-items:center;gap:7px;font-size:12.5px">
+          <input type="checkbox" name="organic" value="1" style="width:18px;height:18px">
+          Organic fertiliser — the tender says preferably organic
+        </label>
+      </div>
+
+      <div class="row" style="gap:10px;align-items:flex-end">
+        <div style="flex:1">
+          <label class="fl">Detail</label>
+          <input class="fi" type="text" name="detail" maxlength="300">
+        </div>
+        <button class="btn" type="submit">Record</button>
+      </div>
+    </form>
+    <% } else { %>
+      <div class="muted" style="font-size:12.5px">Your role has view access only.</div>
+    <% } %>
+  </div>
+
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr><th style="width:110px">Date</th><th>Work</th><th>By</th><th>Detail</th></tr></thead>
+    <tbody>
+    <% garden.forEach(function(g){ %>
+      <tr>
+        <td class="tnum"><%= gdt(g.work_date) %></td>
+        <td><b><%= glabel(g.work_type) %></b>
+          <% if (g.work_type === 'gamla_supply') { %>
+            <div class="muted" style="font-size:11px">
+              <%= g.plants_supplied %> plants<% if (g.pot_material) { %> · <%= g.pot_material %> pots<% } %><%
+                if (g.pot_size_inches) { %> · <%= g.pot_size_inches %>"<% } %>
+              <% if ((g.pot_material === 'other') || (g.pot_size_inches !== null && g.pot_size_inches < 18)) { %>
+                <span class="st warn"><span class="dot"></span>not the pot the tender specifies</span>
+              <% } %>
+            </div>
+          <% } else if (g.work_type === 'fertiliser') { %>
+            <div class="muted" style="font-size:11px"><%= g.organic ? 'organic' : 'not organic' %></div>
+          <% } %>
+        </td>
+        <td><%= g.done_by_name || '—' %></td>
+        <td class="muted" style="font-size:12px"><%= g.detail || '' %></td>
+      </tr>
+    <% }); %>
+    <% if (!garden.length) { %>
+      <tr><td colspan="4" class="muted">No garden work has been recorded at this running room.</td></tr>
+    <% } %>
+    </tbody>
+  </table></div>
+  <div class="tblfoot">
+    Fertiliser and pesticide, trimming of plants and fencing, cleaning of gamlas, and cutting of the lawn
+    grass are all named in the tender under <b>Upkeep / Maintenance of Garden</b>, and non-maintenance of the
+    open area, garden or lawn attracts a penalty in its own right.
+  </div>
+</div>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Pull the nightly dumps down from crtms.in, every morning.
+
+  Installed at ~/Library/LaunchAgents/in.crtms.rrcms-backup-pull.plist and
+  loaded with:  launchctl load ~/Library/LaunchAgents/in.crtms.rrcms-backup-pull.plist
+
+  09:30 IST, because the server's own dump runs at 01:40 UTC — which is 07:10
+  here — and is finished by about 07:15. This leaves two hours of margin and
+  still gets the copy down before most of the working day.
+
+  RunAtLoad is false: loading this file should not start a 170 MB transfer while
+  somebody is watching a terminal wondering what happened.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>            <string>in.crtms.rrcms-backup-pull</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>/Users/neeraja/rrcms19/rrcms-app/deploy/pull-backups.sh</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key>   <integer>9</integer>
+    <key>Minute</key> <integer>30</integer>
+  </dict>
+  <key>RunAtLoad</key>        <false/>
+  <key>StandardOutPath</key>  <string>/Users/neeraja/rrcms19/backups/launchd.out</string>
+  <key>StandardErrorPath</key><string>/Users/neeraja/rrcms19/backups/launchd.err</string>
+</dict>
+</plist>

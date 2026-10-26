@@ -1,0 +1,90 @@
+<div style="margin-bottom:14px"><a href="<%= url('/masters') %>">← Master data</a></div>
+
+<% if (inUseUnapproved.length) { %>
+  <div class="note err" style="margin-bottom:16px">
+    <b><%= inUseUnapproved.length %></b> vendor<%= inUseUnapproved.length === 1 ? ' is' : 's are' %> in use
+    without an approval standing:
+    <%= inUseUnapproved.map(v => v.name).join(', ') %>.
+    Clause C1 makes washing at a non-approved source a deficiency in its own right.
+  </div>
+<% } %>
+
+<div class="grid" style="grid-template-columns:1.6fr 1fr">
+  <div class="card">
+    <div class="card-h"><h3>Washing centres and operators</h3>
+      <span class="sub">approval is a dated act, not a tick</span></div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>Name</th><th>Kind</th><th>Licence</th><th>In use</th><th>Approval</th><th>Last inspected</th></tr></thead>
+      <tbody>
+      <% rows.forEach(function(v){ %>
+        <tr<%= v.is_active ? '' : ' style="opacity:.55"' %>>
+          <td><a href="<%= url('/masters/vendors/' + v.id) %>"><b><%= v.name %></b></a>
+            <% if (v.address) { %><div class="muted" style="font-size:10.5px"><%= v.address %></div><% } %></td>
+          <td style="font-size:12px"><%= (types.find(t => t[0] === v.vendor_type) || [,v.vendor_type])[1] %></td>
+          <td style="font-size:12px"><%= v.licence_no || '—' %>
+            <% if (v.licence_valid_till) { %>
+              <div class="<%= v.licence_expired ? 'st crit' : 'muted' %>" style="font-size:10.5px">
+                <% if (v.licence_expired) { %><span class="dot"></span>expired <% } else { %>valid to <% } %>
+                <%= String(v.licence_valid_till).slice(0,10) %></div>
+            <% } %></td>
+          <td class="num" style="font-size:12px"><%= v.sites %> site<%= v.sites === 1 ? '' : 's' %>
+            <% if (v.dispatches) { %><div class="muted" style="font-size:10.5px"><%= fmtInt(v.dispatches) %> dispatches</div><% } %></td>
+          <td><% if (v.is_approved) { %>
+                <span class="st good"><span class="dot"></span>Approved</span>
+                <div class="muted" style="font-size:10.5px"><%= v.approved_on ? String(v.approved_on).slice(0,10) : '' %><%= v.approved_by_name ? ' · ' + v.approved_by_name : '' %></div>
+              <% } else if (v.blacklisted_on) { %>
+                <span class="st crit"><span class="dot"></span>Withdrawn</span>
+                <div class="muted" style="font-size:10.5px"><%= String(v.blacklisted_on).slice(0,10) %> — <%= v.blacklist_reason || '' %></div>
+              <% } else { %><span class="st warn"><span class="dot"></span>Never approved</span><% } %></td>
+          <td><% if (!v.last_inspected_on) { %><span class="muted">never</span>
+              <% } else { %><span class="tnum"><%= String(v.last_inspected_on).slice(0,10) %></span>
+                <div class="muted" style="font-size:10.5px"><%= v.last_result %></div><% } %>
+              <% if (v.stale) { %><div class="st warn" style="margin-top:3px"><span class="dot"></span>not seen in a year</div><% } %></td>
+        </tr>
+      <% }); %>
+      <% if (!rows.length) { %><tr><td colspan="6" class="muted">No vendor on record.</td></tr><% } %>
+      </tbody>
+    </table></div>
+    <div class="card-b">
+      <div class="muted" style="font-size:11.5px">
+        A vendor whose approval is withdrawn is <b>not deleted and not switched off</b>. Dispatches already
+        sent to it must keep pointing at a record that still reads correctly, or last month's clause C1 case
+        loses its subject.
+      </div>
+    </div>
+  </div>
+
+  <% if (can('vendor.approve')) { %>
+  <div class="card">
+    <div class="card-h"><h3>Add a vendor</h3></div>
+    <div class="card-b">
+      <form method="post" action="<%= url('/masters/vendors') %>">
+        <div style="margin-bottom:10px"><label class="fl">Kind</label>
+          <select class="fi" name="vendor_type" required>
+            <option value="">— choose —</option>
+            <% types.forEach(function(t){ %><option value="<%= t[0] %>"><%= t[1] %></option><% }); %>
+          </select></div>
+        <div style="margin-bottom:10px"><label class="fl">Name</label>
+          <input class="fi" name="name" required maxlength="180"></div>
+        <div style="margin-bottom:10px"><label class="fl">Address</label>
+          <input class="fi" name="address" maxlength="400"></div>
+        <div class="row" style="gap:8px;margin-bottom:10px">
+          <div style="flex:1"><label class="fl">Contact</label><input class="fi" name="contact_person"></div>
+          <div style="flex:1"><label class="fl">Phone</label><input class="fi" name="phone"></div>
+        </div>
+        <div class="row" style="gap:8px;margin-bottom:10px">
+          <div style="flex:1"><label class="fl">Licence no.</label><input class="fi" name="licence_no"></div>
+          <div style="flex:1"><label class="fl">Valid till</label><input class="fi" type="date" name="licence_valid_till"></div>
+        </div>
+        <div style="margin-bottom:12px"><label class="fl">GST</label><input class="fi" name="gst_no"></div>
+        <button class="btn" type="submit">Add — unapproved</button>
+      </form>
+      <div class="hr"></div>
+      <div class="muted" style="font-size:11.5px">
+        A vendor is created <b>unapproved</b>. Approving is a separate, dated act on the vendor's own page —
+        creating and approving in one motion would make the approval a side effect of typing a name.
+      </div>
+    </div>
+  </div>
+  <% } %>
+</div>

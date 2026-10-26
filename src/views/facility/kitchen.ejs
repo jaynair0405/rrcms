@@ -1,0 +1,85 @@
+<%- await include('_nav') %>
+
+<% if (!rr.has_meal_facility) { %>
+  <div class="note" style="margin-bottom:14px">
+    <b><%= rr.name %></b> has no meal facility, so the kitchen obligations do not apply here.
+    Nothing on this page is a deficiency for this running room.
+  </div>
+<% } %>
+
+<div class="kpis" style="margin-bottom:14px">
+  <div class="kpi"><div class="strip" style="background:var(--good)"></div>
+    <div class="lab">Checks compliant</div>
+    <div class="val"><%= checks.filter(function(c){ return c.row && c.row.status === 'compliant'; }).length %><small> / <%= checks.length %></small></div>
+    <div class="foot">latest position on record</div></div>
+  <div class="kpi"><div class="strip" style="background:var(--critical)"></div>
+    <div class="lab">Shortfalls</div><div class="val"><%= shortfalls %></div>
+    <div class="foot">head B of the deficiency schedule</div></div>
+  <div class="kpi"><div class="strip" style="background:var(--warning)"></div>
+    <div class="lab">Never recorded</div><div class="val"><%= unrecorded %></div>
+    <div class="foot">no entry for this running room</div></div>
+</div>
+
+<div class="grid" style="grid-template-columns:1.5fr 1fr">
+  <div class="card">
+    <div class="card-h"><h3>Kitchen obligations</h3><span class="sub"><%= rr.name %> · latest entry per check</span></div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>Check</th><th>As on</th><th>Position</th><th>Detail</th><th>Valid till</th></tr></thead>
+      <tbody>
+      <% checks.forEach(function(c){ %>
+        <tr>
+          <td><%= c.label %><div class="muted" style="font-size:11.3px"><%= c.note %></div></td>
+          <td class="tnum"><%= c.row ? c.row.as_on_date : '—' %></td>
+          <td><% if (!c.row) { %><span class="st neut"><span class="dot"></span>Not recorded</span>
+              <% } else if (c.row.status === 'compliant') { %><span class="st good"><span class="dot"></span>Compliant</span>
+              <% } else if (c.row.status === 'shortfall') { %><span class="st crit"><span class="dot"></span>Shortfall</span>
+              <% } else { %><span class="st neut"><span class="dot"></span>Not applicable</span><% } %></td>
+          <td class="muted"><%= c.row && c.row.detail ? c.row.detail : '—' %></td>
+          <td class="tnum"><% if (c.row && c.row.valid_till) { %>
+                <% if (String(c.row.valid_till).slice(0,10) < date) { %>
+                  <span class="st crit"><span class="dot"></span><%= String(c.row.valid_till).slice(0,10) %> expired</span>
+                <% } else { %><%= String(c.row.valid_till).slice(0,10) %><% } %>
+              <% } else { %><span class="muted">—</span><% } %></td>
+        </tr>
+      <% }); %>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h3>Record a check</h3></div>
+    <div class="card-b">
+      <% if (can('stay.manage')) { %>
+      <form method="post" action="<%= url('/facility/kitchen') %>">
+        <input type="hidden" name="rr" value="<%= rr.id %>">
+        <div style="margin-bottom:10px"><label class="fl">Check</label>
+          <select class="fi" name="check_type" required>
+            <% checks.forEach(function(c){ %><option value="<%= c.type %>"><%= c.label %></option><% }); %>
+          </select></div>
+        <div class="row" style="gap:8px;margin-bottom:10px">
+          <div style="flex:1"><label class="fl">As on</label>
+            <input class="fi" type="date" name="as_on_date" value="<%= date %>" required></div>
+          <div style="flex:1"><label class="fl">Position</label>
+            <select class="fi" name="status">
+              <option value="compliant">Compliant</option>
+              <option value="shortfall">Shortfall</option>
+              <option value="not_applicable">Not applicable</option>
+            </select></div>
+        </div>
+        <div style="margin-bottom:10px"><label class="fl">Detail</label>
+          <input class="fi" type="text" name="detail" placeholder="what was seen, quantity found"></div>
+        <div style="margin-bottom:12px"><label class="fl">Valid till</label>
+          <input class="fi" type="date" name="valid_till">
+          <div class="muted" style="font-size:11.3px;margin-top:3px">for licences and the six-monthly gas pipe</div></div>
+        <button class="btn" type="submit">Save check</button>
+      </form>
+      <% } else { %>
+        <div class="muted" style="font-size:12.5px">Your role has view access only.</div>
+      <% } %>
+      <div class="hr"></div>
+      <div class="muted" style="font-size:11.5px">
+        Saving the same check for the same date replaces that entry; a different date adds to the history.
+      </div>
+    </div>
+  </div>
+</div>

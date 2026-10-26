@@ -1,0 +1,150 @@
+<%- await include('_nav') %>
+
+<%
+/* The menu card and rate board as they go on the wall.
+
+   Schedule B requires the rates "displayed in Dining Hall" and the menu
+   "Display on Kitchen Board on daily basis". Printed from the same rows the
+   rest of the application reads, so the paper and the record cannot drift —
+   which is the whole failure mode of a hand-written rate board.
+
+   The page reuses the certification pack's document styling, because this is a
+   document and not a screen. */
+const rateOf = id => rateBy[id] || null;
+const fmt = n => Number(n).toFixed(2);
+%>
+
+<div class="row" style="margin-bottom:12px">
+  <a class="btn ghost small" href="<%= url('/facility/menu?rr=' + rr.id + '&week=' + week) %>">‹ back to the weekly menu</a>
+  <div class="spacer"></div>
+  <button class="btn small" type="button" onclick="window.print()">Print</button>
+</div>
+
+<% if (unpriced) { %>
+  <div class="note warn" style="margin-bottom:14px">
+    <b><%= unpriced %> of the optional items have no rate.</b>
+    The tender prints Table B with its cost column <b>blank</b> — the rates "shall be fixed by Railways … on the
+    basis of no-profit, no-loss" and displayed. Until the division supplies them they print as
+    <i>rate not yet fixed</i> rather than as a blank or a zero, because a blank on a rate board invites a pencil.
+    Clause <b>B6</b>, overcharging, cannot be tested against an item that has no fixed rate.
+    <div style="margin-top:6px;font-size:12px">
+      <% if (can('menu.manage')) { %>
+        Rates are entered on the <a href="<%= url('/masters/menu') %>">rate board master</a>.
+      <% } else { %>
+        The rates are the Railway's to fix.
+      <% } %>
+    </div>
+  </div>
+<% } %>
+
+<div class="card packsheet">
+  <div class="card-b">
+    <div class="packhead">
+      <div>
+        <div class="packtitle">Menu Card &amp; Rate Board</div>
+        <div class="packsub"><%= rr.name %> Running Room · Central Railway</div>
+        <div class="packsub">Week of <%= week %> to <%= weekEnd %></div>
+      </div>
+      <div class="packstamp">
+        <% if (plan && plan.status === 'agreed') { %>
+          <span class="st good"><span class="dot"></span>Menu agreed with the Railway</span>
+        <% } else { %>
+          <span class="st warn"><span class="dot"></span>Menu not yet agreed — not for display</span>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="packh">Table A — subsidised meals</div>
+    <table class="tbl">
+      <thead><tr><th style="width:170px">Item</th><th>Contents</th>
+        <th class="num" style="width:110px">Full cost</th><th class="num" style="width:130px">Railway subsidy</th></tr></thead>
+      <tbody>
+      <% tableA.forEach(function(i){
+           const key = i.code === 'A-BREAKFAST' ? 'breakfast' : 'lunch';
+           const r = mealRateFor[key]; %>
+        <tr>
+          <td><b><%= i.name %></b></td>
+          <td style="font-size:12px"><%= i.contents %></td>
+          <td class="num tnum"><% if (r && r.full_rate) { %>₹<%= fmt(r.full_rate) %><% } else { %><span class="muted">not fixed</span><% } %></td>
+          <td class="num tnum"><% if (r && r.subsidised_rate) { %>₹<%= fmt(r.subsidised_rate) %><% } else { %><span class="muted">not fixed</span><% } %></td>
+        </tr>
+      <% }); %>
+      </tbody>
+    </table>
+    <div class="packnote">
+      Rates include 5% GST. The Railway pays 90% of the cost of the meal or the subsidy figure shown, whichever
+      is lower; the balance is paid by the running staff directly to the contractor. The cost of an item in
+      Table A is fixed and is not reduced if less of any item is taken. One cup of tea is served free of cost
+      with breakfast; tea asked for after 10:30 is charged.
+    </div>
+
+    <div class="packh">Table B — optional or extra items, on extra payment</div>
+    <table class="tbl">
+      <thead><tr><th>Item</th><th style="width:110px">Quantity</th><th class="num" style="width:150px">Rate</th></tr></thead>
+      <tbody>
+      <% tableB.forEach(function(i){ const r = rateOf(i.id); %>
+        <tr>
+          <td><%= i.name %></td>
+          <td class="muted"><%= i.unit || '—' %></td>
+          <td class="num tnum">
+            <% if (r) { %>₹<%= fmt(r.rate) %>
+            <% } else { %><span class="muted" style="font-size:11.5px">rate not yet fixed</span><% } %>
+          </td>
+        </tr>
+      <% }); %>
+      </tbody>
+    </table>
+    <div class="packnote">
+      Rates for optional items are fixed by the Railway on a no-profit, no-loss basis and are subject to
+      revision. Anything charged above the rate shown here is a deficiency under clause B6.
+    </div>
+
+    <div class="packh">This week's menu</div>
+    <% if (!plan) { %>
+      <div class="muted" style="font-size:12.5px">No menu has been prepared for this week.</div>
+    <% } else { %>
+      <table class="tbl">
+        <thead><tr><th style="width:120px">Day</th>
+          <% menuMeals.forEach(function(m){ %><th><%= m[1] %></th><% }); %></tr></thead>
+        <tbody>
+        <% weekdays.forEach(function(w){ const n = w[0]; %>
+          <tr>
+            <td><b><%= w[1] %></b><div class="muted tnum" style="font-size:11px"><%= dateOf[n] %></div></td>
+            <% menuMeals.forEach(function(m){ const d = cell[n] && cell[n][m[0]]; %>
+              <td style="font-size:12.2px">
+                <% if (!d || (!d.main_item && !d.veg_dry && !d.veg_curry)) { %><span class="muted">—</span>
+                <% } else { %>
+                  <%= d.main_item || '' %>
+                  <% if (d.veg_dry || d.veg_curry) { %>
+                    <div class="muted" style="font-size:11.3px;margin-top:2px">
+                      <% if (d.veg_dry) { %>dry: <%= d.veg_dry %><% } %><% if (d.veg_dry && d.veg_curry) { %> · <% } %><% if (d.veg_curry) { %>curry: <%= d.veg_curry %><% } %>
+                    </div>
+                  <% } %>
+                <% } %>
+              </td>
+            <% }); %>
+          </tr>
+        <% }); %>
+        </tbody>
+      </table>
+      <div class="packnote">
+        Two seasonal vegetable dishes are served in each meal, one dry and one with curry. Breakfast items are
+        not repeated on the subsequent day in the week. Not more than three subsidised meals are permitted in a
+        24-hour stay; a packed meal for consumption en route is in addition to that ceiling.
+      </div>
+    <% } %>
+
+    <div class="signrow" style="grid-template-columns:repeat(2,1fr)">
+      <div class="signbox">
+        <div class="siglabel">Prepared by the contractor</div>
+        <div class="signame">&nbsp;</div>
+        <div class="sigrole">Contractor's supervisor</div>
+      </div>
+      <div class="signbox">
+        <div class="siglabel">Agreed for the Railway</div>
+        <div class="signame"><%= plan && plan.status === 'agreed' && plan.agreed_by ? '' : '&nbsp;' %></div>
+        <div class="sigrole">Running Room In-charge</div>
+      </div>
+    </div>
+  </div>
+</div>

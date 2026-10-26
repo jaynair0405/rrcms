@@ -1,0 +1,149 @@
+<% if (created && newPassword) { %>
+  <div class="note ok" style="margin-bottom:16px">
+    <b><%= created %></b> — the password is
+    <code style="font-size:15px;letter-spacing:.5px;padding:2px 6px;background:rgba(0,0,0,.06);border-radius:4px"><%= newPassword %></code>
+    <div style="margin-top:6px;font-size:12px">
+      Write it down now and hand it over. It is not stored anywhere and cannot be shown again — only its
+      hash is kept. The account cannot do anything at all until its owner has signed in with this and
+      chosen his own.
+    </div>
+  </div>
+<% } %>
+
+<div class="grid" style="grid-template-columns:1.7fr 1fr">
+  <div class="card">
+    <div class="card-h"><h3>Accounts</h3>
+      <span class="sub">role decides what a person may do · scope decides which records</span></div>
+    <div class="tblwrap"><table class="tbl">
+      <thead><tr><th>Person</th><th>Role</th><th>Reach</th><th>Position</th><th></th></tr></thead>
+      <tbody>
+      <% users.forEach(function(u){ %>
+        <tr<%= u.is_active ? '' : ' style="opacity:.55"' %>>
+          <td><b><%= u.full_name %></b>
+            <div class="muted" style="font-size:11px"><%= u.username %><%= u.designation ? ' · ' + u.designation : '' %></div></td>
+          <td style="font-size:12px"><%= u.role_name %></td>
+          <td style="font-size:12px">
+            <% if (u.div_code) { %><%= u.div_code %> division
+            <% } else if (u.rr_name) { %><%= u.rr_name %>
+            <% } else if (u.contractor_name) { %><%= u.contractor_name %>
+            <% } else if (u.unscoped) { %><span class="st crit"><span class="dot"></span>NOT SET</span>
+            <% } else { %><span class="muted">everything within the role</span><% } %>
+          </td>
+          <td>
+            <% if (!u.is_active) { %><span class="muted">Switched off</span>
+            <% } else if (u.locked_until) { %><span class="st crit"><span class="dot"></span>Locked out</span>
+            <% } else if (u.must_change_pw) { %><span class="st warn"><span class="dot"></span>Has not chosen a password</span>
+            <% } else if (!u.last_login_at) { %><span class="muted">Never signed in</span>
+            <% } else { %><span class="st good"><span class="dot"></span>In use</span>
+              <div class="muted" style="font-size:10.5px">last <%= String(u.last_login_at).slice(0,16) %></div><% } %>
+            <% if (u.unscoped) { %>
+              <div class="st crit" style="margin-top:3px"><span class="dot"></span>Scope not set</div>
+            <% } %>
+          </td>
+          <td>
+            <form method="post" action="<%= url('/account/users/' + u.id) %>" class="row" style="gap:4px;flex-wrap:wrap">
+              <button class="btn ghost small" name="action" value="reset" type="submit">New password</button>
+              <% if (u.locked_until) { %>
+                <button class="btn ghost small" name="action" value="unlock" type="submit">Unlock</button>
+              <% } %>
+              <% if (u.is_active) { %>
+                <button class="btn ghost small" name="action" value="deactivate" type="submit">Switch off</button>
+              <% } else { %>
+                <button class="btn ghost small" name="action" value="activate" type="submit">Switch on</button>
+              <% } %>
+            </form>
+          </td>
+        </tr>
+        <tr><td colspan="5" style="padding-top:0">
+          <details>
+            <summary class="muted" style="font-size:11.5px;cursor:pointer">Change role, scope or particulars</summary>
+            <form method="post" action="<%= url('/account/users/' + u.id) %>" style="margin-top:10px">
+              <input type="hidden" name="action" value="save">
+              <div class="row" style="gap:8px;margin-bottom:8px;flex-wrap:wrap">
+                <div style="flex:2;min-width:170px"><label class="fl">Full name</label>
+                  <input class="fi" name="full_name" value="<%= u.full_name %>" required></div>
+                <div style="flex:2;min-width:150px"><label class="fl">Designation</label>
+                  <input class="fi" name="designation" value="<%= u.designation || '' %>"></div>
+                <div style="flex:1;min-width:120px"><label class="fl">Phone</label>
+                  <input class="fi" name="phone" value="<%= u.phone || '' %>"></div>
+              </div>
+              <div class="row scoperow" style="gap:8px;flex-wrap:wrap">
+                <div style="flex:1;min-width:150px"><label class="fl">Role</label>
+                  <select class="fi rolepick" name="role_code">
+                    <% roles.forEach(function(r){ %>
+                      <option value="<%= r.code %>"<%= r.code === u.role_code ? ' selected' : '' %>><%= r.name %></option>
+                    <% }); %>
+                  </select></div>
+                <div style="flex:1;min-width:150px" data-scope="division_id"><label class="fl">Division</label>
+                  <select class="fi" name="division_id"><option value="">—</option>
+                    <% divisions.forEach(function(d){ %>
+                      <option value="<%= d.id %>"<%= d.code === u.div_code ? ' selected' : '' %>><%= d.name %></option>
+                    <% }); %></select></div>
+                <div style="flex:1;min-width:150px" data-scope="running_room_id"><label class="fl">Running room</label>
+                  <select class="fi" name="running_room_id"><option value="">—</option>
+                    <% rooms.forEach(function(r){ %>
+                      <option value="<%= r.id %>"<%= r.name === u.rr_name ? ' selected' : '' %>><%= r.name %> (<%= r.div_code %>)</option>
+                    <% }); %></select></div>
+                <div style="flex:1;min-width:150px" data-scope="contractor_id"><label class="fl">Contractor</label>
+                  <select class="fi" name="contractor_id"><option value="">—</option>
+                    <% contractors.forEach(function(c){ %>
+                      <option value="<%= c.id %>"<%= c.name === u.contractor_name ? ' selected' : '' %>><%= c.name %></option>
+                    <% }); %></select></div>
+                <div style="align-self:flex-end"><button class="btn small" type="submit">Save</button></div>
+              </div>
+            </form>
+          </details>
+        </td></tr>
+      <% }); %>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h3>Add an account</h3></div>
+    <div class="card-b">
+      <form method="post" action="<%= url('/account/users') %>">
+        <div style="margin-bottom:10px"><label class="fl">Username</label>
+          <input class="fi" name="username" placeholder="igp.incharge" required></div>
+        <div style="margin-bottom:10px"><label class="fl">Full name</label>
+          <input class="fi" name="full_name" required></div>
+        <div class="row" style="gap:8px;margin-bottom:10px">
+          <div style="flex:1"><label class="fl">Designation</label><input class="fi" name="designation" placeholder="SSE/Elect"></div>
+          <div style="flex:1"><label class="fl">Phone</label><input class="fi" name="phone"></div>
+        </div>
+        <div class="scoperow">
+          <div style="margin-bottom:10px"><label class="fl">Role</label>
+            <select class="fi rolepick" name="role_code" required>
+              <% roles.forEach(function(r){ %>
+                <option value="<%= r.code %>" data-help="<%= roleHelp[r.code] || '' %>"><%= r.name %></option>
+              <% }); %>
+            </select>
+            <div class="muted" style="font-size:11px;margin-top:4px" id="rolehelp"><%= roleHelp[roles[0] && roles[0].code] || '' %></div>
+          </div>
+          <div style="margin-bottom:10px" data-scope="division_id"><label class="fl">Division</label>
+            <select class="fi" name="division_id"><option value="">— choose —</option>
+              <% divisions.forEach(function(d){ %><option value="<%= d.id %>"><%= d.name %></option><% }); %>
+            </select></div>
+          <div style="margin-bottom:10px" data-scope="running_room_id"><label class="fl">Running room</label>
+            <select class="fi" name="running_room_id"><option value="">— choose —</option>
+              <% rooms.forEach(function(r){ %><option value="<%= r.id %>"><%= r.name %> (<%= r.div_code %>)</option><% }); %>
+            </select></div>
+          <div style="margin-bottom:10px" data-scope="contractor_id"><label class="fl">Contractor</label>
+            <select class="fi" name="contractor_id"><option value="">— choose —</option>
+              <% contractors.forEach(function(c){ %><option value="<%= c.id %>"><%= c.name %></option><% }); %>
+            </select></div>
+        </div>
+        <button class="btn" type="submit" style="margin-top:4px">Create the account</button>
+      </form>
+      <div class="hr"></div>
+      <div class="muted" style="font-size:11.5px;line-height:1.6">
+        A password is generated and shown once. It is never stored in a form anybody can read back, and the
+        account is refused every screen until its owner has chosen his own.
+        <br><br>
+        <b>Scope is not a formality.</b> An RR In-charge without a running room, or a supervisor without a
+        contractor, does not see nothing — what he sees depends on how each query happens to be written.
+        The form will not let you leave it out.
+      </div>
+    </div>
+  </div>
+</div>

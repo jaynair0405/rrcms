@@ -1,0 +1,24 @@
+-- 044_supervisor_is_posted_to_a_room.sql
+--
+-- A CONTRACTOR SUPERVISOR IS POSTED TO ONE RUNNING ROOM, NOT TO A FIRM.
+--
+-- `contractor_sup` was scoped by CONTRACTOR: the supervisor saw every running
+-- room his firm held a live contract for. Prabhakar Enterprises holds IGP and
+-- ROHA, so Igatpuri's supervisor could open Roha's registers -- a site 100 km
+-- away that he has never been to and cannot answer for.
+--
+-- That is not how the work is organised. Each running room has its own
+-- supervisor on site, and the contract says so in as many words: the Part-A
+-- scope reads "one person in each shift" per running room, and the penalty for
+-- an unreachable supervisor is levied per running room. A register filled by a
+-- man who was not there is worth nothing in a dispute, which is the whole
+-- reason this system exists.
+--
+-- So the role is scoped to a running room, exactly like the RR In-charge. The
+-- two now see the same site and differ only in what they may DO there: the
+-- supervisor records the contractor's work, the In-charge verifies it.
+--
+-- `users.contractor_id` is still set for a supervisor -- it records which firm's
+-- man he is -- but it no longer decides what he can see. Nothing else in the
+-- application reads it: `src/middleware/scope.js` was its only consumer.
+UPDATE roles SET scope_level = 'running_room' WHERE code = 'contractor_sup';

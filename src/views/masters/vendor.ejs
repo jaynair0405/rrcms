@@ -1,0 +1,114 @@
+<div style="margin-bottom:14px"><a href="<%= url('/masters/vendors') %>">← Washing centres & operators</a></div>
+
+<div class="grid" style="grid-template-columns:1.3fr 1fr">
+  <div class="card">
+    <div class="card-h"><h3><%= v.name %></h3>
+      <span class="sub"><%= (types.find(t => t[0] === v.vendor_type) || [,v.vendor_type])[1] %></span></div>
+    <div class="card-b">
+      <div class="kv">
+        <div><span class="k">Address</span><span class="v"><%= v.address || '—' %></span></div>
+        <div><span class="k">Contact</span><span class="v"><%= v.contact_person || '—' %><%= v.phone ? ' · ' + v.phone : '' %></span></div>
+        <div><span class="k">Licence</span><span class="v"><%= v.licence_no || '—' %><%= v.licence_valid_till ? ' · valid to ' + String(v.licence_valid_till).slice(0,10) : '' %></span></div>
+        <div><span class="k">GST</span><span class="v"><%= v.gst_no || '—' %></span></div>
+      </div>
+      <div class="hr"></div>
+      <% if (v.is_approved) { %>
+        <div class="note ok">Approved<%= v.approved_on ? ' on ' + String(v.approved_on).slice(0,10) : '' %>.
+          Washing sent here does not attract clause C1 on the ground of the source.</div>
+      <% } else if (v.blacklisted_on) { %>
+        <div class="note err">Approval withdrawn on <%= String(v.blacklisted_on).slice(0,10) %> —
+          <%= v.blacklist_reason || '' %>. Any dispatch sent here from that date is a clause C1 breach.</div>
+      <% } else { %>
+        <div class="note warn">Never approved. Any dispatch sent here is a clause C1 breach.</div>
+      <% } %>
+    </div>
+  </div>
+
+  <% if (can('vendor.approve')) { %>
+  <div class="card">
+    <div class="card-h"><h3>What the Railway can do</h3></div>
+    <div class="card-b">
+      <% if (!v.is_approved) { %>
+        <form method="post" action="<%= url('/masters/vendors/' + v.id) %>" style="margin-bottom:14px">
+          <input type="hidden" name="action" value="approve">
+          <label class="fl">Approved on</label>
+          <input class="fi" type="date" name="approved_on" value="<%= today() %>"
+                 style="margin-bottom:8px">
+          <button class="btn" type="submit">Approve</button>
+        </form>
+      <% } else { %>
+        <form method="post" action="<%= url('/masters/vendors/' + v.id) %>" style="margin-bottom:14px">
+          <input type="hidden" name="action" value="withdraw">
+          <label class="fl">Withdraw the approval — why</label>
+          <input class="fi" name="blacklist_reason" required maxlength="300"
+                 placeholder="Repeated complaints of poor washing" style="margin-bottom:8px">
+          <button class="btn ghost" type="submit">Withdraw</button>
+        </form>
+      <% } %>
+
+      <div class="hr"></div>
+      <form method="post" action="<%= url('/masters/vendors/' + v.id) %>" enctype="multipart/form-data">
+        <input type="hidden" name="action" value="inspect">
+        <div style="font-size:13px;font-weight:600;margin-bottom:8px">Record a premises inspection</div>
+        <div class="row" style="gap:8px;margin-bottom:8px">
+          <div style="flex:1"><label class="fl">Inspected on</label>
+            <input class="fi" type="date" name="inspected_on" value="<%= today() %>" required></div>
+          <div style="flex:1"><label class="fl">Found</label>
+            <select class="fi" name="result" required>
+              <option value="satisfactory">Satisfactory</option>
+              <option value="deficient">Deficient</option>
+              <option value="unfit">Unfit</option>
+            </select></div>
+        </div>
+        <div style="margin-bottom:8px"><label class="fl">Observations</label>
+          <textarea class="fi" name="observations" rows="3" maxlength="1000"></textarea></div>
+        <div style="margin-bottom:10px"><label class="fl">Photograph or note <span class="muted">— optional</span></label>
+          <input class="fi" type="file" name="evidence" accept="image/*,application/pdf"
+                 data-camera="document" data-camera-label="Photograph it"></div>
+        <button class="btn" type="submit">Record the inspection</button>
+      </form>
+      <div class="muted" style="font-size:11.5px;margin-top:10px">
+        Found <b>unfit</b>, the approval is withdrawn with the finding — the register cannot say "approved"
+        the day after an officer wrote that the premises were not fit to wash railway linen.
+      </div>
+    </div>
+  </div>
+  <% } %>
+</div>
+
+<div class="card" style="margin-top:16px">
+  <div class="card-h"><h3>Inspection history</h3>
+    <span class="sub">the tender asks for this "from time to time", not once</span></div>
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr><th>Date</th><th>Found</th><th>Observations</th><th>By</th><th>Evidence</th></tr></thead>
+    <tbody>
+    <% checks.forEach(function(k){ %>
+      <tr>
+        <td class="tnum"><%= String(k.inspected_on).slice(0,10) %></td>
+        <td><% if (k.result === 'satisfactory') { %><span class="st good"><span class="dot"></span>Satisfactory</span>
+            <% } else if (k.result === 'deficient') { %><span class="st warn"><span class="dot"></span>Deficient</span>
+            <% } else { %><span class="st crit"><span class="dot"></span>Unfit</span><% } %></td>
+        <td style="font-size:12.3px"><%= k.observations || '—' %></td>
+        <td style="font-size:12px"><%= k.inspected_by_name || '—' %></td>
+        <td><% if (k.evidence_file_id) { %><span class="pill">attached</span><% } else { %><span class="muted">—</span><% } %></td>
+      </tr>
+    <% }); %>
+    <% if (!checks.length) { %><tr><td colspan="5" class="muted">The premises have never been inspected.</td></tr><% } %>
+    </tbody>
+  </table></div>
+</div>
+
+<div class="card" style="margin-top:16px">
+  <div class="card-h"><h3>Attached to</h3></div>
+  <div class="tblwrap"><table class="tbl">
+    <thead><tr><th>Running room</th><th>Service</th><th>From</th><th>To</th></tr></thead>
+    <tbody>
+    <% sites.forEach(function(x){ %>
+      <tr><td><%= x.name %></td><td><%= x.service_type %></td>
+        <td class="tnum"><%= x.effective_from ? String(x.effective_from).slice(0,10) : '—' %></td>
+        <td class="tnum"><%= x.effective_to ? String(x.effective_to).slice(0,10) : 'current' %></td></tr>
+    <% }); %>
+    <% if (!sites.length) { %><tr><td colspan="4" class="muted">Not attached to any running room.</td></tr><% } %>
+    </tbody>
+  </table></div>
+</div>
