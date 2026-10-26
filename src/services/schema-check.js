@@ -57,7 +57,8 @@ async function pendingMigrations() {
     }
     // Anything else is the database being unreachable, which the pool will
     // report far more clearly than a guess from here.
-    return { ok: true, pending: [], note: `could not be checked: ${e.message}` };
+    return { ok: true, pending: [], unreachable: true,
+             note: `could not be checked: ${e.message}` };
   }
 
   return { ok: true, pending: files.filter(f => !applied.has(f)) };
@@ -67,8 +68,29 @@ async function pendingMigrations() {
  * Called from the entry point before listening. Returns true if the process
  * should go on.
  */
+/* WAITING FOR MYSQL AFTER A REBOOT.
+ *
+ * On 16.10.2026 and 24.10.2026 the server rebooted, pm2 brought RR-CMS up before
+ * MySQL was listening, and the check above was skipped with ECONNREFUSED. The
+ * app then ran for days on a schema nobody had looked at -- the very thing this
+ * file exists to stop. So an unreachable database is waited for, not shrugged
+ * at: two minutes is far longer than MySQL takes to start, and short enough
+ * that a database which is genuinely down still lets the app come up and say
+ * so on every request, rather than leaving pm2 restarting it in a loop. */
+const WAIT_MS = 120000;
+const RETRY_MS = 5000;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
 async function verify() {
-  const r = await pendingMigrations();
+  let r = await pendingMigrations();
+  const giveUp = Date.now() + WAIT_MS;
+  const waited = r.unreachable;
+  if (waited) console.warn(`  database not reachable yet — waiting up to ${WAIT_MS / 1000}s`);
+  while (r.unreachable && Date.now() < giveUp) {
+    await sleep(RETRY_MS);
+    r = await pendingMigrations();
+  }
+  if (waited && !r.unreachable) console.log('  database reachable — checking the schema');
   if (r.note) { console.warn(`  schema check skipped — ${r.note}`); return true; }
   if (!r.pending.length) return true;
 

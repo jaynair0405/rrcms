@@ -178,8 +178,11 @@ Named by the officer after go-live: *"mark these 6 down. we will come to it."*
    clauses D3 and D4 with no due date and unraisable.
 6. **The HQ help page** — the last of four. Needs the officer's account of HQ's
    own day, the same five questions the other three were built from.
-7. **A git repository, replacing scp.** Deferred until after go-live; go-live has
-   happened. Every other application on crtms.in is deployed this way.
+7. ~~**A git repository, replacing scp.**~~ **Done 26.10.2026.** The code is at
+   `github.com:jaynair0405/rrcms` (its own repo, not the shared `bbtro` one) and
+   `/opt/rrcms` is a clone of it, started at stage 99b. A deploy is now
+   `cd /opt/rrcms && git pull && pm2 restart rrcms`, with
+   `npm ci --omit=dev` before the restart when `package-lock.json` changed.
 
 ## Named after testing stages 99 and 99b — 10.09.2026
 
