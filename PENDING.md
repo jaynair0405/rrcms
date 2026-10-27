@@ -195,10 +195,9 @@ Taken in this order unless the officer says otherwise.
    one it is, and clause C1 reads breached until somebody with a divisional
    login does it for him. Grant it in a SEED, never a migration.
 
-   Worth settling at the same time: whether a washing centre is approved for the
-   division or for one running room — the open question already recorded at the
-   end of this file. Adding the permission without answering that decides it by
-   accident.
+   Settled 27.10.2026: a washing centre is approved per running room (see the
+   end of this file), so the approval moves onto `running_room_vendors` in the
+   same piece of work.
 
 2. **Split the weekly cleaning rows.** The officer's request, first made on
    09.09.2026: C09 bundles nine areas under one weekly tick, and they are not
@@ -2283,3 +2282,8 @@ To be decided with the Railway: whether approval is genuinely per running room
 (in which case it belongs on `running_room_vendors`, with the C1 check reading
 it there), or whether a vendor is approved once and merely ALLOTTED per running
 room, which is what the schema says today.
+
+**Settled 27.10.2026: approval is per running room, not per division.** So the
+approval moves to `running_room_vendors` and clause C1 reads it there. Not yet
+built; until it is, the single `vendors.is_approved` flag stays safe only while
+no washing centre serves two running rooms.
