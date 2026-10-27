@@ -31,6 +31,31 @@ const ROLES = {
         + 'the Railway can see it was done.',
     sections: [
       {
+        when: 'Once, when the running room first comes on',
+        why: 'Every register after this is checked against what is set up here: a man who '
+           + 'is not on the staff list cannot be marked present, and a linen count means '
+           + 'nothing until the book has a figure to compare it with. So this comes before '
+           + 'the first day, not alongside it.',
+        steps: [
+          { do: 'Change the password you were given', at: '/account/password' },
+          { do: 'Add every man posted here, with his designation', at: '/staff',
+            note: 'Add new man, one at a time. Leave a date of joining blank rather than '
+                + 'guess it: a blank says nobody knows yet, a guessed date says somebody checked.' },
+          { do: 'Load each man’s documents and his photograph', at: '/staff',
+            note: 'Open his name. Aadhaar, police verification, medical fitness and the rest. '
+                + 'He stays “screening pending” until the Railway has seen them.' },
+          { do: 'Ask the RR In-charge to admit them provisionally', at: '/staff',
+            note: 'Until he does, nobody you added can be marked present on the muster.' },
+          { do: 'Enter the linen the Railway has issued to the room', at: '/records/linen-stock',
+            note: 'The consignment from stores, with its date. This is the figure every later '
+                + 'count is compared with.' },
+          { do: 'Make the first count of the linen shelf', at: '/records/linen' },
+          { do: 'Enter what you hold of cleaning materials, cutlery and gas', at: '/facility/consumables' },
+          { do: 'Lodge the FSSAI licence, if meals are served', at: '/food-safety',
+            note: 'Until it is lodged the room shows as unlicensed. That is a finding, not a fault.' },
+        ],
+      },
+      {
         when: 'First thing, before you issue anything',
         why: 'The shelf you see before the day’s first bedsheet goes out is the shelf '
            + 'as it stood when yesterday ended. That is the one moment in the day when a '
@@ -141,6 +166,29 @@ const ROLES = {
         + 'only the Railway can say. The two are kept apart on purpose — a contractor who could '
         + 'sign off his own work would be proving nothing to anybody.',
     sections: [
+      {
+        when: 'Once, when the running room first comes on',
+        why: 'The contractor’s supervisor sets up his half — his men, their papers, the first '
+           + 'linen count. These are the Railway’s half, and the registers cannot be kept '
+           + 'properly until both are done.',
+        steps: [
+          { do: 'Change the password you were given', at: '/account/password' },
+          { do: 'Check the staff list and admit each man provisionally', at: '/staff',
+            note: 'Once the supervisor has added them. Provisional lets him be marked present; '
+                + 'the Sr. DEE approves him properly after screening.' },
+          { do: 'Set the day of the week for each weekly cleaning item', at: '/records/cleaning',
+            note: 'Only for items the contract calls “once in week” without naming a day. '
+                + 'Agree the day at the site; the contractor cannot move it himself.' },
+          { do: 'Accept the supervisor’s first linen count', at: '/records/linen' },
+          { do: 'Check the list of trains for the call sheet', at: '/records/call-sheet-trains' },
+          { do: 'Register the Railway’s assets', at: '/facility/assets',
+            note: 'Cots, mattresses, ACs, geysers, RO plants — what the room holds on day one.' },
+          { do: 'Register the CCTV cameras, by place', at: '/facility/cctv' },
+          { do: 'Agree the first weekly menu and the rate board', at: '/facility/menu' },
+          { do: 'Print the feedback QR posters and put them up', at: '/feedback/qr',
+            note: 'At bedsides and in the dining hall. Check the poster opens on a phone first.' },
+        ],
+      },
       {
         when: 'On your visit — most days',
         why: 'The daily check is required whether or not the contractor’s man is there. He works '
