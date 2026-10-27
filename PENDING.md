@@ -176,8 +176,10 @@ Named by the officer after go-live: *"mark these 6 down. we will come to it."*
    the Performance Guarantee stated at 5% (clause 2.2, page 20) and 3% (clause
    2.5, page 21) — Rs 16.17 lakh apart — and the missing LOA date, which leaves
    clauses D3 and D4 with no due date and unraisable.
-6. **The HQ help page** — the last of four. Needs the officer's account of HQ's
-   own day, the same five questions the other three were built from.
+6. **The HQ help page** — the last of four. Settled 27.10.2026: the PCEE office
+   has view access across all CR divisions (dashboard and other pages), and is
+   to be able to put remarks for the Sr. DEEs. The remark feature is to be
+   built later; the help page waits for it.
 7. ~~**A git repository, replacing scp.**~~ **Done 26.10.2026.** The code is at
    `github.com:jaynair0405/rrcms` (its own repo, not the shared `bbtro` one) and
    `/opt/rrcms` is a clone of it, started at stage 99b. A deploy is now
